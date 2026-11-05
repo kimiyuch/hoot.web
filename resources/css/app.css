@@ -31,6 +31,8 @@
 
     /* Gumleaf gold for ratings, like the possum's eye highlights in lamplight. */
     --color-star: #f5c56b;
+    /* What's up next (the teaser and the next episode): a soft mint that sits well on plum. */
+    --color-next: #8fdcae;
 
     /* Calendar page: the red header of the tear-off page the possum holds on to. Used for dates. */
     --color-calendar-50: #fef3f2;

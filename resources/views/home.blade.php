@@ -24,13 +24,12 @@
             </div>
         </div>
     @else
-        <div>
-            <h1 class="font-display text-3xl font-semibold tracking-tight">Upcoming</h1>
-            <p class="mt-1 text-sm/6 text-white/40">Times in {{ str_replace('_', ' ', $timezone) }}</p>
-        </div>
-
-        <div class="mt-10 grid grid-cols-1 gap-x-16 gap-y-16 lg:grid-cols-[minmax(0,48rem)_minmax(20rem,28rem)] lg:justify-between">
+        {{-- The heading sits in the left column, so the sidebar starts at the top too. --}}
+        <div class="grid grid-cols-1 gap-x-16 gap-y-16 lg:grid-cols-[minmax(0,48rem)_minmax(20rem,28rem)] lg:justify-between">
             <div class="min-w-0">
+                <h1 class="font-display text-3xl font-semibold tracking-tight">Upcoming</h1>
+                <p class="mt-1 text-sm/6 text-white/40">Times in {{ str_replace('_', ' ', $timezone) }}</p>
+
                 {{-- Up next --}}
                 @if ($next)
                     @php
@@ -40,14 +39,14 @@
                         $heroPoster = $isEpisodes ? $item->image_url : $item->posterUrl();
                         $heroBackdrop = $isEpisodes ? ($item->image_large_url ?? $item->image_url) : ($item->backdropUrl() ?? $item->posterUrl());
                     @endphp
-                    <section aria-labelledby="up-next" class="relative isolate overflow-hidden rounded-2xl bg-night-900 inset-ring inset-ring-white/5">
+                    <section aria-labelledby="up-next" class="relative isolate mt-10 overflow-hidden rounded-2xl bg-night-900 inset-ring inset-ring-white/5">
                         @if ($heroBackdrop)
                             <img src="{{ $heroBackdrop }}" alt="" class="absolute inset-0 -z-10 size-full scale-125 object-cover opacity-30 blur-3xl saturate-150">
                         @endif
                         <div class="flex items-center gap-5 p-5 sm:gap-8 sm:p-4">
                             <x-poster :src="$heroPoster" alt="" class="aspect-2/3 w-20 rounded-lg sm:w-32" />
                             <div class="min-w-0">
-                                <p id="up-next" class="text-sm/6 font-medium text-calendar-400">
+                                <p id="up-next" class="text-sm/6 font-medium text-next">
                                     Up next ·
                                     @if ($next['timed'])
                                         {{ $next['at']->diffForHumans(['parts' => 2, 'join' => true]) }}
@@ -56,7 +55,7 @@
                                     @endif
                                 </p>
                                 <h2 class="mt-1 max-w-[24ch] font-display text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
-                                    <a href="{{ $isEpisodes ? $item->url : $item->url() }}" class="hover:text-midnight-200">{{ $heroTitle }}</a>
+                                    <a href="{{ $isEpisodes ? $item->url : $item->url() }}" target="_blank" rel="noopener" class="hover:text-midnight-200">{{ $heroTitle }}</a>
                                 </h2>
                                 <p class="mt-2 max-w-[56ch] text-base/7 text-pretty text-white/65">
                                     @if ($isEpisodes)
@@ -124,7 +123,7 @@
                                     <x-poster :src="$isEpisodes ? $item->image_url : $item->posterUrl()" alt="" class="aspect-2/3 w-9 rounded" />
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-base/6 font-medium sm:text-sm/5">
-                                            <a href="{{ $isEpisodes ? $item->url : $item->url() }}" class="before:absolute before:inset-0 group-hover:text-midnight-200">{{ $isEpisodes ? $item->name : $item->title }}</a>
+                                            <a href="{{ $isEpisodes ? $item->url : $item->url() }}" target="_blank" rel="noopener" class="before:absolute before:inset-0 group-hover:text-midnight-200">{{ $isEpisodes ? $item->name : $item->title }}</a>
                                         </p>
                                         <p class="truncate text-sm/5 text-white/45">
                                             {{ $isEpisodes ? \App\Services\Calendar::codes($release['episodes']) : ($release['kind'] === 'digital' ? 'Digital' : 'In cinemas') }}
@@ -137,61 +136,120 @@
                     </section>
                 @endif
 
-                {{-- What you follow. "Manage" shows the Unfollow buttons (a checkbox, so no JS needed). --}}
-                <section aria-labelledby="following" class="group/following border-t border-white/5 pt-8 first:border-t-0 first:pt-0">
+                {{-- What you follow. Each one opens (a <details>) to its rating, Unfollow, description and dates. --}}
+                <section aria-labelledby="following" class="border-t border-white/5 pt-8 first:border-t-0 first:pt-0">
                     <div class="flex items-baseline justify-between gap-4">
                         <div>
                             <h2 id="following" class="font-display text-lg font-semibold tracking-tight">Following</h2>
                             <p class="text-sm/6 text-white/40 tabular-nums">{{ $shows->count() }} {{ Str::plural('show', $shows->count()) }} · {{ $movies->count() }} {{ Str::plural('movie', $movies->count()) }}</p>
                         </div>
-                        <label class="relative cursor-pointer rounded-lg px-2.5 py-1 text-sm/6 font-medium text-white/55 select-none hover:bg-white/5 hover:text-white has-focus-visible:outline-2 has-focus-visible:outline-midnight-400">
-                            <input type="checkbox" class="sr-only">
-                            <span class="group-has-checked/following:hidden">Manage</span>
-                            <span class="hidden text-white group-has-checked/following:inline">Done</span>
-                            <span class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden" aria-hidden="true"></span>
-                        </label>
                     </div>
                     <ul role="list" class="mt-4 divide-y divide-white/5">
                         @foreach ($shows as $show)
-                            <li class="group relative flex items-center gap-3 py-2.5">
-                                <x-poster :src="$show->image_url" alt="" class="aspect-2/3 w-9 rounded" />
-                                <div class="min-w-0 flex-1">
-                                    <p class="truncate text-base/6 font-medium sm:text-sm/5">
-                                        <a href="{{ $show->url }}" class="before:absolute before:inset-0 group-hover:text-midnight-200">{{ $show->name }}</a>
-                                    </p>
-                                    <p class="truncate text-sm/5 text-white/45">
-                                        @if ($show->nextEpisode)
-                                            <span class="tabular-nums">{{ $show->nextEpisode->code() }}</span> · {{ $show->nextEpisode->airs_at->setTimezone($timezone)->format('D j M') }}
+                            @php
+                                $now = now();
+                                // Newest season first; episodes in order within a season.
+                                $seasons = $show->episodes->groupBy('season')->sortKeysDesc();
+                            @endphp
+                            {{-- Each show opens to all its episodes. --}}
+                            <li>
+                                <details class="group/show">
+                                    <summary class="flex cursor-pointer list-none items-center gap-3 py-2.5 [&::-webkit-details-marker]:hidden">
+                                        <x-poster :src="$show->image_url" alt="" class="aspect-2/3 w-9 rounded" />
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-base/6 font-medium group-hover/show:text-midnight-200 sm:text-sm/5">{{ $show->name }}</p>
+                                            <p class="truncate text-sm/5 text-white/45">
+                                                @if ($show->nextEpisode)
+                                                    <span class="tabular-nums">{{ $show->nextEpisode->code() }}</span> · {{ $show->nextEpisode->airs_at->setTimezone($timezone)->format('D j M') }}
+                                                @else
+                                                    {{ $show->status === 'Ended' ? 'Ended' : 'No date yet' }}
+                                                @endif
+                                                @if ($show->channel)
+                                                    · {{ $show->channel }}
+                                                @endif
+                                            </p>
+                                        </div>
+                                        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4 shrink-0 text-white/35 transition-transform group-open/show:rotate-180"><path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
+                                    </summary>
+
+                                    {{-- Rating and description, then the episodes. --}}
+                                    <div class="pb-4">
+                                        <div class="flex items-center gap-3">
+                                            <x-rating :value="$show->rating" class="text-sm/6" />
+                                            <x-follow-button following :unfollow-action="route('shows.unfollow', $show)" :label="$show->name" />
+                                        </div>
+                                        @if ($show->overview)
+                                            <p class="mt-1 text-sm/6 text-pretty text-white/60">{{ $show->overview }}</p>
+                                        @endif
+                                        @if ($seasons->isEmpty())
+                                            <p class="mt-3 text-sm/6 text-white/40">No episodes listed yet.</p>
                                         @else
-                                            {{ $show->status === 'Ended' ? 'Ended' : 'No date yet' }}
+                                            <div class="scrollbar-thin mt-3 max-h-72 overflow-y-auto overscroll-contain">
+                                                @foreach ($seasons as $season => $episodes)
+                                                    <p class="pt-2 pb-1 text-xs/5 font-medium text-white/40 first:pt-0">{{ $season ? 'Season '.$season : 'Specials' }}</p>
+                                                    <ul role="list" class="divide-y divide-white/5">
+                                                        @foreach ($episodes as $episode)
+                                                            @php
+                                                                $at = $episode->airs_at?->setTimezone($timezone);
+                                                                $upcoming = $at && $at->isAfter($now);
+                                                                $isNext = $show->nextEpisode?->is($episode);
+                                                            @endphp
+                                                            <li @class(['flex items-baseline gap-2 py-2 pr-1 text-sm/5', 'text-white/45' => ! $upcoming, 'text-white/80' => $upcoming && ! $isNext, 'text-next' => $isNext])>
+                                                                <span class="shrink-0 tabular-nums">{{ $episode->code() }}</span>
+                                                                <span @class(['min-w-0 flex-1 truncate', 'italic opacity-60' => blank($episode->name)])>{{ filled($episode->name) ? $episode->name : '[No title yet]' }}</span>
+                                                                @if ($at)
+                                                                    <span class="shrink-0 text-xs/5 tabular-nums">{{ $at->format($at->year === $now->year ? 'j M' : 'j M Y') }}</span>
+                                                                @endif
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                @endforeach
+                                            </div>
                                         @endif
-                                        @if ($show->channel)
-                                            · {{ $show->channel }}
-                                        @endif
-                                    </p>
-                                </div>
-                                <x-follow-button following :unfollow-action="route('shows.unfollow', $show)" :label="$show->name" class="relative hidden shrink-0 group-has-checked/following:block" />
+                                        <a href="{{ $show->url }}" target="_blank" rel="noopener" class="mt-3 inline-flex items-center gap-1 text-xs/5 font-medium text-white/50 hover:text-white">
+                                            On TVmaze <span aria-hidden="true">↗</span>
+                                        </a>
+                                    </div>
+                                </details>
                             </li>
                         @endforeach
                         @foreach ($movies as $movie)
-                            @php $date = $movie->digital_date ?? $movie->cinema_date; @endphp
-                            <li class="group relative flex items-center gap-3 py-2.5">
-                                <x-poster :src="$movie->posterUrl()" alt="" class="aspect-2/3 w-9 rounded" />
-                                <div class="min-w-0 flex-1">
-                                    <p class="truncate text-base/6 font-medium sm:text-sm/5">
-                                        <a href="{{ $movie->url() }}" class="before:absolute before:inset-0 group-hover:text-midnight-200">{{ $movie->title }}</a>
-                                    </p>
-                                    <p class="truncate text-sm/5 text-white/45">
-                                        @if ($movie->digital_date)
-                                            Digital {{ $movie->digital_date->format('j M Y') }}
-                                        @elseif ($movie->cinema_date)
-                                            In cinemas {{ $movie->cinema_date->format('j M Y') }}
-                                        @else
-                                            No date yet
+                            <li>
+                                <details class="group/show">
+                                    <summary class="flex cursor-pointer list-none items-center gap-3 py-2.5 [&::-webkit-details-marker]:hidden">
+                                        <x-poster :src="$movie->posterUrl()" alt="" class="aspect-2/3 w-9 rounded" />
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-base/6 font-medium group-hover/show:text-midnight-200 sm:text-sm/5">{{ $movie->title }}</p>
+                                            <p class="truncate text-sm/5 text-white/45">
+                                                @if ($movie->digital_date)
+                                                    Digital {{ $movie->digital_date->format('j M Y') }}
+                                                @elseif ($movie->cinema_date)
+                                                    In cinemas {{ $movie->cinema_date->format('j M Y') }}
+                                                @else
+                                                    No date yet
+                                                @endif
+                                            </p>
+                                        </div>
+                                        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4 shrink-0 text-white/35 transition-transform group-open/show:rotate-180"><path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
+                                    </summary>
+
+                                    <div class="pb-4">
+                                        <div class="flex items-center gap-3">
+                                            <x-rating :value="$movie->rating" class="text-sm/6" />
+                                            <x-follow-button following :unfollow-action="route('movies.unfollow', $movie)" :label="$movie->title" />
+                                        </div>
+                                        @if ($movie->overview)
+                                            <p class="mt-1 text-sm/6 text-pretty text-white/60">{{ $movie->overview }}</p>
                                         @endif
-                                    </p>
-                                </div>
-                                <x-follow-button following :unfollow-action="route('movies.unfollow', $movie)" :label="$movie->title" class="relative hidden shrink-0 group-has-checked/following:block" />
+                                        <dl class="mt-3 divide-y divide-white/5 text-sm/5">
+                                            <div class="flex justify-between gap-4 py-2"><dt class="text-white/45">In cinemas</dt><dd class="text-white/80 tabular-nums">{{ $movie->cinema_date?->format('j M Y') ?? 'Not announced' }}</dd></div>
+                                            <div class="flex justify-between gap-4 py-2"><dt class="text-white/45">Digital</dt><dd class="text-white/80 tabular-nums">{{ $movie->digital_date?->format('j M Y') ?? 'Not announced' }}</dd></div>
+                                        </dl>
+                                        <a href="{{ $movie->url() }}" target="_blank" rel="noopener" class="mt-3 inline-flex items-center gap-1 text-xs/5 font-medium text-white/50 hover:text-white">
+                                            On TMDB <span aria-hidden="true">↗</span>
+                                        </a>
+                                    </div>
+                                </details>
                             </li>
                         @endforeach
                     </ul>

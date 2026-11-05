@@ -9,7 +9,7 @@
 
     <div class="flex min-w-0 flex-1 flex-col py-1 pr-1">
         <h3 class="line-clamp-2 font-display text-lg/6 font-semibold tracking-tight text-balance">
-            <a href="{{ $href }}" class="before:absolute before:inset-0 before:rounded-xl">{{ $title }}</a>
+            <a href="{{ $href }}" target="_blank" rel="noopener" class="before:absolute before:inset-0 before:rounded-xl">{{ $title }}</a>
         </h3>
         @isset($meta)
             <div class="mt-1 text-base/6 text-white/50 sm:text-sm/6">{{ $meta }}</div>

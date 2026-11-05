@@ -44,7 +44,7 @@ class PossumController extends Controller
             'recent' => $recent,
             'timezone' => $timezone,
             'logos' => $services->logos(),
-            'shows' => Show::with('nextEpisode')->get()
+            'shows' => Show::with(['nextEpisode', 'episodes' => fn ($query) => $query->orderBy('number')->orderBy('airs_at')])->get()
                 // Shows with a next episode first, soonest first; then the rest by name.
                 ->sortBy(fn (Show $show) => [$show->nextEpisode ? 0 : 1, $show->nextEpisode?->airs_at?->getTimestamp() ?? 0, $show->name])
                 ->values(),

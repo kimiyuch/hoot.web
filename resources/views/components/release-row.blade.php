@@ -20,7 +20,7 @@
 
     <div class="min-w-0 flex-1">
         <p class="truncate text-base/6 font-medium sm:text-sm/6">
-            <a href="{{ $href }}" class="before:absolute before:inset-0 group-hover:text-midnight-200">{{ $title }}</a>
+            <a href="{{ $href }}" target="_blank" rel="noopener" class="before:absolute before:inset-0 group-hover:text-midnight-200">{{ $title }}</a>
         </p>
         <p class="truncate text-base/6 text-white/50 sm:text-sm/6">
             @if ($isEpisodes)

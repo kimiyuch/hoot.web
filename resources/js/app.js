@@ -106,3 +106,13 @@ if (avatar) {
     update();
     window.addEventListener('scroll', update, { passive: true });
 }
+
+// The status toast fades out after 3 seconds.
+const toast = document.querySelector('[data-toast]');
+
+if (toast) {
+    setTimeout(() => {
+        toast.toggleAttribute('data-hidden', true);
+        toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+    }, 3000);
+}

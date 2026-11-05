@@ -32,7 +32,7 @@
                         <x-poster :src="$item['image']" alt="" class="aspect-2/3 w-8 rounded" />
                         <div class="min-w-0 flex-1">
                             <p class="truncate text-sm/5 font-medium">
-                                <a href="{{ $item['href'] }}" class="before:absolute before:inset-0">{{ $item['title'] }}</a>
+                                <a href="{{ $item['href'] }}" target="_blank" rel="noopener" class="before:absolute before:inset-0">{{ $item['title'] }}</a>
                             </p>
                             @if ($item['meta'])
                                 <p class="truncate text-sm/5 text-white/45">{{ $item['meta'] }}</p>
