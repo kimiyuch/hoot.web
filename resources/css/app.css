@@ -1,0 +1,67 @@
+@import 'tailwindcss' source(none);
+
+/* Only scan the templates; nothing else in the project contains classes. */
+@source '../views';
+@source '../js';
+
+@theme {
+    --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    --font-sans--font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    --font-display: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+
+    /* Midnight: the late-night plum sky behind the possum on the app icon, when it's out and about. The brand colour. */
+    --color-midnight-50: #f9f5f9;
+    --color-midnight-100: #f2e8f2;
+    --color-midnight-200: #e4d0e4;
+    --color-midnight-300: #cfaccf;
+    --color-midnight-400: #b386b3;
+    --color-midnight-500: #9a6a9a;
+    --color-midnight-600: #7f5281;
+    --color-midnight-700: #69426c;
+    --color-midnight-800: #5a3560;
+    --color-midnight-900: #3f2445;
+    --color-midnight-950: #2a1631;
+
+    /* Night: the late-night plum of the icon's background, darkened for the page. Backgrounds and surfaces. */
+    --color-night-600: #5a3d63;
+    --color-night-700: #442c4c;
+    --color-night-800: #34203a;
+    --color-night-900: #28172d;
+    --color-night-950: #1d1022;
+
+    /* Gumleaf gold for ratings, like the possum's eye highlights in lamplight. */
+    --color-star: #f5c56b;
+
+    /* Calendar page: the red header of the tear-off page the possum holds on to. Used for dates. */
+    --color-calendar-50: #fef3f2;
+    --color-calendar-400: #f68a7e;
+    --color-calendar-100: #fde4e1;
+    --color-calendar-500: #f06a5c;
+    --color-calendar-600: #d4473c;
+    --color-calendar-700: #b2372d;
+}
+
+@layer base {
+    :root {
+        color-scheme: dark;
+    }
+
+    /* Dropdowns in the dark theme. */
+    select option {
+        background-color: var(--color-night-900);
+    }
+}
+
+@utility scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: --alpha(var(--color-white) / 15%) transparent;
+}
+
+@utility scrollbar-none {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+

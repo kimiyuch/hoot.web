@@ -1,0 +1,41 @@
+{
+  "_figtree-500-normal-BWnGEVsr.woff2": {
+    "file": "assets/figtree-500-normal-BWnGEVsr.woff2",
+    "src": "_figtree-500-normal-BWnGEVsr.woff2"
+  },
+  "_figtree-500-normal-B_yy1phn.woff": {
+    "file": "assets/figtree-500-normal-B_yy1phn.woff",
+    "src": "_figtree-500-normal-B_yy1phn.woff"
+  },
+  "_figtree-600-normal-BM_oTo4n.woff": {
+    "file": "assets/figtree-600-normal-BM_oTo4n.woff",
+    "src": "_figtree-600-normal-BM_oTo4n.woff"
+  },
+  "_figtree-600-normal-Cv_xCTDl.woff2": {
+    "file": "assets/figtree-600-normal-Cv_xCTDl.woff2",
+    "src": "_figtree-600-normal-Cv_xCTDl.woff2"
+  },
+  "_fonts-Dj1WdnDY.css": {
+    "file": "assets/fonts-Dj1WdnDY.css",
+    "src": "_fonts-Dj1WdnDY.css"
+  },
+  "_inter-400-600-normal-B7rthDxM.woff2": {
+    "file": "assets/inter-400-600-normal-B7rthDxM.woff2",
+    "src": "_inter-400-600-normal-B7rthDxM.woff2"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-BjKS37pV.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-ZN6P6Swb.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  }
+}
