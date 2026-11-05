@@ -148,6 +148,11 @@ class PossumTest extends TestCase
         $this->get('/search?q=night')->assertOk()
             ->assertSeeInOrder(['Night Shift', '2024 · HBO', 'Following', 'Night Court', '1984 · NBC', 'Follow Night Court'])
             ->assertSee('Movies need a TMDB key');
+
+        // The search lightbox only gets the results, without the page around them.
+        $this->get('/search?q=night', ['X-Possum-Partial' => '1'])->assertOk()
+            ->assertSeeInOrder(['Shows', 'Night Shift', 'Following', 'Night Court', 'Show all results'])
+            ->assertDontSee('<html', false);
     }
 
     public function test_search_says_so_when_tvmaze_is_down(): void

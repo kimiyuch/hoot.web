@@ -146,7 +146,7 @@
 
     {{-- Filters drawer for small screens --}}
     <dialog id="filter-drawer" aria-labelledby="filter-drawer-title"
-        class="m-0 ml-auto h-dvh max-h-dvh w-full max-w-sm bg-night-900 p-0 text-white inset-ring inset-ring-white/10 backdrop:bg-black/60 backdrop:backdrop-blur-sm lg:hidden">
+        class="m-0 ml-auto h-dvh max-h-dvh w-full max-w-sm bg-night-900 p-0 text-white inset-ring inset-ring-white/10 backdrop:bg-black/75 lg:hidden">
         <div class="flex h-full flex-col">
             <div class="flex items-center justify-between border-b border-white/5 px-6 py-4">
                 <h2 id="filter-drawer-title" class="font-display text-lg font-semibold">Filters</h2>

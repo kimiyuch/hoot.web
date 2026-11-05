@@ -24,7 +24,7 @@
     "src": "_inter-400-600-normal-B7rthDxM.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-BjKS37pV.css",
+    "file": "assets/app-tQqlPjVB.css",
     "name": "app",
     "names": [
       "app.css"
@@ -33,7 +33,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-ZN6P6Swb.js",
+    "file": "assets/app-D5Mm269b.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true

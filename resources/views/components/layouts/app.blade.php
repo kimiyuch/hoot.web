@@ -33,6 +33,8 @@
         <x-site-footer />
     </div>
 
+    <x-search-dialog />
+
     @if (session('status'))
         <p role="status" class="fixed inset-x-4 bottom-4 z-50 mx-auto w-fit max-w-[calc(100%-2rem)] rounded-full bg-night-700 px-4 py-2 text-base/6 text-white inset-ring inset-ring-white/10 sm:bottom-6 sm:text-sm/6">
             {{ session('status') }}

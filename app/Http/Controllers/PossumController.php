@@ -174,7 +174,8 @@ class PossumController extends Controller
             }
         }
 
-        return view('search', [
+        // The lightbox fetches just the results.
+        return view($request->header('X-Possum-Partial') ? 'partials.search-results' : 'search', [
             'query' => $query,
             'shows' => $shows,
             'movies' => $movies,

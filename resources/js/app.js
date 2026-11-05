@@ -35,3 +35,74 @@ document.addEventListener('click', (event) => {
     // Clicking the backdrop closes the dialog.
     if (event.target instanceof HTMLDialogElement) event.target.close();
 });
+
+// Search lightbox: ⌘K / Ctrl K or the header button opens it; results load as you type.
+const searchDialog = document.getElementById('search-dialog');
+
+if (searchDialog) {
+    const input = searchDialog.querySelector('[data-search-input]');
+    const results = searchDialog.querySelector('[data-search-results]');
+    const hint = results.innerHTML;
+    let timer;
+    let request;
+
+    const openSearch = () => {
+        if (searchDialog.open) return;
+        searchDialog.showModal();
+        input.select();
+    };
+
+    // Show the shortcut for this platform.
+    if (!/Mac|iPhone|iPad/.test(navigator.platform)) {
+        document.querySelectorAll('[data-shortcut]').forEach((kbd) => (kbd.textContent = 'Ctrl K'));
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+            event.preventDefault();
+            searchDialog.open ? searchDialog.close() : openSearch();
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!event.target.closest('[data-search-open]')) return;
+        event.preventDefault();
+        openSearch();
+    });
+
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        request?.abort();
+        const query = input.value.trim();
+
+        if (query.length < 2) {
+            results.innerHTML = hint;
+            return;
+        }
+
+        timer = setTimeout(async () => {
+            request = new AbortController();
+            results.setAttribute('aria-busy', 'true');
+            try {
+                const response = await fetch(`/search?q=${encodeURIComponent(query)}`, {
+                    headers: { 'X-Possum-Partial': '1' },
+                    signal: request.signal,
+                });
+                results.innerHTML = await response.text();
+            } catch (error) {
+                if (error.name !== 'AbortError') results.innerHTML = '<p class="px-3 py-6 text-center text-sm/6 text-white/45">Search isn’t available right now.</p>';
+            } finally {
+                results.removeAttribute('aria-busy');
+            }
+        }, 250);
+    });
+}
+
+// The avatar in the top-left corner fades out once the page is scrolled.
+const avatar = document.querySelector('[data-avatar]');
+
+if (avatar) {
+    const update = () => avatar.toggleAttribute('data-scrolled', window.scrollY > 24);
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+}
