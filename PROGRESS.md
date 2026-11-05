@@ -8,7 +8,7 @@ Last updated: 2026-11-05.
 
 Working locally at https://possum.web.test (Herd, secured with `herd secure possum.web`). 17 tests pass (`php artisan test`), Pint is clean. `public/build` is built.
 
-**Git:** in git since 2026-11-05 and pushed to https://github.com/kimiyuch/possum.web (public, `main`). The tests run on GitHub Actions for every push and passed on the first push. The local `gh` login defaults to `marceli-to`, which can't push to `kimiyuch`, so pushes need the `kimiyuch` account (`gh auth switch --user kimiyuch`, or a token just for that push). **Not done yet:** the first deploy (`./deploy.sh`) and the Hostpoint cron job.
+**Git:** in git since 2026-11-05 and pushed to https://github.com/kimiyuch/possum.web (public, `main`). The tests run on GitHub Actions for every push and passed on the first push. `marceli-to` is a collaborator, so a plain `git push` works. **Not done yet:** the first deploy (`./deploy.sh`) and the Hostpoint cron job.
 
 `.env` has a working `TMDB_TOKEN` (the long "API Read Access Token"). It has to be added to the server's `.env` by hand when deploying.
 
