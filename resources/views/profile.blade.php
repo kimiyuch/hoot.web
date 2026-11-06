@@ -26,7 +26,15 @@
         <header class="flex flex-col gap-6 sm:flex-row sm:items-center">
             <x-avatar :user="$user" size="xl" />
             <div class="min-w-0 flex-1">
-                <h1 class="font-display text-3xl font-semibold tracking-tight text-balance">{{ $user->name }}</h1>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <h1 class="font-display text-3xl font-semibold tracking-tight text-balance">{{ $user->name }}</h1>
+                    @if ($own)
+                        <a href="{{ route('settings') }}#profile" class="flex items-center gap-1.5 rounded-lg bg-white/8 py-1 pr-2.5 pl-2 text-sm/6 font-medium hover:bg-white/12">
+                            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-3.5 text-white/60"><path d="M13.49 3.32a1.75 1.75 0 0 0-2.47 0L4.9 9.44a2 2 0 0 0-.5.84l-.73 2.56a.5.5 0 0 0 .62.62l2.56-.73a2 2 0 0 0 .84-.5l6.12-6.12a1.75 1.75 0 0 0 0-2.47l-.32-.32Z"/></svg>
+                            Edit profile
+                        </a>
+                    @endif
+                </div>
                 <p class="mt-1 flex flex-wrap items-center gap-x-2 text-base/6 text-white/50">
                     <span>{{ '@'.$user->username }}</span>
                     @if ($user->is_private)
@@ -58,7 +66,6 @@
                             {{ trans_choice(':count follow request|:count follow requests', $requestCount) }}
                         </a>
                     @endif
-                    <a href="{{ route('settings') }}#profile" class="rounded-lg bg-white/8 px-3.5 py-2 text-base/6 font-medium hover:bg-white/12 sm:text-sm/6">Edit profile</a>
                     <form method="post" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="rounded-lg px-3.5 py-2 text-base/6 font-medium text-white/55 hover:bg-white/5 hover:text-white sm:text-sm/6">Log out</button>
