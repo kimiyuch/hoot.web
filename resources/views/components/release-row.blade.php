@@ -3,8 +3,10 @@
 
 @php
     $isEpisodes = $release['kind'] === 'episodes';
-    // Already out: timed releases once their moment has passed, dated ones (movies) from the next day.
-    $out = $release['timed'] ? $release['at']->isPast() : $release['at']->lt(\Carbon\CarbonImmutable::now($release['at']->timezone)->startOfDay());
+    // Days before today are dimmed; today looks like any day ahead, even once something has come out.
+    $past = $release['at']->lt(\Carbon\CarbonImmutable::now($release['at']->timezone)->startOfDay());
+    // Out: timed releases once their moment has passed (for the search link), dated ones (movies) from the next day.
+    $out = $release['timed'] ? $release['at']->isPast() : $past;
     if ($isEpisodes) {
         $show = $release['show'];
         $episodes = $release['episodes'];
@@ -16,7 +18,7 @@
     }
 @endphp
 
-<li @class(['group relative flex items-center gap-4 py-2', 'opacity-50' => $out])>
+<li @class(['group relative flex items-center gap-4 py-2', 'opacity-50' => $past])>
     <x-poster :src="$image" alt="" class="aspect-2/3 w-11 rounded-md" />
 
     <div class="min-w-0 flex-1">
