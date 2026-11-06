@@ -1,6 +1,14 @@
 <?php
 
 return [
+    // Usernames nobody can take: the app's own words and pages, so a profile can't pose as one.
+    'reserved_usernames' => [
+        'admin', 'administrator', 'hoot', 'kimiyu', 'support', 'help', 'about', 'team', 'staff', 'moderator', 'mod', 'root', 'system',
+        'settings', 'discover', 'search', 'login', 'logout', 'register', 'signup', 'for_you', 'foryou', 'calendar', 'profile',
+        'people', 'shows', 'movies', 'favourites', 'favorites', 'following', 'followers', 'premieres', 'browse', 'api', 'www', 'mail',
+        'privacy', 'terms', 'null', 'undefined', 'anonymous', 'me', 'you',
+    ],
+
     // GitHub repository of this site.
     'repository_url' => 'https://github.com/kimiyuch/hoot.web',
 

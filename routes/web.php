@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\HootController;
+use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -11,7 +13,15 @@ Route::get('/', [HootController::class, 'welcome'])->name('home');
 // Subscribe to this in Apple Calendar or Google Calendar. No login: the token says whose feed it is.
 Route::get('/calendar/{token}.ics', [HootController::class, 'calendar'])->name('calendar');
 
+// Accounts from before profiles pick a username here first.
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/choose-username', [OnboardingController::class, 'edit'])->name('onboarding');
+    Route::post('/choose-username', [OnboardingController::class, 'update'])->name('onboarding.update');
+});
+
+Route::middleware(['auth', 'verified', 'username'])->group(function () {
+    Route::get('/@{user:username}', [ProfileController::class, 'show'])->where('user', '[a-z0-9_]+')->name('profile');
+
     Route::controller(HootController::class)->group(function () {
         Route::get('/for-you', 'forYou')->name('for-you');
         Route::get('/discover', 'discover')->name('discover');

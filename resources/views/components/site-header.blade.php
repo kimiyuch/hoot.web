@@ -1,14 +1,12 @@
 @php
     $links = ['for-you' => 'For you', 'discover' => 'Discover'];
-    $initial = Str::upper(Str::substr(auth()->user()->name, 0, 1));
-    $onSettings = request()->routeIs('settings');
-    $avatar = 'flex size-9 shrink-0 items-center justify-center rounded-full font-display text-sm font-semibold outline-1 -outline-offset-1 outline-white/10 transition-colors '
-        .($onSettings ? 'bg-white/20 text-white' : 'bg-white/8 text-white/70 hover:bg-white/12 hover:text-white');
+    $me = auth()->user();
+    $onOwnPages = request()->routeIs('settings') || request()->route('user')?->is($me);
     $kbd = 'rounded-full px-2 font-sans text-xs/5 font-normal text-white/45 inset-ring inset-ring-white/10';
 @endphp
 
 {{-- Open and quiet: the owl and wordmark on the left, the pages as a small segmented control in the middle,
-     search and your initial (Settings) on the right. No surface at the top; a glass strip once you scroll (app.js sets data-scrolled). --}}
+     search and your avatar (your profile, which links on to Settings) on the right. No surface at the top; a glass strip once you scroll (app.js sets data-scrolled). --}}
 <header data-header class="sticky top-0 z-40 transition-colors duration-300 data-scrolled:bg-night-950/75 data-scrolled:backdrop-blur-xl">
     <div class="mx-auto grid h-16 max-w-[96rem] grid-cols-[1fr_auto_1fr] items-center gap-x-3 px-4 sm:px-6 lg:px-10">
         <a href="{{ route('for-you') }}" aria-label="For you" class="flex items-center gap-2.5 justify-self-start font-display text-lg font-semibold tracking-tight">
@@ -26,7 +24,9 @@
                 <span class="max-lg:hidden">Search</span>
                 <kbd data-shortcut class="{{ $kbd }} max-lg:hidden">⌘K</kbd>
             </a>
-            <a href="{{ route('settings') }}" aria-label="Settings" class="{{ $avatar }}" @if ($onSettings) aria-current="page" @endif>{{ $initial }}</a>
+            <a href="{{ $me->profileUrl() }}" aria-label="Your profile" @class(['rounded-full transition', 'ring-2 ring-white/60 ring-offset-2 ring-offset-night-950' => $onOwnPages, 'opacity-85 hover:opacity-100' => ! $onOwnPages]) @if ($onOwnPages) aria-current="page" @endif>
+                <x-avatar :user="$me" />
+            </a>
         </div>
     </div>
 </header>

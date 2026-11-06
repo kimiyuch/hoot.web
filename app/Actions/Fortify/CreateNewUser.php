@@ -10,7 +10,7 @@ use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
 {
-    use PasswordValidationRules;
+    use PasswordValidationRules, ProfileValidationRules;
 
     /**
      * Validate and create a newly registered user.
@@ -21,8 +21,11 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        $input['username'] = self::cleanUsername($input['username'] ?? '');
+
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
+            'username' => $this->usernameRules(),
             'email' => [
                 'required',
                 'string',
@@ -31,12 +34,15 @@ class CreateNewUser implements CreatesNewUsers
                 Rule::unique(User::class),
             ],
             'password' => $this->passwordRules(),
-        ])->validate();
+            'visibility' => ['nullable', 'in:public,private'],
+        ], $this->usernameMessages())->validate();
 
         return User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
+            'username' => $input['username'],
+            'is_private' => ($input['visibility'] ?? 'public') === 'private',
         ]);
     }
 }

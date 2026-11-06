@@ -11,13 +11,17 @@
         <section aria-labelledby="profile" class="{{ $section }}">
             <div>
                 <h2 id="profile" class="font-display text-lg font-semibold tracking-tight">Profile</h2>
-                <p class="{{ $intro }}">If you change your email, we send a link to the new address to confirm it.</p>
+                <p class="{{ $intro }}">Your name, username and bio are on <a href="{{ $user->profileUrl() }}" class="text-white/80 underline decoration-white/30 underline-offset-2 hover:text-white">your profile</a>. Your email never is. If you change it, we send a link to the new address to confirm it.</p>
             </div>
             <form method="post" action="{{ route('user-profile-information.update') }}" class="flex flex-col gap-5">
                 @csrf
                 @method('put')
                 <x-field name="name" label="Name" :value="$user->name" bag="updateProfileInformation" required autocomplete="name" />
+                <x-field name="username" label="Username" :value="$user->username" bag="updateProfileInformation" required autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20"
+                    hint="Changing it changes your profile’s address; the old one stops working." />
+                <x-field name="bio" label="Bio" :value="$user->bio" bag="updateProfileInformation" maxlength="160" placeholder="What you watch, in a sentence" hint="Optional. Up to 160 characters." />
                 <x-field name="email" type="email" label="Email" :value="$user->email" bag="updateProfileInformation" required autocomplete="email" />
+                <x-visibility-choice :value="$user->is_private ? 'private' : 'public'" bag="updateProfileInformation" />
                 <x-button class="self-start">Save</x-button>
             </form>
         </section>

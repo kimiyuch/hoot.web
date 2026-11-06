@@ -2,9 +2,12 @@
     <form method="post" action="{{ route('register.store') }}" class="flex flex-col gap-5">
         @csrf
         <x-field name="name" label="Name" required autofocus autocomplete="name" />
+        <x-field name="username" label="Username" required autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20" placeholder="pip_owl"
+            :hint="'Your profile will be at '.parse_url(url('/'), PHP_URL_HOST).'/@username. Lowercase letters, numbers and _.'" />
         <x-field name="email" type="email" label="Email" :value="request('email')" required autocomplete="email" hint="We’ll send you a link to confirm it." />
         <x-field name="password" type="password" label="Password" required autocomplete="new-password" hint="At least 8 characters." />
         <x-field name="password_confirmation" type="password" label="Password again" required autocomplete="new-password" />
+        <x-visibility-choice />
         <x-button class="mt-1 w-full">Create account</x-button>
     </form>
 

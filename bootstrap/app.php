@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureUserHasUsername;
 use App\Timezone;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // The browser writes its timezone into this cookie itself, so it can't be encrypted.
         $middleware->encryptCookies(except: [Timezone::COOKIE]);
+
+        // Accounts without a username (from before profiles) are sent to pick one first.
+        $middleware->alias(['username' => EnsureUserHasUsername::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

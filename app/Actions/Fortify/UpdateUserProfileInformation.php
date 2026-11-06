@@ -11,6 +11,8 @@ use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 
 class UpdateUserProfileInformation implements UpdatesUserProfileInformation
 {
+    use ProfileValidationRules;
+
     /**
      * Validate and update the given user's profile information.
      *
@@ -20,8 +22,13 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
      */
     public function update(User $user, array $input): void
     {
+        $input['username'] = self::cleanUsername($input['username'] ?? '');
+
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
+            'username' => $this->usernameRules($user),
+            'bio' => ['nullable', 'string', 'max:160'],
+            'visibility' => ['required', 'in:public,private'],
 
             'email' => [
                 'required',
@@ -30,7 +37,13 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 'max:255',
                 Rule::unique('users')->ignore($user->id),
             ],
-        ])->validateWithBag('updateProfileInformation');
+        ], $this->usernameMessages())->validateWithBag('updateProfileInformation');
+
+        $user->forceFill([
+            'username' => $input['username'],
+            'bio' => filled($input['bio'] ?? null) ? trim($input['bio']) : null,
+            'is_private' => $input['visibility'] === 'private',
+        ]);
 
         if ($input['email'] !== $user->email &&
             $user instanceof MustVerifyEmail) {

@@ -47,11 +47,13 @@ class AccountsTest extends TestCase
         Notification::fake();
 
         $this->post('/register', [
-            'name' => 'Pip', 'email' => 'Pip@Example.com', 'password' => 'gumleaves-at-night', 'password_confirmation' => 'gumleaves-at-night',
+            'name' => 'Pip', 'username' => '@Pip_Owl', 'email' => 'Pip@Example.com', 'password' => 'gumleaves-at-night', 'password_confirmation' => 'gumleaves-at-night',
         ])->assertRedirect('/for-you');
 
         $user = User::sole();
         $this->assertSame('pip@example.com', $user->email);
+        $this->assertSame('pip_owl', $user->username);
+        $this->assertFalse($user->is_private);
         $this->assertNotNull($user->calendar_token);
         Notification::assertSentTo($user, VerifyEmail::class);
 
@@ -130,8 +132,11 @@ class AccountsTest extends TestCase
 
         $this->actingAs($user)->get('/settings')->assertOk()->assertSee($user->calendarUrl());
 
-        $this->from('/settings')->put('/user/profile-information', ['name' => 'Pip', 'email' => $user->email])->assertRedirect('/settings');
-        $this->assertSame('Pip', $user->fresh()->name);
+        $this->from('/settings')->put('/user/profile-information', [
+            'name' => 'Pip', 'username' => 'pip', 'bio' => ' Late shows only. ', 'email' => $user->email, 'visibility' => 'private',
+        ])->assertRedirect('/settings')->assertSessionHasNoErrors();
+        $user->refresh();
+        $this->assertSame(['Pip', 'pip', 'Late shows only.', true], [$user->name, $user->username, $user->bio, $user->is_private]);
 
         $this->from('/settings')->put('/user/password', [
             'current_password' => 'gumleaves-at-night', 'password' => 'a-new-night-out', 'password_confirmation' => 'a-new-night-out',

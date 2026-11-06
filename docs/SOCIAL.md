@@ -1,6 +1,6 @@
 # Hoot as a network: plan
 
-Status: decided 2026-11-06 (see "Decisions" at the end); step 0, favourites, is built. This is what it would take to turn Hoot from a personal release tracker into a small network for movie and TV nerds: you follow people, see what they follow and watch, and get a thread of what the people you follow are up to.
+Status: decided 2026-11-06 (see "Decisions" at the end); steps 0 (favourites) and 1 (usernames and profiles) are built. This is what it would take to turn Hoot from a personal release tracker into a small network for movie and TV nerds: you follow people, see what they follow and watch, and get a thread of what the people you follow are up to.
 
 ## What it means
 
@@ -171,5 +171,5 @@ Steps 1–4 are the smallest version that does what the idea asks for; 5 should 
 - **Ratings:** ½–5 stars, no reviews.
 - **Episode tracking:** later. Show/movie-level watch status is enough to start.
 - **Favourites:** capped at 10 shows + 10 movies (top 4 big on the profile), built first (step 0). **Built:** `favourite_position` and `following` on `show_user` / `movie_user`, a heart on every card and in For you's Following, managed (reorder, remove) in Settings → Favourites until profiles exist.
-- **Existing users:** asked on their next visit to pick a username and visibility (one-time screen, required).
+- **Existing users:** asked on their next visit to pick a username and visibility (one-time screen, required). **Built:** `/choose-username`.
 - **Sign-up:** stays open. Lean on rate limits, block, reserved usernames, and the report/suspend tools from step 5.

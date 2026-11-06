@@ -12,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'username', 'bio', 'is_private'])]
 #[Hidden(['password', 'remember_token', 'calendar_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -32,7 +32,26 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_private' => 'boolean',
         ];
+    }
+
+    /** The profile page, /@username. */
+    public function profileUrl(): string
+    {
+        return route('profile', $this);
+    }
+
+    /** The first letter of the name, for the avatar. */
+    public function initial(): string
+    {
+        return Str::upper(Str::substr($this->name, 0, 1));
+    }
+
+    /** Whether $viewer may see this profile's library: always on public profiles and on your own. */
+    public function profileVisibleTo(?User $viewer): bool
+    {
+        return ! $this->is_private || $viewer?->is($this);
     }
 
     /** Every show in your library: followed, a favourite or both. */
