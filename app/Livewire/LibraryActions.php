@@ -42,6 +42,10 @@ class LibraryActions extends Component
     #[Locked]
     public bool $withStatus = true;
 
+    /** Cards show the status as just an icon; For you has room for the label. */
+    #[Locked]
+    public bool $compact = true;
+
     public ?string $status = null;
 
     /** Half stars, 1–10. */
@@ -124,6 +128,23 @@ class LibraryActions extends Component
 
         $this->following = true;
         $this->toast('Following '.$this->title($item).'.');
+    }
+
+    /** Stops following. A favourite, status or rating stays. */
+    public function unfollow(Library $library): void
+    {
+        $item = match (true) {
+            $this->type === 'movie' => Movie::where('tmdb_id', $this->tmdbId)->first(),
+            $this->tvmazeId !== null => Show::where('tvmaze_id', $this->tvmazeId)->first(),
+            default => Show::where('tmdb_id', $this->tmdbId)->first(),
+        };
+
+        if ($item) {
+            $library->unfollow(auth()->user(), $item);
+            $this->toast('Stopped following '.$this->title($item).'.');
+        }
+
+        $this->following = false;
     }
 
     public function toggleFavourite(Library $library): void

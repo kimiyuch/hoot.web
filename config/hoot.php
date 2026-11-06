@@ -28,20 +28,21 @@ return [
     // Shown first in the Discover service filter; the rest are behind "Show more".
     'featured_services' => ['netflix', 'max', 'apple', 'prime', 'disney'],
 
+    // url: the service's homepage; search: its search, to which the title is added (only where it's known to work).
     'services' => [
-        'netflix' => ['name' => 'Netflix', 'tmdb' => [8], 'tvmaze' => ['Netflix']],
-        'prime' => ['name' => 'Prime Video', 'tmdb' => [119, 9], 'tvmaze' => ['Prime Video', 'Amazon Prime Video', 'Amazon Freevee']],
-        'apple' => ['name' => 'Apple TV', 'tmdb' => [350], 'tvmaze' => ['Apple TV', 'Apple TV+']],
-        'disney' => ['name' => 'Disney+', 'tmdb' => [337], 'tvmaze' => ['Disney+']],
-        'max' => ['name' => 'HBO Max', 'tmdb' => [1899, 384], 'tvmaze' => ['HBO Max', 'Max', 'HBO']],
-        'paramount' => ['name' => 'Paramount+', 'tmdb' => [531], 'tvmaze' => ['Paramount+', 'Showtime']],
-        'hulu' => ['name' => 'Hulu', 'tmdb' => [15], 'tvmaze' => ['Hulu', 'FX on Hulu']],
-        'peacock' => ['name' => 'Peacock', 'tmdb' => [386], 'tvmaze' => ['Peacock']],
-        'sky' => ['name' => 'Sky', 'tmdb' => [210, 29], 'tvmaze' => ['Sky Atlantic', 'Sky Max', 'Sky Showcase', 'Sky One', 'NOW', 'WOW']],
-        'bbc' => ['name' => 'BBC iPlayer', 'tmdb' => [38], 'tvmaze' => ['BBC iPlayer', 'BBC One', 'BBC Two', 'BBC Three', 'BBC Four']],
-        'mubi' => ['name' => 'MUBI', 'tmdb' => [11], 'tvmaze' => ['MUBI']],
-        'crunchyroll' => ['name' => 'Crunchyroll', 'tmdb' => [283], 'tvmaze' => ['Crunchyroll']],
-        'playsuisse' => ['name' => 'Play Suisse', 'tmdb' => [691], 'tvmaze' => ['Play Suisse', 'SRF 1', 'SRF zwei', 'RTS 1']],
+        'netflix' => ['name' => 'Netflix', 'tmdb' => [8], 'tvmaze' => ['Netflix'], 'url' => 'https://www.netflix.com', 'search' => 'https://www.netflix.com/search?q='],
+        'prime' => ['name' => 'Prime Video', 'tmdb' => [119, 9], 'tvmaze' => ['Prime Video', 'Amazon Prime Video', 'Amazon Freevee'], 'url' => 'https://www.primevideo.com', 'search' => 'https://www.primevideo.com/search?phrase='],
+        'apple' => ['name' => 'Apple TV', 'tmdb' => [350], 'tvmaze' => ['Apple TV', 'Apple TV+'], 'url' => 'https://tv.apple.com', 'search' => 'https://tv.apple.com/search?term='],
+        'disney' => ['name' => 'Disney+', 'tmdb' => [337], 'tvmaze' => ['Disney+'], 'url' => 'https://www.disneyplus.com'],
+        'max' => ['name' => 'HBO Max', 'tmdb' => [1899, 384], 'tvmaze' => ['HBO Max', 'Max', 'HBO'], 'url' => 'https://www.hbomax.com'],
+        'paramount' => ['name' => 'Paramount+', 'tmdb' => [531], 'tvmaze' => ['Paramount+', 'Showtime'], 'url' => 'https://www.paramountplus.com'],
+        'hulu' => ['name' => 'Hulu', 'tmdb' => [15], 'tvmaze' => ['Hulu', 'FX on Hulu'], 'url' => 'https://www.hulu.com'],
+        'peacock' => ['name' => 'Peacock', 'tmdb' => [386], 'tvmaze' => ['Peacock'], 'url' => 'https://www.peacocktv.com'],
+        'sky' => ['name' => 'Sky', 'tmdb' => [210, 29], 'tvmaze' => ['Sky Atlantic', 'Sky Max', 'Sky Showcase', 'Sky One', 'NOW', 'WOW'], 'url' => 'https://www.sky.com'],
+        'bbc' => ['name' => 'BBC iPlayer', 'tmdb' => [38], 'tvmaze' => ['BBC iPlayer', 'BBC One', 'BBC Two', 'BBC Three', 'BBC Four'], 'url' => 'https://www.bbc.co.uk/iplayer', 'search' => 'https://www.bbc.co.uk/iplayer/search?q='],
+        'mubi' => ['name' => 'MUBI', 'tmdb' => [11], 'tvmaze' => ['MUBI'], 'url' => 'https://mubi.com'],
+        'crunchyroll' => ['name' => 'Crunchyroll', 'tmdb' => [283], 'tvmaze' => ['Crunchyroll'], 'url' => 'https://www.crunchyroll.com'],
+        'playsuisse' => ['name' => 'Play Suisse', 'tmdb' => [691], 'tvmaze' => ['Play Suisse', 'SRF 1', 'SRF zwei', 'RTS 1'], 'url' => 'https://www.playsuisse.ch'],
     ],
 
     // Discover's "Any time" starts at this year. Null means the current year

@@ -41,11 +41,11 @@
             <time datetime="{{ $release['at']->toIso8601String() }}" class="text-base/6 font-medium tabular-nums sm:text-sm/6">{{ $release['at']->format('H:i') }}</time>
         @endif
         @if ($isEpisodes && $show->channel)
-            <x-service :service="$show->service()" :channel="$show->channel" :logos="$logos" class="max-w-36 text-sm/6 text-white/45 max-sm:hidden" />
+            <x-service :service="$show->service()" :channel="$show->channel" :logos="$logos" :href="\App\Services\StreamingServices::link($show->service(), $show->official_url, $show->name)" class="max-w-36 text-sm/6 text-white/45 max-sm:hidden" />
         @elseif (! $isEpisodes && ! empty($movie->services))
             <div class="flex gap-1 max-sm:hidden">
                 @foreach (array_slice($movie->services, 0, 3) as $service)
-                    <x-service :service="$service" :logos="$logos" logo-only />
+                    <x-service :service="$service" :logos="$logos" logo-only :href="\App\Services\StreamingServices::link($service, null, $movie->title)" />
                 @endforeach
             </div>
         @endif

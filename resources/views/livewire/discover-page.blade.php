@@ -88,7 +88,7 @@
                                         <time datetime="{{ $at->toIso8601String() }}">{{ $at->format('D j M') }}</time>
                                         @if ($item['channel'])
                                             <span aria-hidden="true">·</span>
-                                            <x-service :service="$item['service'] ?? null" :channel="$item['channel']" :logos="$logos" />
+                                            <x-service :service="$item['service'] ?? null" :channel="$item['channel']" :logos="$logos" :href="\App\Services\StreamingServices::link($item['service'] ?? null, $item['official_url'] ?? null, $item['name'])" />
                                         @endif
                                     </span>
                                 </x-slot:meta>
@@ -111,7 +111,7 @@
                                 @if (! empty($item['services']))
                                     <div class="mt-3 flex gap-1.5">
                                         @foreach (array_slice($item['services'], 0, 5) as $key)
-                                            <x-service :service="$key" :logos="$logos" logo-only />
+                                            <x-service :service="$key" :logos="$logos" logo-only :href="\App\Services\StreamingServices::link($key, null, $item['title'])" />
                                         @endforeach
                                     </div>
                                 @endif

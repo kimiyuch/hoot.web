@@ -284,7 +284,7 @@ class Library
             $summary = TvMaze::summary($data);
 
             $show = Show::updateOrCreate(['tvmaze_id' => $summary['tvmaze_id']], [
-                ...collect($summary)->only(['name', 'overview', 'channel', 'status', 'image_url', 'image_large_url', 'url', 'rating', 'genres'])->all(),
+                ...collect($summary)->only(['name', 'overview', 'channel', 'status', 'image_url', 'image_large_url', 'url', 'official_url', 'rating', 'genres'])->all(),
                 'refreshed_at' => now(),
             ]);
 

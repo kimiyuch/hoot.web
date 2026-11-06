@@ -58,7 +58,7 @@
                                 <div class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm/6 text-white/55">
                                     <span class="text-white/80 tabular-nums">{{ $next['at']->format($next['timed'] ? 'l j M, H:i' : 'l j M') }}</span>
                                     @if ($isEpisodes)
-                                        <x-service :service="$item->service()" :channel="$item->channel" :logos="$logos" />
+                                        <x-service :service="$item->service()" :channel="$item->channel" :logos="$logos" :href="\App\Services\StreamingServices::link($item->service(), $item->official_url, $item->name)" />
                                     @endif
                                     <x-rating :value="$item->rating" />
                                 </div>
@@ -135,6 +135,9 @@
                                                 @if ($show->channel)
                                                     · {{ $show->channel }}
                                                 @endif
+                                                @if ($show->rating)
+                                                    · <x-rating :value="$show->rating" />
+                                                @endif
                                             </p>
                                         </div>
                                         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4 shrink-0 text-white/35 transition-transform group-open/show:rotate-180"><path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
@@ -143,9 +146,8 @@
                                     {{-- Rating and description, then the episodes. --}}
                                     <div class="pb-4">
                                         <div class="flex items-center gap-3">
-                                            <x-rating :value="$show->rating" class="text-sm/6" />
-                                            <div class="ml-auto"><livewire:library-actions :key="'following-show-'.$show->id" type="show" :tvmaze-id="$show->tvmaze_id" :label="$show->name" :with-follow="false" following :favourite="$show->pivot->favourite_position ? $show->id : null" /></div>
-                                            <x-follow-button following :unfollow-action="route('shows.unfollow', $show)" :label="$show->name" />
+                                            <div><livewire:library-actions :key="'following-show-'.$show->id" type="show" :tvmaze-id="$show->tvmaze_id" :label="$show->name" :with-follow="false" :compact="false" following :favourite="$show->pivot->favourite_position ? $show->id : null" /></div>
+                                            <x-follow-button class="ml-auto" following :unfollow-action="route('shows.unfollow', $show)" :label="$show->name" />
                                         </div>
                                         @if ($show->overview)
                                             <p class="mt-1 text-sm/6 text-pretty text-white/60">{{ $show->overview }}</p>
@@ -212,6 +214,9 @@
                                                 @else
                                                     No date yet
                                                 @endif
+                                                @if ($movie->rating)
+                                                    · <x-rating :value="$movie->rating" />
+                                                @endif
                                             </p>
                                         </div>
                                         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4 shrink-0 text-white/35 transition-transform group-open/show:rotate-180"><path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
@@ -219,9 +224,8 @@
 
                                     <div class="pb-4">
                                         <div class="flex items-center gap-3">
-                                            <x-rating :value="$movie->rating" class="text-sm/6" />
-                                            <div class="ml-auto"><livewire:library-actions :key="'following-movie-'.$movie->id" type="movie" :tmdb-id="$movie->tmdb_id" :label="$movie->title" :with-follow="false" following :favourite="$movie->pivot->favourite_position ? $movie->id : null" /></div>
-                                            <x-follow-button following :unfollow-action="route('movies.unfollow', $movie)" :label="$movie->title" />
+                                            <div><livewire:library-actions :key="'following-movie-'.$movie->id" type="movie" :tmdb-id="$movie->tmdb_id" :label="$movie->title" :with-follow="false" :compact="false" following :favourite="$movie->pivot->favourite_position ? $movie->id : null" /></div>
+                                            <x-follow-button class="ml-auto" following :unfollow-action="route('movies.unfollow', $movie)" :label="$movie->title" />
                                         </div>
                                         @if ($movie->overview)
                                             <p class="mt-1 text-sm/6 text-pretty text-white/60">{{ $movie->overview }}</p>

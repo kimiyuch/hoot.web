@@ -103,6 +103,24 @@ class WatchStatusTest extends TestCase
             ->assertSee('Want to watch')->assertDontSee('Dropped');
     }
 
+    public function test_a_card_can_unfollow_in_place_and_keeps_the_rest(): void
+    {
+        $user = User::factory()->create();
+        $show = Show::create(['tvmaze_id' => 1, 'name' => 'Severance', 'refreshed_at' => now()]);
+        $user->shows()->attach($show);
+        app(Library::class)->rate($user, $show, 8);
+
+        Livewire::actingAs($user)->test(LibraryActions::class, ['type' => 'show', 'tvmazeId' => 1, 'label' => 'Severance', 'following' => true])
+            ->assertSee('Unfollow Severance')
+            ->call('unfollow')
+            ->assertSet('following', false)
+            ->assertDispatched('toast', message: 'Stopped following Severance.')
+            ->assertSee('Follow Severance');
+
+        $this->assertSame(0, $user->shows()->count());
+        $this->assertSame(8, $this->row($user, $show)->rating);
+    }
+
     public function test_profiles_show_what_they_are_watching_and_what_they_watched_with_ratings(): void
     {
         $pip = User::factory()->create(['name' => 'Pip', 'username' => 'pip']);

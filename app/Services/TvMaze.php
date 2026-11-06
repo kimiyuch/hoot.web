@@ -102,6 +102,7 @@ class TvMaze
             'image_url' => $show['image']['medium'] ?? null,
             'image_large_url' => $show['image']['original'] ?? null,
             'url' => $show['url'] ?? null,
+            'official_url' => str_starts_with($show['officialSite'] ?? '', 'http') ? $show['officialSite'] : null,
             'rating' => $show['rating']['average'] ?? null,
             'genres' => $show['genres'] ?? [],
             // TVmaze's summary is HTML.

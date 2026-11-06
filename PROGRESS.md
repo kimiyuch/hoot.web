@@ -6,7 +6,7 @@ Last updated: 2026-11-06.
 
 ## State
 
-Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.web`). 56 tests pass (`php artisan test`), Pint is clean. `public/build` is built.
+Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.web`). 58 tests pass (`php artisan test`), Pint is clean. `public/build` is built.
 
 **Git:** in git since 2026-11-05 and pushed to https://github.com/kimiyuch/hoot.web (public, `main`). The tests run on GitHub Actions for every push (all green so far). `marceli-to` is a collaborator, so a plain `git push` works. **Not done yet:** the first deploy (`./deploy.sh`) and the Hostpoint cron job.
 
@@ -32,9 +32,9 @@ Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.w
 - **Calendar feed** (`/calendar/{token}.ics`, one per user, no login needed; the token is the secret).
 - **`php artisan hoot:refresh [--all]`**, scheduled every 6 h. It takes about 70 s, because it loads 30 past days × (worldwide streaming + US + GB) from TVmaze.
 - **Ratings:** TVmaze for shows, TMDB for movies (hidden with fewer than 10 votes).
-- **Services:** a fixed list in `config/hoot.php` that maps TMDB provider ids and TVmaze channel names. A movie's services are the union over all countries.
+- **Services:** a fixed list in `config/hoot.php` that maps TMDB provider ids and TVmaze channel names, with each service's `url` and (where known to work: Netflix, Prime Video, Apple TV, BBC iPlayer) `search`. A movie's services are the union over all countries. The service names and logos in For you (Up next, the timeline) and on Discover's premiere cards link out with ↗ (`StreamingServices::link`): the show's TVmaze `officialSite` (`shows.official_url`, since 2026-11-06, usually its page on the service), else the service's search for the title, else its homepage.
 - **Following a show from Browse (TMDB):** it's looked up on TVmaze by TheTVDB or IMDb id, and `shows.tmdb_id` is stored.
-- **Cards:** horizontal panels (poster | title, details, 3-line description, rating, Follow button), at most 3 per row (`components/media-card`, `media-grid`).
+- **Cards:** horizontal panels (poster with the TVmaze/TMDB rating under it | title, details, 3-line description, and the heart, status and Follow at the bottom right), at most 3 per row (`components/media-card`, `media-grid`). On cards the status is compact: an icon per status (`components/status-icon`: bookmark, play, pause, check, cross; an eye when none) and your rating as "★4½", with the full label in the tooltip; For you's Following passes `:compact="false"` and shows the label and five stars.
 - **Theme:** dark plum to match the icon (`night-*` palette in `resources/css/app.css`), Figtree for headings and Inter for text. Designed with the /ui skill guidelines.
 
 ## Decisions

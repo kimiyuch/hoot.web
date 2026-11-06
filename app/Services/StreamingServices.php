@@ -23,6 +23,25 @@ class StreamingServices
         return self::all()[$key]['name'] ?? null;
     }
 
+    /**
+     * Where to watch it: the show's official site (from TVmaze) if there is one, otherwise the service's
+     * search for the title, otherwise its homepage. Null if there's nowhere to go.
+     */
+    public static function link(?string $service, ?string $officialUrl = null, ?string $title = null): ?string
+    {
+        if ($officialUrl) {
+            return $officialUrl;
+        }
+
+        $config = self::all()[$service] ?? null;
+
+        return match (true) {
+            $config === null => null,
+            isset($config['search']) && filled($title) => $config['search'].rawurlencode($title),
+            default => $config['url'] ?? null,
+        };
+    }
+
     /** The service a TVmaze channel belongs to, if it's one of ours. */
     public static function forChannel(?string $channel): ?string
     {

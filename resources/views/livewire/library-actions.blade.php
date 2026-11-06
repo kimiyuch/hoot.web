@@ -5,7 +5,7 @@
     $touch = '<span class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden" aria-hidden="true"></span>';
 @endphp
 
-<div class="flex items-center gap-1">
+<div @class(['flex flex-wrap items-center gap-1', 'justify-end' => $compact])>
     <button type="button" wire:click="toggleFavourite" wire:loading.attr="disabled" wire:target="toggleFavourite"
         title="{{ $heartTitle }}" aria-label="{{ $heartTitle }}" aria-pressed="{{ $favourite ? 'true' : 'false' }}"
         @class(['relative grid size-8 place-items-center rounded-lg hover:bg-white/5 disabled:opacity-50', 'text-calendar-400' => $favourite, 'text-white/40 hover:text-white' => ! $favourite])>
@@ -17,18 +17,24 @@
         {{-- Watch status and rating: a small menu that opens upwards (Alpine, which comes with Livewire). --}}
         <div class="relative" x-data="{ open: false, hover: 0 }" x-on:click.outside="open = false" x-on:keydown.escape.window="open = false">
             <button type="button" x-on:click="open = ! open" x-bind:aria-expanded="open" aria-haspopup="true"
-                title="{{ $status || $rating ? 'Change your status or rating' : 'Set a status or rating' }}"
+                title="{{ collect([$status ? \App\Services\Library::STATUSES[$status] : null, $rating ? \App\Services\Library::stars($rating) : null])->filter()->join(' · ') ?: 'Set a status or rating' }}"
                 aria-label="{{ collect([$status ? \App\Services\Library::STATUSES[$status] : null, $rating ? 'rated '.\App\Services\Library::stars($rating) : null])->filter()->join(', ') ?: 'Status and rating' }} for {{ $label }}"
                 @class(['relative flex h-8 items-center gap-1.5 rounded-lg px-2 text-sm/6 hover:bg-white/5', 'text-white' => $status || $rating, 'text-white/40 hover:text-white' => ! $status && ! $rating])>
-                @if ($status || $rating)
-                    @if ($status)
-                        <span class="font-medium">{{ \App\Services\Library::STATUSES[$status] }}</span>
-                    @endif
-                    @if ($rating)
-                        <span class="text-star tabular-nums">{{ \App\Services\Library::stars($rating) }}</span>
-                    @endif
-                @else
-                    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-4.5"><path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" clip-rule="evenodd"/></svg>
+                {{-- Compact (cards): the status as an icon and the rating as "★4½". Full (For you): with the label and five stars. --}}
+                @if ($status || ! $rating)
+                    <x-status-icon :status="$status" @class(['text-midnight-300' => $status]) />
+                @endif
+                @if ($status && ! $compact)
+                    <span class="font-medium">{{ \App\Services\Library::STATUSES[$status] }}</span>
+                @endif
+                @if ($rating)
+                    <span class="flex items-center gap-0.5 text-star tabular-nums">
+                        @if ($compact)
+                            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-3.5"><path d="{{ $starPath }}"/></svg>{{ (intdiv($rating, 2) ?: '').($rating % 2 ? '½' : '') }}
+                        @else
+                            {{ \App\Services\Library::stars($rating) }}
+                        @endif
+                    </span>
                 @endif
                 {!! $touch !!}
             </button>
@@ -38,8 +44,9 @@
                 <p class="px-3 pt-1.5 pb-1 text-xs/5 font-medium text-white/40">Status</p>
                 @foreach ($statuses as $key => $statusLabel)
                     <button type="button" wire:click="setStatus('{{ $status === $key ? '' : $key }}')" x-on:click="open = false"
-                        @class(['flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-sm/6 hover:bg-white/5', 'font-medium text-white' => $status === $key, 'text-white/70' => $status !== $key])>
-                        {{ $statusLabel }}
+                        @class(['flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm/6 hover:bg-white/5', 'font-medium text-white' => $status === $key, 'text-white/70' => $status !== $key])>
+                        <x-status-icon :status="$key" class="size-4 text-white/45" />
+                        <span class="flex-1">{{ $statusLabel }}</span>
                         @if ($status === $key)
                             <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4 text-midnight-300"><path fill-rule="evenodd" d="M12.4 4.2a.75.75 0 0 1 .15 1.05l-5 6.5a.75.75 0 0 1-1.13.08l-3-3a.75.75 0 1 1 1.06-1.06l2.4 2.4 4.47-5.81a.75.75 0 0 1 1.05-.16Z" clip-rule="evenodd"/></svg>
                         @endif
@@ -76,10 +83,13 @@
 
     @if ($withFollow)
         @if ($following)
-            <span class="flex items-center gap-1.5 py-1 pl-1 text-sm/6 text-midnight-300">
-                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4"><path fill-rule="evenodd" d="M12.4 4.2a.75.75 0 0 1 .15 1.05l-5 6.5a.75.75 0 0 1-1.13.08l-3-3a.75.75 0 1 1 1.06-1.06l2.4 2.4 4.47-5.81a.75.75 0 0 1 1.05-.16Z" clip-rule="evenodd"/></svg>
-                Following
-            </span>
+            <button type="button" wire:click="unfollow" wire:loading.attr="disabled" wire:target="unfollow" title="Unfollow {{ $label }}" aria-label="Unfollow {{ $label }}"
+                class="group/follow relative flex items-center gap-1.5 rounded-lg py-1 pr-2.5 pl-1.5 text-sm/6 text-midnight-300 hover:bg-white/5 hover:text-white disabled:opacity-50">
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4 group-hover/follow:hidden"><path fill-rule="evenodd" d="M12.4 4.2a.75.75 0 0 1 .15 1.05l-5 6.5a.75.75 0 0 1-1.13.08l-3-3a.75.75 0 1 1 1.06-1.06l2.4 2.4 4.47-5.81a.75.75 0 0 1 1.05-.16Z" clip-rule="evenodd"/></svg>
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="hidden size-4 group-hover/follow:block"><path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z"/></svg>
+                <span class="group-hover/follow:hidden">Following</span>
+                <span class="hidden group-hover/follow:inline">Unfollow</span>{!! $touch !!}
+            </button>
         @else
             <button type="button" wire:click="follow" wire:loading.attr="disabled" wire:target="follow" title="Follow {{ $label }}"
                 class="relative flex items-center gap-1 rounded-lg bg-white/10 py-1 pr-2.5 pl-1.5 text-sm/6 font-medium text-white hover:bg-white/15 disabled:opacity-50">
