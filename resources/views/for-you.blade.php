@@ -177,6 +177,8 @@
                                     <div class="pb-4">
                                         <div class="flex items-center gap-3">
                                             <x-rating :value="$show->rating" class="text-sm/6" />
+                                            <x-favourite-button :action="route('favourites.shows.store')" :fields="['tvmaze_id' => $show->tvmaze_id]" :label="$show->name"
+                                                :remove-action="$show->pivot->favourite_position ? route('favourites.shows.destroy', $show) : null" class="ml-auto" />
                                             <x-follow-button following :unfollow-action="route('shows.unfollow', $show)" :label="$show->name" />
                                         </div>
                                         @if ($show->overview)
@@ -237,6 +239,8 @@
                                     <div class="pb-4">
                                         <div class="flex items-center gap-3">
                                             <x-rating :value="$movie->rating" class="text-sm/6" />
+                                            <x-favourite-button :action="route('favourites.movies.store')" :fields="['tmdb_id' => $movie->tmdb_id]" :label="$movie->title"
+                                                :remove-action="$movie->pivot->favourite_position ? route('favourites.movies.destroy', $movie) : null" class="ml-auto" />
                                             <x-follow-button following :unfollow-action="route('movies.unfollow', $movie)" :label="$movie->title" />
                                         </div>
                                         @if ($movie->overview)

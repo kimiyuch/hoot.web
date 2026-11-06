@@ -5,27 +5,25 @@ namespace App\Services;
 use App\Models\Movie;
 use App\Models\Show;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Sleep;
 use Throwable;
 
 /**
- * Following and unfollowing, and keeping the followed shows and movies up to date.
+ * Following, favourites, and keeping the followed shows and movies up to date.
  */
 class Library
 {
     public function __construct(private TvMaze $tvmaze, private Tmdb $tmdb) {}
 
+    /** At most this many favourite shows, and as many favourite movies. */
+    public const MAX_FAVOURITES = 10;
+
     public function followShow(User $user, int $tvmazeId): Show
     {
-        // Already in the catalog and fresh: no need to ask TVmaze again.
-        $show = Show::where('tvmaze_id', $tvmazeId)->where('refreshed_at', '>', now()->subDay())->first()
-            ?? $this->syncShow($this->tvmaze->show($tvmazeId));
-
-        $user->shows()->syncWithoutDetaching([$show->id => ['created_at' => now()]]);
-
-        return $show;
+        return tap($this->show($tvmazeId), fn (Show $show) => $this->put($user, $show, ['following' => true]));
     }
 
     /**
@@ -34,30 +32,135 @@ class Library
      */
     public function followTmdbShow(User $user, int $tmdbId): ?Show
     {
-        $ids = $this->tmdb->tvExternalIds($tmdbId);
-        $show = $this->tvmaze->lookup($ids['tvdb_id'] ?? null, $ids['imdb_id'] ?? null);
+        $show = $this->tmdbShow($tmdbId);
 
-        if (! $show) {
-            return null;
+        if ($show) {
+            $this->put($user, $show, ['following' => true]);
         }
 
-        return tap($this->followShow($user, $show['id']))->update(['tmdb_id' => $tmdbId]);
+        return $show;
     }
 
     public function followMovie(User $user, int $tmdbId): Movie
     {
-        $movie = Movie::where('tmdb_id', $tmdbId)->where('refreshed_at', '>', now()->subDay())->first()
-            ?? $this->syncMovie($this->tmdb->movie($tmdbId));
-
-        $user->movies()->syncWithoutDetaching([$movie->id => ['created_at' => now()]]);
-
-        return $movie;
+        return tap($this->movie($tmdbId), fn (Movie $movie) => $this->put($user, $movie, ['following' => true]));
     }
 
-    /** Stops following; once nobody follows it any more, it's removed from the catalog. */
+    /** Stops following. A favourite stays in your library; anything nobody has any more leaves the catalog. */
     public function unfollow(User $user, Show|Movie $item): void
     {
-        $item instanceof Show ? $user->shows()->detach($item) : $user->movies()->detach($item);
+        $this->library($user, $item)->newPivotStatementForId($item->id)->update(['following' => false]);
+        $this->tidy($user, $item);
+    }
+
+    /** Whether there's room for another favourite show (or movie). */
+    public function hasRoomForFavourite(User $user, string $type): bool
+    {
+        $relation = $type === Show::class ? $user->libraryShows() : $user->libraryMovies();
+
+        return $relation->newPivotQuery()->whereNotNull('favourite_position')->count() < self::MAX_FAVOURITES;
+    }
+
+    /**
+     * Adds it at the end of your favourites, without following it. False if there are already MAX_FAVOURITES.
+     */
+    public function favourite(User $user, Show|Movie $item): bool
+    {
+        $relation = $this->library($user, $item);
+
+        if ($relation->newPivotStatementForId($item->id)->whereNotNull('favourite_position')->exists()) {
+            return true;
+        }
+
+        if (! $this->hasRoomForFavourite($user, $item::class)) {
+            $this->tidy($user, $item);
+
+            return false;
+        }
+
+        $last = (int) $relation->newPivotQuery()->max('favourite_position');
+        $this->put($user, $item, ['favourite_position' => $last + 1]);
+
+        return true;
+    }
+
+    /** Takes it out of your favourites and closes the gap. Following it is left alone. */
+    public function unfavourite(User $user, Show|Movie $item): void
+    {
+        $relation = $this->library($user, $item);
+        $position = $relation->newPivotStatementForId($item->id)->value('favourite_position');
+
+        if ($position === null) {
+            return;
+        }
+
+        DB::transaction(function () use ($relation, $item, $position) {
+            $relation->newPivotStatementForId($item->id)->update(['favourite_position' => null]);
+            $relation->newPivotQuery()->where('favourite_position', '>', $position)->decrement('favourite_position');
+        });
+
+        $this->tidy($user, $item);
+    }
+
+    /** Swaps a favourite with the one before it (-1) or after it (1). */
+    public function moveFavourite(User $user, Show|Movie $item, int $by): void
+    {
+        $relation = $this->library($user, $item);
+        $position = $relation->newPivotStatementForId($item->id)->value('favourite_position');
+
+        if ($position === null || ! $relation->newPivotQuery()->where('favourite_position', $position + $by)->exists()) {
+            return;
+        }
+
+        DB::transaction(function () use ($relation, $item, $position, $by) {
+            $relation->newPivotQuery()->where('favourite_position', $position + $by)->update(['favourite_position' => $position]);
+            $relation->newPivotStatementForId($item->id)->update(['favourite_position' => $position + $by]);
+        });
+    }
+
+    /** A show from the catalog, or from TVmaze if it isn't there or is more than a day old. */
+    public function show(int $tvmazeId): Show
+    {
+        return Show::where('tvmaze_id', $tvmazeId)->where('refreshed_at', '>', now()->subDay())->first()
+            ?? $this->syncShow($this->tvmaze->show($tvmazeId));
+    }
+
+    /** A show found on TMDB, looked up on TVmaze by TheTVDB or IMDb id. Null if TVmaze doesn't have it. */
+    public function tmdbShow(int $tmdbId): ?Show
+    {
+        $ids = $this->tmdb->tvExternalIds($tmdbId);
+        $found = $this->tvmaze->lookup($ids['tvdb_id'] ?? null, $ids['imdb_id'] ?? null);
+
+        return $found ? tap($this->show($found['id']))->update(['tmdb_id' => $tmdbId]) : null;
+    }
+
+    /** A movie from the catalog, or from TMDB if it isn't there or is more than a day old. */
+    public function movie(int $tmdbId): Movie
+    {
+        return Movie::where('tmdb_id', $tmdbId)->where('refreshed_at', '>', now()->subDay())->first()
+            ?? $this->syncMovie($this->tmdb->movie($tmdbId));
+    }
+
+    private function library(User $user, Show|Movie $item): BelongsToMany
+    {
+        return $item instanceof Show ? $user->libraryShows() : $user->libraryMovies();
+    }
+
+    /** Sets flags on your library row, adding the row (not following) if there's none yet. */
+    private function put(User $user, Show|Movie $item, array $values): void
+    {
+        $relation = $this->library($user, $item);
+
+        $relation->newPivotStatementForId($item->id)->exists()
+            ? $relation->newPivotStatementForId($item->id)->update($values)
+            : $relation->attach($item->id, $values + ['following' => false, 'created_at' => now()]);
+    }
+
+    /** Drops your library row once it's neither followed nor a favourite, and the item once nobody has it. */
+    private function tidy(User $user, Show|Movie $item): void
+    {
+        $this->library($user, $item)->newPivotStatementForId($item->id)
+            ->where('following', false)->whereNull('favourite_position')->delete();
 
         if (! $item->users()->exists()) {
             $item->delete();

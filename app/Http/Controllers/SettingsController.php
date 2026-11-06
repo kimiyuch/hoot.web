@@ -16,7 +16,13 @@ class SettingsController extends Controller
 {
     public function edit(Request $request): View
     {
-        return view('settings', ['user' => $request->user()]);
+        $user = $request->user();
+
+        return view('settings', [
+            'user' => $user,
+            'favouriteShows' => $user->favouriteShows()->get(),
+            'favouriteMovies' => $user->favouriteMovies()->get(),
+        ]);
     }
 
     public function resetCalendar(Request $request): RedirectResponse
@@ -31,13 +37,13 @@ class SettingsController extends Controller
         $request->validateWithBag('deleteAccount', ['password' => ['required', 'current_password']]);
 
         $user = $request->user();
-        $shows = $user->shows()->pluck('shows.id');
-        $movies = $user->movies()->pluck('movies.id');
+        $shows = $user->libraryShows()->pluck('shows.id');
+        $movies = $user->libraryMovies()->pluck('movies.id');
 
         Auth::logout();
         $user->delete();
 
-        // What only this user followed leaves the catalog with them.
+        // What only this user had in their library leaves the catalog with them.
         Show::whereKey($shows)->doesntHave('users')->delete();
         Movie::whereKey($movies)->doesntHave('users')->delete();
 

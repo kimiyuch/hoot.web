@@ -35,14 +35,40 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    public function shows(): BelongsToMany
+    /** Every show in your library: followed, a favourite or both. */
+    public function libraryShows(): BelongsToMany
     {
-        return $this->belongsToMany(Show::class)->withPivot('created_at');
+        return $this->belongsToMany(Show::class)->withPivot('created_at', 'following', 'favourite_position');
     }
 
+    /** Every movie in your library: followed, a favourite or both. */
+    public function libraryMovies(): BelongsToMany
+    {
+        return $this->belongsToMany(Movie::class)->withPivot('created_at', 'following', 'favourite_position');
+    }
+
+    /** The shows you follow: their episodes are in For you and the calendar feed. */
+    public function shows(): BelongsToMany
+    {
+        return $this->libraryShows()->wherePivot('following', true);
+    }
+
+    /** The movies you follow. */
     public function movies(): BelongsToMany
     {
-        return $this->belongsToMany(Movie::class)->withPivot('created_at');
+        return $this->libraryMovies()->wherePivot('following', true);
+    }
+
+    /** Your favourite shows, in your order. */
+    public function favouriteShows(): BelongsToMany
+    {
+        return $this->libraryShows()->wherePivotNotNull('favourite_position')->orderByPivot('favourite_position');
+    }
+
+    /** Your favourite movies, in your order. */
+    public function favouriteMovies(): BelongsToMany
+    {
+        return $this->libraryMovies()->wherePivotNotNull('favourite_position')->orderByPivot('favourite_position');
     }
 
     /** The calendar feed, for Copy link. */

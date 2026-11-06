@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FavouriteController;
 use App\Http\Controllers\HootController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Http\Request;
@@ -21,6 +22,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/shows/{show}', 'unfollowShow')->name('shows.unfollow');
         Route::post('/movies', 'followMovie')->name('movies.follow');
         Route::delete('/movies/{movie}', 'unfollowMovie')->name('movies.unfollow');
+    });
+
+    Route::controller(FavouriteController::class)->prefix('favourites')->name('favourites.')->group(function () {
+        Route::post('/shows', 'storeShow')->name('shows.store');
+        Route::delete('/shows/{show}', 'destroyShow')->name('shows.destroy');
+        Route::post('/shows/{show}/move', 'moveShow')->name('shows.move');
+        Route::post('/movies', 'storeMovie')->name('movies.store');
+        Route::delete('/movies/{movie}', 'destroyMovie')->name('movies.destroy');
+        Route::post('/movies/{movie}/move', 'moveMovie')->name('movies.move');
     });
 
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');

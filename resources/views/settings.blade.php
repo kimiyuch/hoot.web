@@ -22,6 +22,17 @@
             </form>
         </section>
 
+        <section id="favourites" aria-labelledby="favourites-title" class="{{ $section }} scroll-mt-24">
+            <div>
+                <h2 id="favourites-title" class="font-display text-lg font-semibold tracking-tight">Favourites</h2>
+                <p class="{{ $intro }}">The shows and movies that are part of your taste, in your order. A favourite doesn’t need to be followed: nothing about it shows up in For you unless you follow it too.</p>
+            </div>
+            <div class="flex flex-col gap-8">
+                <x-favourites-list :items="$favouriteShows" type="show" heading="Shows" />
+                <x-favourites-list :items="$favouriteMovies" type="movie" heading="Movies" />
+            </div>
+        </section>
+
         <section aria-labelledby="password" class="{{ $section }}">
             <div>
                 <h2 id="password" class="font-display text-lg font-semibold tracking-tight">Password</h2>
@@ -69,7 +80,7 @@
         <section aria-labelledby="delete" class="{{ $section }}">
             <div>
                 <h2 id="delete" class="font-display text-lg font-semibold tracking-tight">Delete account</h2>
-                <p class="{{ $intro }}">Your account, what you follow and your calendar feed are deleted right away. This can’t be undone.</p>
+                <p class="{{ $intro }}">Your account, what you follow, your favourites and your calendar feed are deleted right away. This can’t be undone.</p>
             </div>
             <form method="post" action="{{ route('settings.destroy') }}" class="flex flex-col gap-5">
                 @csrf

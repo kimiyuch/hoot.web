@@ -1,6 +1,6 @@
 # Hoot as a network: plan
 
-Status: idea, nothing built yet (2026-11-06). This is what it would take to turn Hoot from a personal release tracker into a small network for movie and TV nerds: you follow people, see what they follow and watch, and get a thread of what the people you follow are up to.
+Status: decided 2026-11-06 (see "Decisions" at the end); step 0, favourites, is built. This is what it would take to turn Hoot from a personal release tracker into a small network for movie and TV nerds: you follow people, see what they follow and watch, and get a thread of what the people you follow are up to.
 
 ## What it means
 
@@ -163,13 +163,13 @@ New routes, roughly: `/@{username}`, `/@{username}/followers`, `/@{username}/fol
 
 Steps 1–4 are the smallest version that does what the idea asks for; 5 should land before inviting strangers.
 
-## Open questions
+## Decisions (2026-11-06)
 
-- Default visibility: public or private? (Letterboxd: public. Hoot so far: completely private.)
-- Is the thread a third tab or part of For you?
-- One "Follow" word for both, or Track for shows/movies?
-- Ratings: 5 stars with halves, or 10 points? Reviews at all?
-- Episode-level tracking now or later?
-- Favourites: capped (e.g. 10 + 10, top 4 big) or unlimited? Built before the social part or with it?
-- Should existing users be asked to pick a username (and visibility) on their next visit, with a clear explanation that Hoot became social?
-- Invite-only at first (invite links) or open sign-up as now?
+- **Visibility:** public by default, changeable in Settings and explained at sign-up.
+- **Thread:** part of For you (a "From people you follow" block); a third tab only if people come for it.
+- **Words:** "Follow" for both people and shows/movies; context does the work.
+- **Ratings:** ½–5 stars, no reviews.
+- **Episode tracking:** later. Show/movie-level watch status is enough to start.
+- **Favourites:** capped at 10 shows + 10 movies (top 4 big on the profile), built first (step 0). **Built:** `favourite_position` and `following` on `show_user` / `movie_user`, a heart on every card and in For you's Following, managed (reorder, remove) in Settings → Favourites until profiles exist.
+- **Existing users:** asked on their next visit to pick a username and visibility (one-time screen, required).
+- **Sign-up:** stays open. Lean on rate limits, block, reserved usernames, and the report/suspend tools from step 5.

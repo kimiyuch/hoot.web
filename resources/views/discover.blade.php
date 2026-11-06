@@ -69,9 +69,9 @@
                                 <x-slot:meta>{{ $item['year'] }}</x-slot:meta>
                                 <x-slot:action>
                                     @if ($isTv)
-                                        <x-follow-button :action="route('shows.follow')" :fields="['tmdb_id' => $item['tmdb_id']]" :label="$item['title']" :following="$followedShows->has($item['tmdb_id'])" />
+                                        <x-library-actions type="show" :fields="['tmdb_id' => $item['tmdb_id']]" :label="$item['title']" :following="$followedShows->has($item['tmdb_id'])" :favourite="$favouriteShows->get($item['tmdb_id'])" />
                                     @else
-                                        <x-follow-button :action="route('movies.follow')" :fields="['tmdb_id' => $item['tmdb_id']]" :label="$item['title']" :following="$followedMovies->has($item['tmdb_id'])" />
+                                        <x-library-actions type="movie" :fields="['tmdb_id' => $item['tmdb_id']]" :label="$item['title']" :following="$followedMovies->has($item['tmdb_id'])" :favourite="$favouriteMovies->get($item['tmdb_id'])" />
                                     @endif
                                 </x-slot:action>
                             </x-media-card>
@@ -91,7 +91,7 @@
                                     </span>
                                 </x-slot:meta>
                                 <x-slot:action>
-                                    <x-follow-button :action="route('shows.follow')" :fields="['tvmaze_id' => $item['tvmaze_id']]" :label="$item['name']" :following="$followedShows->has($item['tvmaze_id'])" />
+                                    <x-library-actions type="show" :fields="['tvmaze_id' => $item['tvmaze_id']]" :label="$item['name']" :following="$followedShows->has($item['tvmaze_id'])" :favourite="$favouriteShows->get($item['tvmaze_id'])" />
                                 </x-slot:action>
                             </x-media-card>
                         @else
@@ -114,7 +114,7 @@
                                     </div>
                                 @endif
                                 <x-slot:action>
-                                    <x-follow-button :action="route('movies.follow')" :fields="['tmdb_id' => $item['tmdb_id']]" :label="$item['title']" :following="$followedMovies->has($item['tmdb_id'])" />
+                                    <x-library-actions type="movie" :fields="['tmdb_id' => $item['tmdb_id']]" :label="$item['title']" :following="$followedMovies->has($item['tmdb_id'])" :favourite="$favouriteMovies->get($item['tmdb_id'])" />
                                 </x-slot:action>
                             </x-media-card>
                         @endif

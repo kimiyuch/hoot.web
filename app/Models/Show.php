@@ -13,16 +13,16 @@ class Show extends Model
 {
     protected $guarded = [];
 
-    /** The people who follow it. */
+    /** The people who have it in their library: following it, as a favourite or both. */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class);
     }
 
-    /** Only what someone follows; the rest stays in the catalog but isn't refreshed. */
+    /** Only what someone follows; the rest (favourites only) stays in the catalog but isn't refreshed. */
     public function scopeFollowed(Builder $query): void
     {
-        $query->has('users');
+        $query->whereHas('users', fn (Builder $users) => $users->where('show_user.following', true));
     }
 
     protected function casts(): array

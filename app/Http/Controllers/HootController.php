@@ -95,6 +95,7 @@ class HootController extends Controller
             'logos' => $services->logos(),
             'timezone' => Timezone::for($request),
             'followedMovies' => $request->user()->movies()->pluck('tmdb_id')->flip(),
+            'favouriteMovies' => $request->user()->favouriteMovies()->pluck('movies.id', 'tmdb_id'),
         ];
 
         if ($filters['when'] === 'any') {
@@ -117,6 +118,7 @@ class HootController extends Controller
                 'serviceCounts' => null,
                 'refreshedAt' => null,
                 'followedShows' => $request->user()->shows()->whereNotNull('tmdb_id')->pluck('tmdb_id')->flip(),
+                'favouriteShows' => $request->user()->favouriteShows()->whereNotNull('tmdb_id')->pluck('shows.id', 'tmdb_id'),
             ]);
         }
 
@@ -154,6 +156,7 @@ class HootController extends Controller
             'serviceCounts' => $serviceCounts,
             'refreshedAt' => $data['refreshed_at'],
             'followedShows' => $request->user()->shows()->pluck('tvmaze_id')->flip(),
+            'favouriteShows' => $request->user()->favouriteShows()->pluck('shows.id', 'tvmaze_id'),
         ]));
     }
 
@@ -192,6 +195,8 @@ class HootController extends Controller
             'moviesEnabled' => $tmdb->configured(),
             'followedShows' => $request->user()->shows()->pluck('tvmaze_id')->flip(),
             'followedMovies' => $request->user()->movies()->pluck('tmdb_id')->flip(),
+            'favouriteShows' => $request->user()->favouriteShows()->pluck('shows.id', 'tvmaze_id'),
+            'favouriteMovies' => $request->user()->favouriteMovies()->pluck('movies.id', 'tmdb_id'),
         ]);
     }
 

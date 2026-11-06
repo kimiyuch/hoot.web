@@ -20,7 +20,7 @@
                         <x-media-card :title="$show['name']" :href="$show['url']" :image="$show['image_url']" :overview="$show['overview'] ?? null" :rating="$show['rating']">
                             <x-slot:meta>{{ collect([$show['year'], $show['channel'], $show['status'] === 'Ended' ? 'Ended' : null])->filter()->join(' · ') }}</x-slot:meta>
                             <x-slot:action>
-                                <x-follow-button :action="route('shows.follow')" :fields="['tvmaze_id' => $show['tvmaze_id']]" :label="$show['name']" :following="$followedShows->has($show['tvmaze_id'])" />
+                                <x-library-actions type="show" :fields="['tvmaze_id' => $show['tvmaze_id']]" :label="$show['name']" :following="$followedShows->has($show['tvmaze_id'])" :favourite="$favouriteShows->get($show['tvmaze_id'])" />
                             </x-slot:action>
                         </x-media-card>
                     @endforeach
@@ -42,7 +42,7 @@
                             :overview="$movie['overview'] ?? null" :rating="$movie['rating']">
                             <x-slot:meta>{{ $movie['year'] }}</x-slot:meta>
                             <x-slot:action>
-                                <x-follow-button :action="route('movies.follow')" :fields="['tmdb_id' => $movie['tmdb_id']]" :label="$movie['title']" :following="$followedMovies->has($movie['tmdb_id'])" />
+                                <x-library-actions type="movie" :fields="['tmdb_id' => $movie['tmdb_id']]" :label="$movie['title']" :following="$followedMovies->has($movie['tmdb_id'])" :favourite="$favouriteMovies->get($movie['tmdb_id'])" />
                             </x-slot:action>
                         </x-media-card>
                     @endforeach

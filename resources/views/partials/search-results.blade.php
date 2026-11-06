@@ -4,13 +4,13 @@
         'Shows' => collect($shows)->take(6)->map(fn ($show) => [
             'title' => $show['name'], 'href' => $show['url'], 'image' => $show['image_url'],
             'meta' => collect([$show['year'], $show['channel'], $show['status'] === 'Ended' ? 'Ended' : null])->filter()->join(' · '),
-            'action' => route('shows.follow'), 'fields' => ['tvmaze_id' => $show['tvmaze_id']], 'following' => $followedShows->has($show['tvmaze_id']),
+            'type' => 'show', 'fields' => ['tvmaze_id' => $show['tvmaze_id']], 'following' => $followedShows->has($show['tvmaze_id']), 'favourite' => $favouriteShows->get($show['tvmaze_id']),
         ]),
         'Movies' => collect($movies)->take(6)->map(fn ($movie) => [
             'title' => $movie['title'], 'href' => 'https://www.themoviedb.org/movie/'.$movie['tmdb_id'],
             'image' => $movie['poster_path'] ? 'https://image.tmdb.org/t/p/w92'.$movie['poster_path'] : null,
             'meta' => $movie['year'],
-            'action' => route('movies.follow'), 'fields' => ['tmdb_id' => $movie['tmdb_id']], 'following' => $followedMovies->has($movie['tmdb_id']),
+            'type' => 'movie', 'fields' => ['tmdb_id' => $movie['tmdb_id']], 'following' => $followedMovies->has($movie['tmdb_id']), 'favourite' => $favouriteMovies->get($movie['tmdb_id']),
         ]),
     ];
 @endphp
@@ -38,7 +38,7 @@
                                 <p class="truncate text-sm/5 text-white/45">{{ $item['meta'] }}</p>
                             @endif
                         </div>
-                        <x-follow-button :action="$item['action']" :fields="$item['fields']" :label="$item['title']" :following="$item['following']" class="relative shrink-0" />
+                        <x-library-actions :type="$item['type']" :fields="$item['fields']" :label="$item['title']" :following="$item['following']" :favourite="$item['favourite']" class="relative shrink-0" />
                     </li>
                 @endforeach
             </ul>
