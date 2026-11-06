@@ -2,18 +2,18 @@
 
 return [
     // GitHub repository of this site.
-    'repository_url' => 'https://github.com/kimiyuch/possum.web',
+    'repository_url' => 'https://github.com/kimiyuch/hoot.web',
 
     // Used until the browser has told us its own timezone (it does on the first page load), and for the calendar feed.
-    'timezone' => env('POSSUM_TIMEZONE', 'Europe/Zurich'),
+    'timezone' => env('HOOT_TIMEZONE', 'Europe/Zurich'),
 
     // TMDB, for movies. Either the "API Read Access Token" (a long JWT) or the short "API Key"; both work.
-    // Without one, Possum only does TV.
+    // Without one, Hoot only does TV.
     'tmdb_token' => env('TMDB_TOKEN'),
 
     // Where to look up which service has what on the Browse page (TMDB only knows that per country).
     // Can be changed on the page; this is the default.
-    'region' => env('POSSUM_REGION', 'CH'),
+    'region' => env('HOOT_REGION', 'CH'),
     'regions' => ['CH' => 'Switzerland', 'DE' => 'Germany', 'AT' => 'Austria', 'FR' => 'France', 'IT' => 'Italy', 'GB' => 'United Kingdom', 'US' => 'United States'],
 
     // The streaming services to filter by: TMDB's provider ids, and the channel names TVmaze uses for their shows.

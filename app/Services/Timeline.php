@@ -76,8 +76,8 @@ class Timeline
 
         $releases = $this->releases(
             $user,
-            $today->subDays(config('possum.days_back')),
-            $today->addDays(config('possum.days_ahead'))->endOfDay(),
+            $today->subDays(config('hoot.days_back')),
+            $today->addDays(config('hoot.days_ahead'))->endOfDay(),
             $timezone,
         );
 

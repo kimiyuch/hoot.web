@@ -22,14 +22,14 @@ class AccountsTest extends TestCase
         parent::setUp();
 
         Http::preventStrayRequests();
-        config(['possum.tmdb_token' => null]);
+        config(['hoot.tmdb_token' => null]);
     }
 
     public function test_guests_see_the_landing_page_and_the_app_pages_ask_them_to_log_in(): void
     {
         $this->get('/')->assertOk()->assertSee('Never miss a')->assertSee('Create your account');
 
-        foreach (['/discover', '/search', '/settings'] as $page) {
+        foreach (['/for-you', '/discover', '/search', '/settings'] as $page) {
             $this->get($page)->assertRedirect('/login');
         }
         $this->post('/shows', ['tvmaze_id' => 1])->assertRedirect('/login');
@@ -38,7 +38,7 @@ class AccountsTest extends TestCase
     public function test_the_auth_pages_render(): void
     {
         foreach (['/login', '/register', '/forgot-password', '/reset-password/some-token?email=a@b.ch'] as $page) {
-            $this->get($page)->assertOk()->assertSee('Possum');
+            $this->get($page)->assertOk()->assertSee('Hoot');
         }
     }
 
@@ -48,7 +48,7 @@ class AccountsTest extends TestCase
 
         $this->post('/register', [
             'name' => 'Pip', 'email' => 'Pip@Example.com', 'password' => 'gumleaves-at-night', 'password_confirmation' => 'gumleaves-at-night',
-        ])->assertRedirect('/');
+        ])->assertRedirect('/for-you');
 
         $user = User::sole();
         $this->assertSame('pip@example.com', $user->email);
@@ -56,14 +56,16 @@ class AccountsTest extends TestCase
         Notification::assertSentTo($user, VerifyEmail::class);
 
         // Not confirmed yet: For you waits for the email.
-        $this->get('/')->assertRedirect(route('verification.notice'));
+        $this->get('/for-you')->assertRedirect(route('verification.notice'));
         $this->get(route('verification.notice'))->assertOk()->assertSee('pip@example.com');
 
         $link = URL::temporarySignedRoute('verification.verify', now()->addHour(), ['id' => $user->id, 'hash' => sha1($user->email)]);
-        $this->get($link)->assertRedirect('/?verified=1');
+        $this->get($link)->assertRedirect('/for-you');
 
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
-        $this->get('/')->assertOk()->assertSee('Nothing followed yet');
+        $this->get('/for-you')->assertOk()->assertSee('Nothing followed yet');
+        // Signed in, the landing page isn't needed.
+        $this->get('/')->assertRedirect('/for-you');
     }
 
     public function test_logging_in_and_out(): void
@@ -73,7 +75,7 @@ class AccountsTest extends TestCase
         $this->post('/login', ['email' => 'pip@example.com', 'password' => 'wrong'])->assertSessionHasErrors('email');
         $this->assertGuest();
 
-        $this->post('/login', ['email' => 'PIP@example.com', 'password' => 'gumleaves-at-night'])->assertRedirect('/');
+        $this->post('/login', ['email' => 'PIP@example.com', 'password' => 'gumleaves-at-night'])->assertRedirect('/for-you');
         $this->assertAuthenticatedAs($user);
 
         $this->post('/logout')->assertRedirect('/');
@@ -96,7 +98,7 @@ class AccountsTest extends TestCase
             return true;
         });
 
-        $this->post('/login', ['email' => 'pip@example.com', 'password' => 'a-new-night-out'])->assertRedirect('/');
+        $this->post('/login', ['email' => 'pip@example.com', 'password' => 'a-new-night-out'])->assertRedirect('/for-you');
     }
 
     public function test_everyone_has_their_own_follows_and_calendar_feed(): void
@@ -106,7 +108,7 @@ class AccountsTest extends TestCase
         $show->users()->attach([$pip->id, $rue->id]);
         $pip->movies()->create(['tmdb_id' => 1, 'title' => 'Only Pip’s Movie', 'digital_date' => now()->addWeek()]);
 
-        $this->actingAs($rue)->get('/')->assertSee('Shared Show')->assertDontSee('Only Pip’s Movie');
+        $this->actingAs($rue)->get('/for-you')->assertSee('Shared Show')->assertDontSee('Only Pip’s Movie');
         $this->get(route('calendar', $rue->calendar_token))->assertDontSee('Only Pip’s Movie');
         $this->get(route('calendar', $pip->calendar_token))->assertSee('Only Pip’s Movie');
         $this->get('/calendar/not-a-token.ics')->assertNotFound();

@@ -9,7 +9,7 @@
     --font-sans--font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     --font-display: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
 
-    /* Midnight: the late-night plum sky behind the possum on the app icon, when it's out and about. The brand colour. */
+    /* Midnight: the late-night plum sky behind the owl on the app icon, when it's out and about. The brand colour. */
     --color-midnight-50: #f9f5f9;
     --color-midnight-100: #f2e8f2;
     --color-midnight-200: #e4d0e4;
@@ -29,12 +29,12 @@
     --color-night-900: #28172d;
     --color-night-950: #1d1022;
 
-    /* Gumleaf gold for ratings, like the possum's eye highlights in lamplight. */
+    /* Amber gold for ratings, like the owl's eyes. */
     --color-star: #f5c56b;
     /* What's up next (the teaser and the next episode): a soft mint that sits well on plum. */
     --color-next: #8fdcae;
 
-    /* Calendar page: the red header of the tear-off page the possum holds on to. Used for dates. */
+    /* Calendar page: the red header of a tear-off calendar page (the calendar band on the landing page). Used for dates. */
     --color-calendar-50: #fef3f2;
     --color-calendar-400: #f68a7e;
     --color-calendar-100: #fde4e1;

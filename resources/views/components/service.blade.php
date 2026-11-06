@@ -1,4 +1,4 @@
-{{-- A streaming service (a key from config/possum.php) with its logo, or a plain channel name. --}}
+{{-- A streaming service (a key from config/hoot.php) with its logo, or a plain channel name. --}}
 @props(['service' => null, 'channel' => null, 'logos' => [], 'logoOnly' => false])
 
 @php

@@ -15,9 +15,9 @@
 
     @if ($shows->isEmpty() && $movies->isEmpty())
         <div class="mx-auto flex max-w-xl flex-col items-center py-16 text-center">
-            <img src="{{ asset('images/possum-head.svg') }}" alt="" class="size-24">
+            <img src="{{ asset('images/hoot-head.svg') }}" alt="" class="size-24">
             <h1 class="mt-8 font-display text-3xl font-semibold tracking-tight text-balance">Nothing followed yet</h1>
-            <p class="mt-4 max-w-[48ch] text-lg text-pretty text-white/55">Follow shows and movies, and Possum keeps watch: every new episode and release, on every service, in your timezone.</p>
+            <p class="mt-4 max-w-[48ch] text-lg text-pretty text-white/55">Follow shows and movies, and Hoot keeps watch: every new episode and release, on every service, in your timezone.</p>
             <div class="mt-10 flex items-center gap-6">
                 <a href="{{ route('discover') }}" class="rounded-lg bg-white px-3.5 py-2 text-sm/6 font-semibold text-night-950 hover:bg-midnight-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-midnight-400">See what’s premiering</a>
                 <a href="{{ route('discover', ['when' => 'any']) }}" class="text-sm/6 font-semibold text-white/70 hover:text-white">Browse everything <span aria-hidden="true">→</span></a>
@@ -83,7 +83,7 @@
 
                 {{-- Timeline --}}
                 @if ($days->isEmpty())
-                    <x-empty-state class="mt-8">Nothing comes out in the next {{ config('possum.days_ahead') }} days for what you follow.</x-empty-state>
+                    <x-empty-state class="mt-8">Nothing comes out in the next {{ config('hoot.days_ahead') }} days for what you follow.</x-empty-state>
                 @else
                     <div class="mt-12 flex flex-col gap-10">
                         @foreach ($days as $day => $releases)
@@ -113,7 +113,7 @@
                 @if ($recent->isNotEmpty())
                     <section aria-labelledby="just-released">
                         <h2 id="just-released" class="font-display text-lg font-semibold tracking-tight">Just released</h2>
-                        <p class="text-sm/6 text-white/40">In the last {{ config('possum.days_back') }} days</p>
+                        <p class="text-sm/6 text-white/40">In the last {{ config('hoot.days_back') }} days</p>
                         <ul role="list" class="mt-4 divide-y divide-white/5">
                             @foreach ($recent as $release)
                                 @php

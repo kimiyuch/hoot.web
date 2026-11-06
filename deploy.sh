@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Deploys the committed state of this repository to possum.kimiyu.ch (Hostpoint) over SSH,
+# Deploys the committed state of this repository to hoot.kimiyu.ch (Hostpoint) over SSH,
 # using your own SSH key. Run from your Mac: ./deploy.sh
 #
 # Frontend assets are built locally and committed (npm run build). The server's .env,
@@ -9,7 +9,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 HOST=pumutuxu@pumutuxu.myhostpoint.ch
-DEST=/home/pumutuxu/www/possum.kimiyu.ch
+DEST=/home/pumutuxu/www/hoot.kimiyu.ch
 
 if [[ -n $(git status --porcelain) ]]; then
   echo "You have uncommitted changes. Commit them first; only committed code is deployed."
@@ -45,4 +45,4 @@ rsync -az --delete \
 echo "Migrating and refreshing caches…"
 ssh "$HOST" "cd '$DEST' && php artisan migrate --force >/dev/null && php artisan optimize:clear >/dev/null && php artisan optimize >/dev/null"
 
-echo "Deployed $(git rev-parse --short HEAD) to https://possum.kimiyu.ch"
+echo "Deployed $(git rev-parse --short HEAD) to https://hoot.kimiyu.ch"

@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Cache;
 use Throwable;
 
 /**
- * The streaming services in config('possum.services'), matched against TVmaze channel names and TMDB providers.
+ * The streaming services in config('hoot.services'), matched against TVmaze channel names and TMDB providers.
  */
 class StreamingServices
 {
@@ -15,7 +15,7 @@ class StreamingServices
     /** @return array<string, array{name: string, tmdb: list<int>, tvmaze: list<string>}> */
     public static function all(): array
     {
-        return config('possum.services');
+        return config('hoot.services');
     }
 
     public static function name(?string $key): ?string

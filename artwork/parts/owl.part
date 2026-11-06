@@ -1,0 +1,52 @@
+  <!-- ear tufts -->
+  <g fill="url(#tuft)">
+    <path d="M356 262C344 214 346 172 362 136C384 166 418 196 452 212Z"/>
+    <path d="M668 262C680 214 678 172 662 136C640 166 606 196 572 212Z"/>
+  </g>
+  <!-- body and head in one round shape, as owls have no neck -->
+  <g filter="url(#soft)">
+    <path d="M512 186C630 186 708 250 712 350C716 430 690 490 650 530H374C334 490 308 430 312 350C316 250 394 186 512 186Z" fill="url(#body)"/>
+  </g>
+  <g clip-path="url(#bodyClip)">
+    <!-- pale chest with little chevrons -->
+    <ellipse cx="512" cy="500" rx="150" ry="110" fill="url(#belly)"/>
+    <g fill="none" stroke="url(#mark)" stroke-width="7" stroke-linecap="round" opacity=".7">
+      <path d="M440 446q12 10 24 0M500 440q12 10 24 0M560 446q12 10 24 0M470 474q12 10 24 0M530 474q12 10 24 0M410 476q12 10 24 0M590 476q12 10 24 0"/>
+    </g>
+    <!-- speckles on the crown -->
+    <g fill="url(#mark)" opacity=".55">
+      <ellipse cx="470" cy="214" rx="7" ry="5"/><ellipse cx="512" cy="204" rx="7" ry="5"/><ellipse cx="554" cy="214" rx="7" ry="5"/><ellipse cx="430" cy="232" rx="6" ry="4.5"/><ellipse cx="594" cy="232" rx="6" ry="4.5"/>
+    </g>
+  </g>
+
+  <!-- facial disc: two rings meeting at the beak -->
+  <g fill="url(#rim)">
+    <ellipse cx="438" cy="330" rx="96" ry="92"/><ellipse cx="586" cy="330" rx="96" ry="92"/>
+  </g>
+  <g fill="url(#disc)">
+    <ellipse cx="440" cy="332" rx="84" ry="80"/><ellipse cx="584" cy="332" rx="84" ry="80"/>
+  </g>
+  <!-- brows meeting in a V above the beak -->
+  <path d="M346 268C384 232 458 226 512 262C566 226 640 232 678 268C638 248 566 246 512 290C458 246 386 248 346 268Z" fill="url(#tuft)" opacity=".85"/>
+
+  <!-- eyes -->
+  <g class="eyes">
+    <g fill="#2a1a14" opacity=".25"><circle cx="440" cy="336" r="58"/><circle cx="584" cy="336" r="58"/></g>
+    <g fill="url(#iris)"><circle cx="440" cy="334" r="52"/><circle cx="584" cy="334" r="52"/></g>
+    <g fill="url(#pupil)"><circle cx="442" cy="336" r="32"/><circle cx="582" cy="336" r="32"/></g>
+    <g fill="#fff"><circle cx="458" cy="318" r="13"/><circle cx="598" cy="318" r="13"/></g>
+    <g fill="#fff" opacity=".7"><circle cx="428" cy="352" r="5"/><circle cx="568" cy="352" r="5"/></g>
+  </g>
+  <!-- little hooked beak -->
+  <path d="M492 360C500 352 524 352 532 360C534 384 524 404 512 416C500 404 490 384 492 360Z" fill="url(#beak)"/>
+  <path d="M500 364C506 360 518 360 524 364" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".3"/>
+  <g fill="#e9a3a8" opacity=".35"><ellipse cx="404" cy="414" rx="24" ry="13"/><ellipse cx="620" cy="414" rx="24" ry="13"/></g>
+
+  <!-- wings folded down the sides -->
+  <g class="wings" fill="url(#wing)">
+    <path d="M318 340C300 400 306 470 344 524H404C392 470 360 414 318 340Z"/>
+    <path d="M706 340C724 400 718 470 680 524H620C632 470 664 414 706 340Z"/>
+  </g>
+  <g fill="none" stroke="url(#mark)" stroke-width="6" stroke-linecap="round" opacity=".55">
+    <path d="M332 420q14 16 30 18M336 456q16 16 36 18M690 420q-14 16-30 18M686 456q-16 16-36 18"/>
+  </g>

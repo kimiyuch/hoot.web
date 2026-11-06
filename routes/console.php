@@ -5,7 +5,7 @@ use App\Services\Premieres;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('possum:refresh {--all : Refresh every show, not just the ones TVmaze says have changed}', function (Library $library, Premieres $premieres) {
+Artisan::command('hoot:refresh {--all : Refresh every show, not just the ones TVmaze says have changed}', function (Library $library, Premieres $premieres) {
     // TVmaze's full schedule is a 10+ MB JSON response.
     ini_set('memory_limit', '512M');
 
@@ -20,4 +20,4 @@ Artisan::command('possum:refresh {--all : Refresh every show, not just the ones 
 })->purpose('Refresh the followed shows and movies from TVmaze and TMDB, and the premieres');
 
 // On Hostpoint, a cron job runs "php artisan schedule:run" every few minutes.
-Schedule::command('possum:refresh')->everySixHours()->withoutOverlapping();
+Schedule::command('hoot:refresh')->everySixHours()->withoutOverlapping();

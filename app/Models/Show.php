@@ -30,7 +30,7 @@ class Show extends Model
         return ['refreshed_at' => 'datetime', 'rating' => 'float', 'genres' => 'array'];
     }
 
-    /** The streaming service key (config/possum.php) of the show's channel, if it's one of them. */
+    /** The streaming service key (config/hoot.php) of the show's channel, if it's one of them. */
     public function service(): ?string
     {
         return StreamingServices::forChannel($this->channel);

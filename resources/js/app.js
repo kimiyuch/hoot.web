@@ -87,7 +87,7 @@ if (searchDialog) {
             results.setAttribute('aria-busy', 'true');
             try {
                 const response = await fetch(`/search?q=${encodeURIComponent(query)}`, {
-                    headers: { 'X-Possum-Partial': '1' },
+                    headers: { 'X-Hoot-Partial': '1' },
                     signal: request.signal,
                 });
                 results.innerHTML = await response.text();

@@ -23,20 +23,18 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
 
-class PossumController extends Controller
+class HootController extends Controller
 {
-    /** The landing page for guests, the For you page for everyone else. */
-    public function home(Request $request, Timeline $timeline, StreamingServices $services): View|RedirectResponse
+    /** The landing page. Signed-in users don't need it and go on to For you. */
+    public function welcome(Request $request): View|RedirectResponse
+    {
+        return $request->user() ? redirect()->route('for-you') : view('welcome');
+    }
+
+    /** Up next, the timeline by day, what just came out and everything you follow. */
+    public function forYou(Request $request, Timeline $timeline, StreamingServices $services): View
     {
         $user = $request->user();
-
-        if (! $user) {
-            return view('welcome');
-        }
-        if (! $user->hasVerifiedEmail()) {
-            return redirect()->route('verification.notice');
-        }
-
         $timezone = Timezone::for($request);
         $sections = $timeline->sections($user, $timezone);
 
@@ -49,7 +47,7 @@ class PossumController extends Controller
             ->unique(fn (array $release) => isset($release['show']) ? 'show-'.$release['show']->id : 'movie-'.$release['movie']->id)
             ->values();
 
-        return view('home', [
+        return view('for-you', [
             'sections' => collect($sections)->except('Just released')->all(),
             'next' => $next,
             'recent' => $recent,
@@ -65,7 +63,7 @@ class PossumController extends Controller
 
     /**
      * Premieres and the TMDB catalog on one page. "When" picks the source: soon and new come from
-     * the premieres that possum:refresh builds, "any" asks TMDB discover.
+     * the premieres that hoot:refresh builds, "any" asks TMDB discover.
      */
     public function discover(Request $request, Premieres $premieres, Browse $browse, Tmdb $tmdb, StreamingServices $services): View
     {
@@ -73,7 +71,7 @@ class PossumController extends Controller
             'when' => [Rule::in(['soon', 'new', 'any'])],
             'type' => [Rule::in(['movie', 'tv'])],
             'service' => [Rule::in(array_keys(StreamingServices::all()))],
-            'region' => [Rule::in(array_keys(config('possum.regions')))],
+            'region' => [Rule::in(array_keys(config('hoot.regions')))],
             'from' => ['integer', 'between:1950,'.now()->year],
             'sort' => [Rule::in(array_keys(Browse::SORTS))],
             'min_rating' => [Rule::in(array_keys(Browse::MIN_RATINGS))],
@@ -84,8 +82,8 @@ class PossumController extends Controller
             'when' => $input['when'] ?? 'soon',
             'type' => $input['type'] ?? 'tv',
             'service' => $input['service'] ?? null,
-            'region' => $input['region'] ?? config('possum.region'),
-            'from' => (int) ($input['from'] ?? config('possum.browse_from_year') ?? now()->year),
+            'region' => $input['region'] ?? config('hoot.region'),
+            'from' => (int) ($input['from'] ?? config('hoot.browse_from_year') ?? now()->year),
             'sort' => $input['sort'] ?? 'popular',
             'min_rating' => (int) ($input['min_rating'] ?? 0),
             'page' => (int) ($input['page'] ?? 1),
@@ -186,7 +184,7 @@ class PossumController extends Controller
         }
 
         // The lightbox fetches just the results.
-        return view($request->header('X-Possum-Partial') ? 'partials.search-results' : 'search', [
+        return view($request->header('X-Hoot-Partial') ? 'partials.search-results' : 'search', [
             'query' => $query,
             'shows' => $shows,
             'movies' => $movies,
@@ -255,7 +253,7 @@ class PossumController extends Controller
 
         return response($calendar->ics($user), 200, [
             'Content-Type' => 'text/calendar; charset=utf-8',
-            'Content-Disposition' => 'inline; filename="possum.ics"',
+            'Content-Disposition' => 'inline; filename="hoot.ics"',
             'Cache-Control' => 'private, max-age=900',
         ]);
     }

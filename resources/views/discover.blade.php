@@ -11,16 +11,16 @@
             ? ['Shows that just premiered', 'New shows and new seasons from the last '.\App\Services\Premieres::DAYS_BACK.' days'.($serviceName ? ' on '.$serviceName : ', on every service').', most popular first.']
             : ['Movies just out', 'Popular movies released in cinemas or digitally in the last '.\App\Services\Premieres::DAYS_BACK.' days'.($serviceName ? ', on '.$serviceName : '').'.'],
         default => [$isTv ? 'All shows' : 'All movies',
-            \App\Services\Browse::SORTS[$filters['sort']].' since '.$filters['from'].($serviceName ? ' on '.$serviceName.' in '.config('possum.regions')[$filters['region']] : ', on every service').'.'],
+            \App\Services\Browse::SORTS[$filters['sort']].' since '.$filters['from'].($serviceName ? ' on '.$serviceName.' in '.config('hoot.regions')[$filters['region']] : ', on every service').'.'],
     };
 
     $activeFilters = collect([
         $filters['when'] !== 'soon',
         $filters['service'],
         $any && $filters['sort'] !== 'popular',
-        $any && $filters['from'] !== (int) (config('possum.browse_from_year') ?? now()->year),
+        $any && $filters['from'] !== (int) (config('hoot.browse_from_year') ?? now()->year),
         $any && $filters['min_rating'],
-        $any && $filters['region'] !== config('possum.region'),
+        $any && $filters['region'] !== config('hoot.region'),
     ])->filter();
 @endphp
 
@@ -55,7 +55,7 @@
                     @if ($any || $refreshedAt)
                         Nothing matches these filters.
                     @else
-                        No premieres loaded yet. They’re fetched with every refresh (php artisan possum:refresh).
+                        No premieres loaded yet. They’re fetched with every refresh (php artisan hoot:refresh).
                     @endif
                 </x-empty-state>
             @else

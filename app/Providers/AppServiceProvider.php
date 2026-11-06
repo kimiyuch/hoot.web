@@ -20,24 +20,24 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Possum's own words for the two account mails. The look is in resources/views/vendor/mail.
+     * Hoot's own words for the two account mails. The look is in resources/views/vendor/mail.
      */
     private function configureMails(): void
     {
         VerifyEmail::toMailUsing(fn (object $user, string $url) => (new MailMessage)
-            ->subject('Confirm your email for Possum')
+            ->subject('Confirm your email for Hoot')
             ->greeting('Hi '.$user->name.',')
-            ->line('Welcome to Possum. Confirm your email and your For you page opens, ready for the first show you follow.')
+            ->line('Welcome to Hoot. Confirm your email and your For you page opens, ready for the first show you follow.')
             ->action('Confirm my email', $url)
-            ->line('The link works for an hour. If you didn’t sign up for Possum, you can ignore this mail.')
-            ->salutation('Possum keeps watch from here.'));
+            ->line('The link works for an hour. If you didn’t sign up for Hoot, you can ignore this mail.')
+            ->salutation('Hoot keeps watch from here.'));
 
         ResetPassword::toMailUsing(fn (object $user, string $token) => (new MailMessage)
-            ->subject('Pick a new Possum password')
+            ->subject('Pick a new Hoot password')
             ->greeting('Hi '.$user->name.',')
-            ->line('Someone, hopefully you, asked to reset the password for your Possum account.')
+            ->line('Someone, hopefully you, asked to reset the password for your Hoot account.')
             ->action('Pick a new password', url(route('password.reset', ['token' => $token, 'email' => $user->getEmailForPasswordReset()], false)))
             ->line('The link works for '.config('auth.passwords.'.config('auth.defaults.passwords').'.expire').' minutes. If you didn’t ask for this, your password stays as it is.')
-            ->salutation('Possum'));
+            ->salutation('Hoot'));
     }
 }

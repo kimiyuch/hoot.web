@@ -10,7 +10,7 @@
             ['The Long Way North', 'S01E01–S01E08 · all 8 episodes', '09:00', 'Netflix', 2],
         ]],
         ['Monday', 'Mon 9 Nov', [
-            ['Gumtree Lane', 'S04E10 · Possums in the Roof', '03:00', 'HBO Max', 4],
+            ['Gumtree Lane', 'S04E10 · Owls in the Roof', '03:00', 'HBO Max', 4],
         ]],
     ];
 @endphp

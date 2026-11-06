@@ -19,7 +19,7 @@ return new class extends Migration
         Schema::table('movies', function (Blueprint $table) {
             $table->decimal('rating', 3, 1)->nullable()->after('title');
             $table->string('backdrop_path')->nullable()->after('poster_path');
-            // Keys from config('possum.services') that have the movie to stream in at least one country.
+            // Keys from config('hoot.services') that have the movie to stream in at least one country.
             $table->json('services')->nullable()->after('backdrop_path');
         });
     }

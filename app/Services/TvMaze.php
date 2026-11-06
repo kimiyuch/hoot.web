@@ -89,7 +89,7 @@ class TvMaze
     }
 
     /**
-     * The fields of a show that Possum keeps.
+     * The fields of a show that Hoot keeps.
      */
     public static function summary(array $show): array
     {
@@ -114,7 +114,7 @@ class TvMaze
         return Http::baseUrl(self::URL)
             ->acceptJson()
             ->timeout(15)
-            ->withUserAgent('Possum (https://possum.kimiyu.ch)')
+            ->withUserAgent('Hoot (https://hoot.kimiyu.ch)')
             // Rate limited: wait and try again, up to three times.
             ->retry(3, 2500, fn ($exception) => $exception->response?->status() === 429, throw: false);
     }

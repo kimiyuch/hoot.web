@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html lang="en" class="scheme-only-dark bg-night-950 antialiased">
 <head>
-    <x-head :title="$title.' · Possum'" />
+    <x-head :title="$title.' · Hoot'" />
 </head>
 <body class="font-sans text-white">
     <div class="relative isolate flex min-h-dvh flex-col items-center justify-center px-4 py-12">
@@ -11,8 +11,8 @@
 
         <div class="w-full max-w-sm">
             <a href="{{ url('/') }}" class="mx-auto flex w-fit flex-col items-center gap-3 font-display text-3xl font-semibold tracking-tight">
-                <img src="{{ asset('images/possum-head.svg') }}" alt="" class="size-16">
-                Possum
+                <img src="{{ asset('images/hoot-head.svg') }}" alt="" class="size-16">
+                Hoot
             </a>
 
             <div class="mt-8 rounded-2xl bg-night-900 p-6 inset-ring inset-ring-white/5 sm:p-8">

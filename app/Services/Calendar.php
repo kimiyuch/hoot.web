@@ -15,25 +15,25 @@ class Calendar
     public function ics(User $user): string
     {
         $now = CarbonImmutable::now('UTC');
-        $timezone = config('possum.timezone');
+        $timezone = config('hoot.timezone');
 
         $lines = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
-            'PRODID:-//kimiyu//Possum//EN',
+            'PRODID:-//kimiyu//Hoot//EN',
             'CALSCALE:GREGORIAN',
             'METHOD:PUBLISH',
-            'X-WR-CALNAME:Possum',
+            'X-WR-CALNAME:Hoot',
             'X-WR-CALDESC:New episodes and movie releases you follow',
             'REFRESH-INTERVAL;VALUE=DURATION:PT6H',
             'X-PUBLISHED-TTL:PT6H',
         ];
 
-        $releases = $this->timeline->releases($user, $now->subDays(30), $now->addDays(config('possum.days_ahead')), $timezone);
+        $releases = $this->timeline->releases($user, $now->subDays(30), $now->addDays(config('hoot.days_ahead')), $timezone);
 
         foreach ($releases as $release) {
             $lines[] = 'BEGIN:VEVENT';
-            $lines[] = 'UID:'.$release['key'].'@possum.kimiyu.ch';
+            $lines[] = 'UID:'.$release['key'].'@hoot.kimiyu.ch';
             $lines[] = 'DTSTAMP:'.$now->format('Ymd\THis\Z');
 
             if ($release['kind'] === 'episodes') {

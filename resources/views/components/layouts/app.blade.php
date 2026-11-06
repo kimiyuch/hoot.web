@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en" class="scheme-only-dark bg-night-950 antialiased" data-timezone="{{ \App\Timezone::for(request()) }}">
 <head>
-    <x-head :title="$title ? $title.' · Possum' : 'Possum'" />
+    <x-head :title="$title ? $title.' · Hoot' : 'Hoot'" />
 </head>
 <body class="font-sans text-white">
     <div class="relative isolate flex min-h-dvh flex-col">

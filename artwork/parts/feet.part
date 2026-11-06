@@ -1,0 +1,8 @@
+  <!-- feathered feet gripping the top of the calendar -->
+  <g class="feet" filter="url(#soft)" fill="url(#foot)">
+    <rect x="372" y="474" width="22" height="40" rx="11"/><rect x="396" y="472" width="22" height="46" rx="11"/>
+    <rect x="606" y="472" width="22" height="46" rx="11"/><rect x="630" y="474" width="22" height="40" rx="11"/>
+  </g>
+  <g fill="none" stroke="#2e2320" stroke-width="5" stroke-linecap="round">
+    <path d="M378 510q4 9 11 9M402 514q4 9 11 9M612 514q4 9 11 9M636 510q4 9 11 9"/>
+  </g>

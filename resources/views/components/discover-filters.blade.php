@@ -8,7 +8,7 @@
         'sort' => ['Sort by', \App\Services\Browse::SORTS, $filters['sort']],
         'from' => ['Released since', collect(range(now()->year, 1970))->mapWithKeys(fn ($y) => [$y => $y])->all(), $filters['from']],
         'min_rating' => ['Rating', \App\Services\Browse::MIN_RATINGS, $filters['min_rating']],
-        'region' => ['Streaming in', config('possum.regions'), $filters['region']],
+        'region' => ['Streaming in', config('hoot.regions'), $filters['region']],
     ];
     $whens = [
         'soon' => 'Premiering soon',
@@ -18,7 +18,7 @@
     // On premieres, only the services that have something; on "any time", all of them.
     $services = $any ? array_keys(\App\Services\StreamingServices::all()) : $serviceCounts?->keys()->all() ?? [];
     // The big ones first; the rest (and never the selected one) behind "Show more".
-    $featured = array_values(array_intersect(config('possum.featured_services'), $services));
+    $featured = array_values(array_intersect(config('hoot.featured_services'), $services));
     $more = array_values(array_diff($services, $featured, [$filters['service']]));
     if ($filters['service'] && ! in_array($filters['service'], $featured, true)) {
         $featured[] = $filters['service'];

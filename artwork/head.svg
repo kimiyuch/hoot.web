@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="292 120 440 440">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6a9a"/><stop offset=".55" stop-color="#5a3560"/><stop offset="1" stop-color="#2a1631"/></linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="body" gradientUnits="userSpaceOnUse" x1="0" y1="190" x2="0" y2="530"><stop offset="0" stop-color="#a9a2b6"/><stop offset="1" stop-color="#76708a"/></linearGradient>
+    <linearGradient id="wing" gradientUnits="userSpaceOnUse" x1="0" y1="340" x2="0" y2="524"><stop offset="0" stop-color="#837c96"/><stop offset="1" stop-color="#5a546b"/></linearGradient>
+    <linearGradient id="tuft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7f7891"/><stop offset="1" stop-color="#5b556c"/></linearGradient>
+    <linearGradient id="belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4dfe9"/><stop offset="1" stop-color="#c9c2d3"/></linearGradient>
+    <linearGradient id="disc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2eff5"/><stop offset="1" stop-color="#d8d2e0"/></linearGradient>
+    <linearGradient id="foot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfc8d8"/><stop offset="1" stop-color="#aaa2b8"/></linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b556c"/><stop offset="1" stop-color="#5b556c"/></linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5e5870"/><stop offset="1" stop-color="#5e5870"/></linearGradient>
+    <radialGradient id="iris" cx=".45" cy=".4" r=".62"><stop offset="0" stop-color="#ffd86e"/><stop offset=".75" stop-color="#f0a52c"/><stop offset="1" stop-color="#c9761a"/></radialGradient>
+    <radialGradient id="pupil" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="#3b2a2f"/><stop offset=".7" stop-color="#120a0c"/></radialGradient>
+    <linearGradient id="beak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a5e5a"/><stop offset="1" stop-color="#3a302e"/></linearGradient>
+    <linearGradient id="slate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#45454d"/><stop offset="1" stop-color="#2a2a30"/></linearGradient>
+    <radialGradient id="pin" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#d8d8de"/><stop offset="1" stop-color="#8a8a94"/></radialGradient>
+    <clipPath id="bodyClip"><path d="M512 186C630 186 708 250 712 350C716 430 690 490 650 530H374C334 490 308 430 312 350C316 250 394 186 512 186Z"/></clipPath>
+    <clipPath id="stickClip"><rect x="296" y="508" width="430" height="54" rx="12"/></clipPath>
+    <clipPath id="squircle"><rect x="100" y="100" width="824" height="824" rx="185"/></clipPath>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#12061a" flood-opacity=".3"/></filter>
+    <filter id="drop" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#12061a" flood-opacity=".4"/></filter>
+    <filter id="icon" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity=".3"/></filter>
+  </defs>
+  <!-- ear tufts -->
+  <g fill="url(#tuft)">
+    <path d="M356 262C344 214 346 172 362 136C384 166 418 196 452 212Z"/>
+    <path d="M668 262C680 214 678 172 662 136C640 166 606 196 572 212Z"/>
+  </g>
+  <!-- body and head in one round shape, as owls have no neck -->
+  <g filter="url(#soft)">
+    <path d="M512 186C630 186 708 250 712 350C716 430 690 490 650 530H374C334 490 308 430 312 350C316 250 394 186 512 186Z" fill="url(#body)"/>
+  </g>
+  <g clip-path="url(#bodyClip)">
+    <!-- pale chest with little chevrons -->
+    <ellipse cx="512" cy="500" rx="150" ry="110" fill="url(#belly)"/>
+    <g fill="none" stroke="url(#mark)" stroke-width="7" stroke-linecap="round" opacity=".7">
+      <path d="M440 446q12 10 24 0M500 440q12 10 24 0M560 446q12 10 24 0M470 474q12 10 24 0M530 474q12 10 24 0M410 476q12 10 24 0M590 476q12 10 24 0"/>
+    </g>
+    <!-- speckles on the crown -->
+    <g fill="url(#mark)" opacity=".55">
+      <ellipse cx="470" cy="214" rx="7" ry="5"/><ellipse cx="512" cy="204" rx="7" ry="5"/><ellipse cx="554" cy="214" rx="7" ry="5"/><ellipse cx="430" cy="232" rx="6" ry="4.5"/><ellipse cx="594" cy="232" rx="6" ry="4.5"/>
+    </g>
+  </g>
+
+  <!-- facial disc: two rings meeting at the beak -->
+  <g fill="url(#rim)">
+    <ellipse cx="438" cy="330" rx="96" ry="92"/><ellipse cx="586" cy="330" rx="96" ry="92"/>
+  </g>
+  <g fill="url(#disc)">
+    <ellipse cx="440" cy="332" rx="84" ry="80"/><ellipse cx="584" cy="332" rx="84" ry="80"/>
+  </g>
+  <!-- brows meeting in a V above the beak -->
+  <path d="M346 268C384 232 458 226 512 262C566 226 640 232 678 268C638 248 566 246 512 290C458 246 386 248 346 268Z" fill="url(#tuft)" opacity=".85"/>
+
+  <!-- eyes -->
+  <g class="eyes">
+    <g fill="#2a1a14" opacity=".25"><circle cx="440" cy="336" r="58"/><circle cx="584" cy="336" r="58"/></g>
+    <g fill="url(#iris)"><circle cx="440" cy="334" r="52"/><circle cx="584" cy="334" r="52"/></g>
+    <g fill="url(#pupil)"><circle cx="442" cy="336" r="32"/><circle cx="582" cy="336" r="32"/></g>
+    <g fill="#fff"><circle cx="458" cy="318" r="13"/><circle cx="598" cy="318" r="13"/></g>
+    <g fill="#fff" opacity=".7"><circle cx="428" cy="352" r="5"/><circle cx="568" cy="352" r="5"/></g>
+  </g>
+  <!-- little hooked beak -->
+  <path d="M492 360C500 352 524 352 532 360C534 384 524 404 512 416C500 404 490 384 492 360Z" fill="url(#beak)"/>
+  <path d="M500 364C506 360 518 360 524 364" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".3"/>
+  <g fill="#e9a3a8" opacity=".35"><ellipse cx="404" cy="414" rx="24" ry="13"/><ellipse cx="620" cy="414" rx="24" ry="13"/></g>
+
+  <!-- wings folded down the sides -->
+  <g class="wings" fill="url(#wing)">
+    <path d="M318 340C300 400 306 470 344 524H404C392 470 360 414 318 340Z"/>
+    <path d="M706 340C724 400 718 470 680 524H620C632 470 664 414 706 340Z"/>
+  </g>
+  <g fill="none" stroke="url(#mark)" stroke-width="6" stroke-linecap="round" opacity=".55">
+    <path d="M332 420q14 16 30 18M336 456q16 16 36 18M690 420q-14 16-30 18M686 456q-16 16-36 18"/>
+  </g>
+</svg>

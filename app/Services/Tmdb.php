@@ -26,7 +26,7 @@ class Tmdb
 
     public function configured(): bool
     {
-        return filled(config('possum.tmdb_token'));
+        return filled(config('hoot.tmdb_token'));
     }
 
     /**
@@ -85,7 +85,7 @@ class Tmdb
     }
 
     /**
-     * The fields Possum shows of a movie (or, with $tv, a show) from a TMDB search or discover result.
+     * The fields Hoot shows of a movie (or, with $tv, a show) from a TMDB search or discover result.
      */
     public static function summary(array $item, bool $tv = false): array
     {
@@ -140,7 +140,7 @@ class Tmdb
 
     private function http(): PendingRequest
     {
-        $token = config('possum.tmdb_token');
+        $token = config('hoot.tmdb_token');
 
         if (blank($token)) {
             throw new RuntimeException('There is no TMDB key. Add TMDB_TOKEN to .env.');

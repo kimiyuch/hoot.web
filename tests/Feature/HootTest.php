@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
 use Tests\TestCase;
 
-class PossumTest extends TestCase
+class HootTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -30,7 +30,7 @@ class PossumTest extends TestCase
         Carbon::setTestNow('2026-11-05 12:00:00');
         Sleep::fake();
         Http::preventStrayRequests();
-        config(['possum.timezone' => 'Europe/Zurich', 'possum.tmdb_token' => null]);
+        config(['hoot.timezone' => 'Europe/Zurich', 'hoot.tmdb_token' => null]);
     }
 
     private function tvmazeShow(array $episodes): array
@@ -66,19 +66,19 @@ class PossumTest extends TestCase
         $this->assertSame(3, Episode::count());
         $this->assertSame('Apple TV+', Show::first()->channel);
 
-        $this->get('/')->assertOk()
+        $this->get('/for-you')->assertOk()
             ->assertSeeInOrder(['Up next', 'Night Shift', 'S01E02', 'The Long Night', 'Tuesday 10 Nov, 03:00'])
             ->assertSeeInOrder(['Tue 10 Nov', 'Night Shift', 'S01E02', '03:00', 'Just released', 'Night Shift', 'S01E01'])
             ->assertDontSee('TBA');
 
-        $this->withUnencryptedCookie('tz', 'America/New_York')->get('/')
+        $this->withUnencryptedCookie('tz', 'America/New_York')->get('/for-you')
             ->assertSee('Monday 9 Nov, 21:00')
             ->assertSeeInOrder(['Mon 9 Nov', 'The Long Night', '21:00']);
     }
 
     public function test_an_unknown_timezone_cookie_falls_back_to_the_configured_one(): void
     {
-        $this->withUnencryptedCookie('tz', 'Mars/Olympus')->get('/')
+        $this->withUnencryptedCookie('tz', 'Mars/Olympus')->get('/for-you')
             ->assertSee('data-timezone="Europe/Zurich"', false);
     }
 
@@ -89,7 +89,7 @@ class PossumTest extends TestCase
             $show->episodes()->create(['tvmaze_id' => $number, 'season' => 2, 'number' => $number, 'airs_at' => '2026-11-07 08:00:00']);
         }
 
-        $this->get('/')->assertSee('S02E01–E08')->assertSee('all 8 episodes');
+        $this->get('/for-you')->assertSee('S02E01–E08')->assertSee('all 8 episodes');
     }
 
     public function test_unfollowing_a_show_removes_its_episodes(): void
@@ -105,7 +105,7 @@ class PossumTest extends TestCase
 
     public function test_following_a_movie_keeps_its_earliest_cinema_and_digital_release_anywhere(): void
     {
-        config(['possum.tmdb_token' => 'abc123']);
+        config(['hoot.tmdb_token' => 'abc123']);
         Http::fake(['api.themoviedb.org/3/movie/550*' => Http::response([
             'id' => 550, 'title' => 'Owl Light', 'poster_path' => '/owl.jpg', 'release_date' => '2026-11-20',
             'release_dates' => ['results' => [
@@ -130,12 +130,12 @@ class PossumTest extends TestCase
         $this->assertSame('AU', $movie->cinema_country);
         $this->assertSame('2026-12-10', $movie->digital_date->toDateString());
 
-        $this->get('/')->assertSeeInOrder(['Tue 10 Nov', 'Owl Light', 'In cinemas', 'first in AU', 'Thu 10 Dec', 'Owl Light', 'Digital release']);
+        $this->get('/for-you')->assertSeeInOrder(['Tue 10 Nov', 'Owl Light', 'In cinemas', 'first in AU', 'Thu 10 Dec', 'Owl Light', 'Digital release']);
     }
 
     public function test_a_long_tmdb_token_is_sent_as_a_bearer_token(): void
     {
-        config(['possum.tmdb_token' => $token = str_repeat('x', 200)]);
+        config(['hoot.tmdb_token' => $token = str_repeat('x', 200)]);
         Http::fake(['api.themoviedb.org/*' => Http::response(['results' => []])]);
 
         $this->get('/search?q=owl')->assertOk();
@@ -156,7 +156,7 @@ class PossumTest extends TestCase
             ->assertSee('Movies need a TMDB key');
 
         // The search lightbox only gets the results, without the page around them.
-        $this->get('/search?q=night', ['X-Possum-Partial' => '1'])->assertOk()
+        $this->get('/search?q=night', ['X-Hoot-Partial' => '1'])->assertOk()
             ->assertSeeInOrder(['Shows', 'Night Shift', 'Following', 'Night Court', 'Show all results'])
             ->assertDontSee('<html', false);
     }
@@ -178,7 +178,7 @@ class PossumTest extends TestCase
             ->assertHeader('Content-Type', 'text/calendar; charset=utf-8')
             ->getContent();
 
-        $this->assertStringContainsString("UID:episode-7@possum.kimiyu.ch\r\n", $ics);
+        $this->assertStringContainsString("UID:episode-7@hoot.kimiyu.ch\r\n", $ics);
         $this->assertStringContainsString("DTSTART:20261110T020000Z\r\nDTEND:20261110T025000Z\r\nSUMMARY:Night Shift S01E02\r\n", $ics);
         $this->assertStringContainsString('DESCRIPTION:Dawn\, again\nHBO', $ics);
         $this->assertStringContainsString("DTSTART;VALUE=DATE:20261210\r\nDTEND;VALUE=DATE:20261211\r\nSUMMARY:Owl Light (digital)", $ics);
@@ -210,7 +210,7 @@ class PossumTest extends TestCase
             ]),
         ]);
 
-        $this->artisan('possum:refresh')
+        $this->artisan('hoot:refresh')
             ->expectsOutput('Refreshed 1 shows and 0 movies.')
             ->expectsOutput('Found 4 show premieres and 0 upcoming movies.')
             ->assertSuccessful();
@@ -237,7 +237,7 @@ class PossumTest extends TestCase
 
     public function test_pages_render_without_anything_followed(): void
     {
-        $this->get('/')->assertOk()->assertSee('Nothing followed yet');
+        $this->get('/for-you')->assertOk()->assertSee('Nothing followed yet');
         $this->get('/discover')->assertOk()->assertSee('No premieres loaded yet');
         $this->get('/search')->assertOk();
         $this->get('/search')->assertOk();
@@ -246,7 +246,7 @@ class PossumTest extends TestCase
 
     public function test_browse_asks_tmdb_for_the_service_in_the_region_and_shows_ratings(): void
     {
-        config(['possum.tmdb_token' => 'abc123']);
+        config(['hoot.tmdb_token' => 'abc123']);
         $this->user->movies()->create(['tmdb_id' => 1, 'title' => 'Followed Film']);
         Http::fake([
             'api.themoviedb.org/3/watch/providers/*' => Http::response(['results' => [['provider_id' => 8, 'logo_path' => '/netflix.png']]]),
@@ -271,7 +271,7 @@ class PossumTest extends TestCase
 
     public function test_a_show_from_browse_is_followed_through_tvmaze(): void
     {
-        config(['possum.tmdb_token' => 'abc123']);
+        config(['hoot.tmdb_token' => 'abc123']);
         Http::fake([
             'api.themoviedb.org/3/tv/292741/external_ids*' => Http::response(['tvdb_id' => 4242, 'imdb_id' => 'tt26598805']),
             'api.tvmaze.com/lookup/shows*' => Http::response(['id' => 82]),
@@ -286,7 +286,7 @@ class PossumTest extends TestCase
 
     public function test_the_old_pages_redirect_to_for_you_and_discover(): void
     {
-        $this->get('/following')->assertRedirect('/');
+        $this->get('/following')->assertRedirect('/for-you');
         $this->get('/premieres?tab=recent')->assertRedirect(route('discover', ['when' => 'new']));
         $this->get('/premieres?tab=movies')->assertRedirect(route('discover', ['when' => 'soon', 'type' => 'movie']));
         $this->get('/browse?service=netflix')->assertRedirect(route('discover', ['when' => 'any', 'type' => 'movie', 'service' => 'netflix']));
@@ -296,7 +296,7 @@ class PossumTest extends TestCase
     {
         $this->user->movies()->create(['tmdb_id' => 1, 'title' => 'Owl Light']);
 
-        $this->get('/')->assertOk()
+        $this->get('/for-you')->assertOk()
             ->assertSeeInOrder(['Following', '0 shows · 1 movie', 'Owl Light', 'Unfollow', 'In your calendar'])
             ->assertSee('webcal://', false);
     }

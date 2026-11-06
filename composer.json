@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "kimiyuch/possum.web",
+    "name": "kimiyuch/hoot.web",
     "type": "project",
-    "description": "Possum: when the movies and shows I follow come out.",
+    "description": "Hoot: when the movies and shows I follow come out.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {

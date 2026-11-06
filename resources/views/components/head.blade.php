@@ -1,8 +1,8 @@
-@props(['title' => null, 'description' => 'Possum keeps watch over the shows and movies you follow: every new episode and release, on every service, in your timezone.', 'index' => false])
+@props(['title' => null, 'description' => 'Hoot keeps watch over the shows and movies you follow: every new episode and release, on every service, in your timezone.', 'index' => false])
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>{{ $title ?? 'Possum' }}</title>
+<title>{{ $title ?? 'Hoot' }}</title>
 <meta name="description" content="{{ $description }}">
 @unless ($index)
     <meta name="robots" content="noindex, nofollow">
