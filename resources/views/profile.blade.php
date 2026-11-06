@@ -33,6 +33,10 @@
                             <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-3.5 text-white/60"><path d="M13.49 3.32a1.75 1.75 0 0 0-2.47 0L4.9 9.44a2 2 0 0 0-.5.84l-.73 2.56a.5.5 0 0 0 .62.62l2.56-.73a2 2 0 0 0 .84-.5l6.12-6.12a1.75 1.75 0 0 0 0-2.47l-.32-.32Z"/></svg>
                             Edit profile
                         </a>
+                        <form method="post" action="{{ route('logout') }}" class="-ml-2">
+                            @csrf
+                            <button type="submit" class="rounded-lg px-2.5 py-1 text-sm/6 font-medium text-white/55 hover:bg-white/5 hover:text-white">Log out</button>
+                        </form>
                     @endif
                 </div>
                 <p class="mt-1 flex flex-wrap items-center gap-x-2 text-base/6 text-white/50">
@@ -59,18 +63,12 @@
                 @endunless
             </div>
             @if ($own)
-                <div class="flex items-center gap-2 self-start sm:self-center">
-                    @if ($requestCount)
-                        <a href="{{ route('settings') }}#requests" class="flex items-center gap-2 rounded-lg px-3.5 py-2 text-base/6 font-medium text-white/80 hover:bg-white/5 hover:text-white sm:text-sm/6">
-                            <span class="size-2 rounded-full bg-calendar-400" aria-hidden="true"></span>
-                            {{ trans_choice(':count follow request|:count follow requests', $requestCount) }}
-                        </a>
-                    @endif
-                    <form method="post" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="rounded-lg px-3.5 py-2 text-base/6 font-medium text-white/55 hover:bg-white/5 hover:text-white sm:text-sm/6">Log out</button>
-                    </form>
-                </div>
+                @if ($requestCount)
+                    <a href="{{ route('settings') }}#requests" class="flex items-center gap-2 self-start rounded-lg px-3.5 py-2 text-base/6 font-medium text-white/80 hover:bg-white/5 hover:text-white sm:self-center sm:text-sm/6">
+                        <span class="size-2 rounded-full bg-calendar-400" aria-hidden="true"></span>
+                        {{ trans_choice(':count follow request|:count follow requests', $requestCount) }}
+                    </a>
+                @endif
             @else
                 <div class="self-start sm:self-center">
                     <livewire:person-actions :user-id="$user->id" context="profile" />

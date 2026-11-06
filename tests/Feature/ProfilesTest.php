@@ -38,7 +38,7 @@ class ProfilesTest extends TestCase
             ->assertSee('Pip’s profile is private.')->assertDontSee('Night Shift');
 
         $this->actingAs($pip)->get('/@pip')->assertOk()
-            ->assertSee('Night Shift')->assertSee('Edit profile')->assertSee('Log out');
+            ->assertSee('Night Shift')->assertSee('Edit profile')->assertSee('Log out')->assertDontSee('aria-label="Follow @', false);
     }
 
     public function test_unknown_profiles_are_not_found_and_profiles_need_an_account(): void
