@@ -29,22 +29,34 @@
                             Private
                         </span>
                     @endif
+                    @if ($followsYou)
+                        <span class="rounded-full bg-white/8 px-2 text-xs/5 text-white/60">Follows you</span>
+                    @endif
                     @if ($visible)
                         <span aria-hidden="true">·</span>
                         <span>{{ $counts }}</span>
                     @endif
                 </p>
-                @if ($user->bio)
+                @if ($user->bio && ! $blockedByYou)
                     <p class="mt-3 max-w-[60ch] text-base/7 text-pretty text-white/75">{{ $user->bio }}</p>
                 @endif
+                @unless ($blockedByYou)
+                    <x-people-counts :user="$user" :followers="$followerCount" :following="$followingCount" :links="$visible" class="mt-3" />
+                @endunless
             </div>
             @if ($own)
                 <a href="{{ route('settings') }}#profile" class="self-start rounded-lg bg-white/8 px-3.5 py-2 text-base/6 font-medium hover:bg-white/12 sm:self-center sm:text-sm/6">Edit profile</a>
+            @else
+                <div class="self-start sm:self-center">
+                    <livewire:person-actions :user-id="$user->id" context="profile" />
+                </div>
             @endif
         </header>
 
-        @if (! $visible)
-            <x-empty-state class="mt-16">{{ $user->name }}’s profile is private.</x-empty-state>
+        @if ($blockedByYou)
+            <x-empty-state class="mt-16">You blocked {{ '@'.$user->username }}. You don’t see each other on Hoot, and neither of you can follow the other.</x-empty-state>
+        @elseif (! $visible)
+            <x-empty-state class="mt-16">{{ $user->name }}’s profile is private. Following private accounts comes later.</x-empty-state>
         @else
             {{-- Favourites: the first four big, the rest smaller. --}}
             @foreach ($favourites as $heading => $tiles)

@@ -16,7 +16,10 @@ class SettingsController extends Controller
 {
     public function edit(Request $request): View
     {
-        return view('settings', ['user' => $request->user()]);
+        return view('settings', [
+            'user' => $request->user(),
+            'blocked' => $request->user()->blocked()->orderByPivot('created_at', 'desc')->get(),
+        ]);
     }
 
     public function resetCalendar(Request $request): RedirectResponse

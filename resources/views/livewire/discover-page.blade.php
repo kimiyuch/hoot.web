@@ -3,7 +3,7 @@
     $any = $filters['when'] === 'any';
     $serviceName = $filters['service'] ? \App\Services\StreamingServices::name($filters['service']) : null;
 
-    [$heading, $intro] = match ($filters['when']) {
+    [$heading, $intro] = $filters['type'] === 'people' ? ['People', 'Find people who watch what you watch, and follow them to see what they follow.'] : match ($filters['when']) {
         'soon' => $isTv
             ? ['Shows premiering soon', 'New shows and new seasons in the next '.\App\Services\Premieres::DAYS_AHEAD.' days'.($serviceName ? ' on '.$serviceName : ', on every service').', most popular first.']
             : ['Movies coming out', 'Popular movies with a cinema or digital release still to come'.($serviceName ? ', on '.$serviceName : '').'.'],
@@ -46,7 +46,9 @@
                 </button>
             </div>
 
-            @if ((! $isTv || $any) && ! $moviesEnabled)
+            @if ($filters['type'] === 'people')
+                @include('livewire.partials.discover-people')
+            @elseif ((! $isTv || $any) && ! $moviesEnabled)
                 <x-empty-state class="mt-8">This needs a TMDB key. Add TMDB_TOKEN to .env.</x-empty-state>
             @elseif ($error)
                 <x-empty-state class="mt-8">{{ $error }}</x-empty-state>

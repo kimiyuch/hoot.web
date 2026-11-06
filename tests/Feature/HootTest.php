@@ -72,7 +72,7 @@ class HootTest extends TestCase
         $this->get('/for-you')->assertOk()
             ->assertSeeInOrder(['Up next', 'Night Shift', 'S01E02', 'The Long Night', 'Tuesday 10 Nov, 03:00'])
             ->assertSeeInOrder(['Tue 10 Nov', 'Night Shift', 'S01E02', '03:00', 'Just released', 'Night Shift', 'S01E01'])
-            ->assertDontSee('TBA');
+            ->assertDontSeeText('TBA');
 
         $this->withUnencryptedCookie('tz', 'America/New_York')->get('/for-you')
             ->assertSee('Monday 9 Nov, 21:00')

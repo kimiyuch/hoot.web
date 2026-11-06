@@ -32,7 +32,7 @@
     <nav aria-labelledby="{{ $id }}-what">
         <h3 id="{{ $id }}-what" class="{{ $label }}">What</h3>
         <ul role="list" class="mt-2 flex flex-col gap-0.5">
-            @foreach (['tv' => 'Shows', 'movie' => 'Movies'] as $type => $typeLabel)
+            @foreach (['tv' => 'Shows', 'movie' => 'Movies', 'people' => 'People'] as $type => $typeLabel)
                 <li>
                     <a href="{{ $discover->url(['type' => $type, 'service' => '', 'page' => 1]) }}" wire:click.prevent="choose('type', '{{ $type }}')" class="flex items-center rounded-lg px-3 py-1.5 text-base/6 sm:text-sm/6 {{ $linkClass($filters['type'] === $type) }}" @if ($filters['type'] === $type) aria-current="page" @endif>
                         {{ $typeLabel }}
@@ -42,18 +42,20 @@
         </ul>
     </nav>
 
-    <nav aria-labelledby="{{ $id }}-when">
-        <h3 id="{{ $id }}-when" class="{{ $label }}">When</h3>
-        <ul role="list" class="mt-2 flex flex-col gap-0.5">
-            @foreach ($whens as $when => $whenLabel)
-                <li>
-                    <a href="{{ $discover->url(['when' => $when, 'service' => '', 'page' => 1]) }}" wire:click.prevent="choose('when', '{{ $when }}')" class="flex items-center rounded-lg px-3 py-1.5 text-base/6 sm:text-sm/6 {{ $linkClass($filters['when'] === $when) }}" @if ($filters['when'] === $when) aria-current="page" @endif>
-                        {{ $whenLabel }}
-                    </a>
-                </li>
-            @endforeach
-        </ul>
-    </nav>
+    @if ($filters['type'] !== 'people')
+        <nav aria-labelledby="{{ $id }}-when">
+            <h3 id="{{ $id }}-when" class="{{ $label }}">When</h3>
+            <ul role="list" class="mt-2 flex flex-col gap-0.5">
+                @foreach ($whens as $when => $whenLabel)
+                    <li>
+                        <a href="{{ $discover->url(['when' => $when, 'service' => '', 'page' => 1]) }}" wire:click.prevent="choose('when', '{{ $when }}')" class="flex items-center rounded-lg px-3 py-1.5 text-base/6 sm:text-sm/6 {{ $linkClass($filters['when'] === $when) }}" @if ($filters['when'] === $when) aria-current="page" @endif>
+                            {{ $whenLabel }}
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </nav>
+    @endif
 
     @if ($any)
         <form method="get" action="{{ route('discover') }}" class="flex flex-col gap-5">

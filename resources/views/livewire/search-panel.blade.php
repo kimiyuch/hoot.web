@@ -1,6 +1,6 @@
 <div>
     <form action="{{ route('search') }}" method="get" role="search" class="grid grid-cols-1 border-b border-white/8">
-        <input type="search" name="q" data-search-input wire:model.live.debounce.250ms="query" autocomplete="off" aria-label="Find a show or movie" placeholder="Find a show or movie"
+        <input type="search" name="q" data-search-input wire:model.live.debounce.250ms="query" autocomplete="off" aria-label="Find a show, movie or person" placeholder="Find a show, movie or person"
             class="col-start-1 row-start-1 bg-transparent py-4 pr-16 pl-12 text-base text-white placeholder:text-white/35 focus:outline-none [&::-webkit-search-cancel-button]:hidden">
         <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 ml-4 size-5 self-center text-white/35"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.45 4.39l3.08 3.08a.75.75 0 1 1-1.06 1.06l-3.08-3.08A7 7 0 0 1 2 9Z" clip-rule="evenodd"/></svg>
         <button type="button" data-dialog-close class="col-start-1 row-start-1 mr-3 self-center justify-self-end rounded-md px-1.5 py-0.5 text-xs/5 font-medium text-white/45 inset-ring inset-ring-white/10 hover:text-white">Esc</button>
@@ -12,8 +12,8 @@
         @endforeach
 
         @if ($groups === null)
-            <p class="px-3 py-6 text-center text-sm/6 text-white/40">Search shows on TVmaze and movies on TMDB.</p>
-        @elseif (empty($groups))
+            <p class="px-3 py-6 text-center text-sm/6 text-white/40">Search shows on TVmaze, movies on TMDB, and people on Hoot (start with @ for just people).</p>
+        @elseif (empty($groups) && $people->isEmpty())
             <p class="px-3 py-6 text-center text-sm/6 text-white/45">Nothing found for “{{ $term }}”.</p>
         @else
             @foreach ($groups as $label => $items)
@@ -40,6 +40,28 @@
                     </ul>
                 </section>
             @endforeach
+
+            @if ($people->isNotEmpty())
+                <section wire:key="group-people" aria-label="People" class="py-2 first:pt-0">
+                    <h3 class="px-3 pb-1 text-xs/6 font-medium text-white/40">People</h3>
+                    <ul role="list">
+                        @foreach ($people as $person)
+                            <li wire:key="person-{{ $person->id }}" class="relative flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-white/5">
+                                <x-avatar :user="$person" size="sm" />
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm/5 font-medium">
+                                        <a href="{{ $person->profileUrl() }}" class="before:absolute before:inset-0">{{ $person->name }}</a>
+                                    </p>
+                                    <p class="truncate text-sm/5 text-white/45">{{ '@'.$person->username }}</p>
+                                </div>
+                                <div class="relative shrink-0">
+                                    <livewire:person-actions :key="'search-person-'.$person->id" :user-id="$person->id" />
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </section>
+            @endif
 
             <a href="{{ route('search', ['q' => $term]) }}" class="mt-1 flex items-center justify-center rounded-lg px-3 py-2 text-sm/6 font-medium text-white/55 hover:bg-white/5 hover:text-white">
                 Show all results <span aria-hidden="true" class="ml-1">→</span>

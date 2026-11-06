@@ -20,7 +20,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'username'])->group(function () {
-    Route::get('/@{user:username}', [ProfileController::class, 'show'])->where('user', '[a-z0-9_]+')->name('profile');
+    Route::controller(ProfileController::class)->where(['user' => '[a-z0-9_]+'])->group(function () {
+        Route::get('/@{user:username}', 'show')->name('profile');
+        Route::get('/@{user:username}/followers', 'followers')->name('profile.followers');
+        Route::get('/@{user:username}/following', 'following')->name('profile.following');
+    });
 
     Route::controller(HootController::class)->group(function () {
         Route::get('/for-you', 'forYou')->name('for-you');

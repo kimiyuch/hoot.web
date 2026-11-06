@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 use Livewire\Component;
 
 /**
- * Inside the search lightbox: results load as you type, and following or favouriting keeps it open.
+ * Inside the search lightbox: shows, movies and people load as you type, and following or favouriting keeps it open.
  * The <dialog> around it is plain Blade, opened and closed by app.js.
  */
 class SearchPanel extends Component
@@ -18,12 +18,16 @@ class SearchPanel extends Component
     public function render(Search $search): View
     {
         $term = trim($this->query);
-        $results = mb_strlen($term) >= 2 ? $search->run($term) : null;
+        $searching = mb_strlen($term) >= 2;
+        // "@pip" only looks for people.
+        $results = $searching && ! str_starts_with($term, '@') ? $search->run($term) : null;
+        $people = $searching ? $search->people(auth()->user(), $term) : collect();
 
         return view('livewire.search-panel', [
             'term' => $term,
             'searchErrors' => $results['errors'] ?? [],
-            'groups' => $results ? $this->groups($results) : null,
+            'groups' => $searching ? ($results ? $this->groups($results) : []) : null,
+            'people' => $people,
         ]);
     }
 

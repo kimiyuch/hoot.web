@@ -37,6 +37,26 @@
             </div>
         </section>
 
+        <section id="blocked" aria-labelledby="blocked-title" class="{{ $section }} scroll-mt-24">
+            <div>
+                <h2 id="blocked-title" class="font-display text-lg font-semibold tracking-tight">Blocked people</h2>
+                <p class="{{ $intro }}">You don’t see each other’s profiles, lists or search results, and neither can follow the other. Block someone from the menu on their profile. They aren’t told.</p>
+            </div>
+            @if ($blocked->isEmpty())
+                <p class="rounded-lg px-3 py-3 text-sm/6 text-white/40 inset-ring inset-ring-white/5 lg:self-start">You haven’t blocked anyone.</p>
+            @else
+                <ul role="list" class="divide-y divide-white/5 lg:-mt-4">
+                    @foreach ($blocked as $person)
+                        <x-person-row :person="$person">
+                            <x-slot:actions>
+                                <livewire:person-actions :key="'blocked-'.$person->id" :user-id="$person->id" context="blocked" />
+                            </x-slot:actions>
+                        </x-person-row>
+                    @endforeach
+                </ul>
+            @endif
+        </section>
+
         <section aria-labelledby="password" class="{{ $section }}">
             <div>
                 <h2 id="password" class="font-display text-lg font-semibold tracking-tight">Password</h2>

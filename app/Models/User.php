@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -48,10 +49,70 @@ class User extends Authenticatable implements MustVerifyEmail
         return Str::upper(Str::substr($this->name, 0, 1));
     }
 
-    /** Whether $viewer may see this profile's library: always on public profiles and on your own. */
+    /**
+     * Whether $viewer may see this profile's library and lists: on public profiles, on your own, and on a
+     * private one you follow. Never across a block.
+     */
     public function profileVisibleTo(?User $viewer): bool
     {
-        return ! $this->is_private || $viewer?->is($this);
+        if ($viewer?->is($this)) {
+            return true;
+        }
+
+        if ($viewer && $this->blocksEitherWay($viewer)) {
+            return false;
+        }
+
+        return ! $this->is_private || ($viewer && $this->isFollowedBy($viewer));
+    }
+
+    /** The people you follow (accepted follows only). */
+    public function following(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'followed_id')
+            ->withPivot('accepted_at')->withTimestamps()->wherePivotNotNull('accepted_at');
+    }
+
+    /** The people who follow you (accepted follows only). */
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'follows', 'followed_id', 'follower_id')
+            ->withPivot('accepted_at')->withTimestamps()->wherePivotNotNull('accepted_at');
+    }
+
+    /** The people you blocked. */
+    public function blocked(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'blocks', 'blocker_id', 'blocked_id')->withPivot('created_at');
+    }
+
+    public function isFollowing(User $user): bool
+    {
+        return $this->following()->whereKey($user->id)->exists();
+    }
+
+    public function isFollowedBy(User $user): bool
+    {
+        return $user->isFollowing($this);
+    }
+
+    public function hasBlocked(User $user): bool
+    {
+        return $this->blocked()->whereKey($user->id)->exists();
+    }
+
+    /** Whether one of the two blocked the other. */
+    public function blocksEitherWay(User $user): bool
+    {
+        return $this->hasBlocked($user) || $user->hasBlocked($this);
+    }
+
+    /** Leaves out everyone $viewer blocked or was blocked by, and anyone without a username yet. */
+    public function scopeVisibleTo(Builder $query, User $viewer): void
+    {
+        $query->whereNotNull('users.username')
+            ->whereNotIn('users.id', fn ($blocks) => $blocks->select('blocked_id')->from('blocks')->where('blocker_id', $viewer->id))
+            ->whereNotIn('users.id', fn ($blocks) => $blocks->select('blocker_id')->from('blocks')->where('blocked_id', $viewer->id));
     }
 
     /** Every show in your library: followed, a favourite or both. */

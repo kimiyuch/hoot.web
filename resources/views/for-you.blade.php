@@ -258,6 +258,25 @@
                     </ul>
                 </section>
 
+                @if ($peopleSuggestions !== null)
+                    <section aria-labelledby="find-people" class="border-t border-white/5 pt-8">
+                        <h2 id="find-people" class="font-display text-lg font-semibold tracking-tight">Find people</h2>
+                        <p class="mt-1 text-base/7 text-pretty text-white/50 sm:text-sm/6">Follow people who watch what you watch, and see what they follow.</p>
+                        @if ($peopleSuggestions->isNotEmpty())
+                            <ul role="list" class="mt-2 divide-y divide-white/5">
+                                @foreach ($peopleSuggestions as $person)
+                                    <x-person-row :person="$person" :meta="trans_choice(':count in common|:count in common', $person->shared)">
+                                        <x-slot:actions>
+                                            <livewire:person-actions :key="'for-you-'.$person->id" :user-id="$person->id" />
+                                        </x-slot:actions>
+                                    </x-person-row>
+                                @endforeach
+                            </ul>
+                        @endif
+                        <a href="{{ route('discover', ['type' => 'people']) }}" class="mt-3 inline-block text-sm/6 font-semibold text-white/70 hover:text-white">{{ $peopleSuggestions->isNotEmpty() ? 'More people' : 'Find people' }} <span aria-hidden="true">→</span></a>
+                    </section>
+                @endif
+
                 <section id="calendar-feed" aria-labelledby="calendar-feed-title" class="border-t border-white/5 pt-8">
                     <h2 id="calendar-feed-title" class="font-display text-lg font-semibold tracking-tight">In your calendar</h2>
                     <p class="mt-1 text-base/7 text-pretty text-white/50 sm:text-sm/6">Subscribe once and every episode and release shows up in Apple Calendar or Google Calendar (Other calendars → From URL). It updates by itself. The link is yours alone; you can make a new one in <a href="{{ route('settings') }}#calendar" class="text-white/70 underline decoration-white/20 underline-offset-2 hover:text-white">Settings</a>.</p>

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Browse;
 use App\Services\Calendar;
 use App\Services\Library;
+use App\Services\People;
 use App\Services\Premieres;
 use App\Services\Search;
 use App\Services\StreamingServices;
@@ -30,7 +31,7 @@ class HootController extends Controller
     }
 
     /** Up next, the timeline by day, what just came out and everything you follow. */
-    public function forYou(Request $request, Timeline $timeline, StreamingServices $services): View
+    public function forYou(Request $request, Timeline $timeline, StreamingServices $services, People $people): View
     {
         $user = $request->user();
         $timezone = Timezone::for($request);
@@ -56,6 +57,8 @@ class HootController extends Controller
                 ->sortBy(fn (Show $show) => [$show->nextEpisode ? 0 : 1, $show->nextEpisode?->airs_at?->getTimestamp() ?? 0, $show->name])
                 ->values(),
             'movies' => $user->movies()->orderBy('title')->get(),
+            // Until you follow someone: a few people to start with.
+            'peopleSuggestions' => $user->following()->exists() ? null : $people->suggestions($user, 3),
         ]);
     }
 
@@ -67,7 +70,8 @@ class HootController extends Controller
     {
         $request->validate([
             'when' => [Rule::in(['soon', 'new', 'any'])],
-            'type' => [Rule::in(['movie', 'tv'])],
+            'type' => [Rule::in(['movie', 'tv', 'people'])],
+            'q' => ['nullable', 'string', 'max:100'],
             'service' => [Rule::in(array_keys(StreamingServices::all()))],
             'region' => [Rule::in(array_keys(config('hoot.regions')))],
             'from' => ['integer', 'between:1950,'.now()->year],
@@ -82,10 +86,13 @@ class HootController extends Controller
     public function search(Request $request, Search $search, Tmdb $tmdb): View
     {
         $query = trim((string) $request->query('q'));
-        $results = $search->run($query);
+        $onlyPeople = str_starts_with($query, '@');
+        $results = $search->run($onlyPeople ? '' : $query);
 
         return view('search', [
             'query' => $query,
+            'onlyPeople' => $onlyPeople,
+            'people' => $search->people($request->user(), $query, 24),
             'shows' => $results['shows'],
             'movies' => $results['movies'],
             'searchErrors' => $results['errors'],

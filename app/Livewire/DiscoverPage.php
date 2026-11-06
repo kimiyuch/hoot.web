@@ -3,7 +3,9 @@
 namespace App\Livewire;
 
 use App\Services\Browse;
+use App\Services\People;
 use App\Services\Premieres;
+use App\Services\Search;
 use App\Services\StreamingServices;
 use App\Services\Tmdb;
 use App\Timezone;
@@ -17,6 +19,7 @@ use Throwable;
 /**
  * Discover: premieres and the TMDB catalog, with filters that apply in place and keep the URL in step.
  * "When" picks the source: soon and new come from the premieres that hoot:refresh builds, "any" asks TMDB discover.
+ * The type "people" is different: people to follow (suggestions, popular, new) and a search by name.
  * Empty values in the URL mean the default, so a plain /discover stays plain.
  */
 class DiscoverPage extends Component
@@ -46,6 +49,10 @@ class DiscoverPage extends Component
 
     #[Url(except: 1)]
     public int $page = 1;
+
+    /** The name search in People. */
+    #[Url(except: '')]
+    public string $q = '';
 
     public function mount(): void
     {
@@ -77,10 +84,29 @@ class DiscoverPage extends Component
         $this->js('window.scrollTo({ top: 0, behavior: "smooth" })');
     }
 
+    /** The People search box, as you type. */
+    public function updatedQ(): void
+    {
+        $this->normalize();
+    }
+
     public function render(Premieres $premieres, Browse $browse, Tmdb $tmdb, StreamingServices $services): View
     {
         $user = auth()->user();
         $filters = $this->filters();
+
+        if ($filters['type'] === 'people') {
+            return view('livewire.discover-page', $this->people($user, $filters) + [
+                'filters' => $filters,
+                'moviesEnabled' => true,
+                'logos' => [],
+                'items' => collect(),
+                'totalPages' => 1,
+                'error' => null,
+                'serviceCounts' => null,
+                'refreshedAt' => null,
+            ]);
+        }
 
         $view = [
             'moviesEnabled' => $tmdb->configured(),
@@ -157,6 +183,7 @@ class DiscoverPage extends Component
             'sort' => $this->sort,
             'min_rating' => $this->minRating,
             'page' => $this->page,
+            'q' => $this->q,
         ];
     }
 
@@ -165,10 +192,15 @@ class DiscoverPage extends Component
     {
         $query = array_merge([
             'when' => $this->when, 'type' => $this->type, 'service' => $this->service, 'region' => $this->region,
-            'from' => $this->from, 'sort' => $this->sort, 'min_rating' => $this->minRating, 'page' => $this->page,
+            'from' => $this->from, 'sort' => $this->sort, 'min_rating' => $this->minRating, 'page' => $this->page, 'q' => $this->q,
         ], $changes);
 
-        $defaults = ['when' => 'soon', 'type' => 'tv', 'service' => '', 'region' => '', 'from' => 0, 'sort' => 'popular', 'min_rating' => 0, 'page' => 1];
+        // Leaving People drops its search.
+        if (($query['type'] ?? null) !== 'people') {
+            $query['q'] = '';
+        }
+
+        $defaults = ['when' => 'soon', 'type' => 'tv', 'service' => '', 'region' => '', 'from' => 0, 'sort' => 'popular', 'min_rating' => 0, 'page' => 1, 'q' => ''];
 
         return route('discover', array_filter($query, fn ($value, $key) => $value !== null && $value !== $defaults[$key], ARRAY_FILTER_USE_BOTH));
     }
@@ -182,7 +214,7 @@ class DiscoverPage extends Component
     private function normalize(): void
     {
         $this->when = in_array($this->when, ['soon', 'new', 'any'], true) ? $this->when : 'soon';
-        $this->type = in_array($this->type, ['tv', 'movie'], true) ? $this->type : 'tv';
+        $this->type = in_array($this->type, ['tv', 'movie', 'people'], true) ? $this->type : 'tv';
         $this->service = array_key_exists($this->service, StreamingServices::all()) ? $this->service : '';
         $this->region = array_key_exists($this->region, config('hoot.regions')) && $this->region !== config('hoot.region') ? $this->region : '';
         $this->from = $this->from >= 1950 && $this->from <= now()->year && $this->from !== self::defaultFrom() ? $this->from : 0;
@@ -190,10 +222,33 @@ class DiscoverPage extends Component
         $this->minRating = array_key_exists($this->minRating, Browse::MIN_RATINGS) ? $this->minRating : 0;
         $this->page = max(1, min($this->page, 500));
 
+        $this->q = $this->type === 'people' ? mb_substr(trim($this->q), 0, 50) : '';
+
+        // People has none of the other filters.
+        if ($this->type === 'people') {
+            [$this->when, $this->service] = ['soon', ''];
+        }
+
         // Only Any time has pages and the extra filters.
         if ($this->when !== 'any') {
             [$this->region, $this->from, $this->sort, $this->minRating, $this->page] = ['', 0, 'popular', 0, 1];
         }
+    }
+
+    /** People to follow, or the people matching the search. */
+    private function people($user, array $filters): array
+    {
+        if ($filters['q'] !== '') {
+            return ['results' => app(Search::class)->people($user, $filters['q'], 30), 'sections' => []];
+        }
+
+        $people = app(People::class);
+
+        return ['results' => null, 'sections' => array_filter([
+            'suggested' => $people->suggestions($user),
+            'popular' => $people->popular($user),
+            'new' => $people->newest($user),
+        ], fn ($people) => $people->isNotEmpty())];
     }
 
     /** The premieres for this type and "when". */
