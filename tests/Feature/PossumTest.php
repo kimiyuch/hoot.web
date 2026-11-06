@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Episode;
 use App\Models\Movie;
 use App\Models\Show;
+use App\Models\User;
 use App\Services\Premieres;
 use App\Services\StreamingServices;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,9 +18,14 @@ class PossumTest extends TestCase
 {
     use RefreshDatabase;
 
+    private User $user;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->user = User::factory()->create();
+        $this->actingAs($this->user);
 
         Carbon::setTestNow('2026-11-05 12:00:00');
         Sleep::fake();
@@ -78,7 +84,7 @@ class PossumTest extends TestCase
 
     public function test_a_season_dropping_at_once_is_one_release(): void
     {
-        $show = Show::create(['tvmaze_id' => 1, 'name' => 'Binge']);
+        $show = $this->user->shows()->create(['tvmaze_id' => 1, 'name' => 'Binge']);
         foreach (range(1, 8) as $number) {
             $show->episodes()->create(['tvmaze_id' => $number, 'season' => 2, 'number' => $number, 'airs_at' => '2026-11-07 08:00:00']);
         }
@@ -88,7 +94,7 @@ class PossumTest extends TestCase
 
     public function test_unfollowing_a_show_removes_its_episodes(): void
     {
-        $show = Show::create(['tvmaze_id' => 1, 'name' => 'Gone']);
+        $show = $this->user->shows()->create(['tvmaze_id' => 1, 'name' => 'Gone']);
         $show->episodes()->create(['tvmaze_id' => 1, 'season' => 1, 'number' => 1, 'airs_at' => '2026-11-07 08:00:00']);
 
         $this->delete("/shows/{$show->id}")->assertRedirect();
@@ -139,7 +145,7 @@ class PossumTest extends TestCase
 
     public function test_search_finds_shows_and_marks_followed_ones(): void
     {
-        Show::create(['tvmaze_id' => 82, 'name' => 'Night Shift']);
+        $this->user->shows()->create(['tvmaze_id' => 82, 'name' => 'Night Shift']);
         Http::fake(['api.tvmaze.com/search/shows*' => Http::response([
             ['score' => 1, 'show' => ['id' => 82, 'name' => 'Night Shift', 'premiered' => '2024-04-01', 'network' => ['name' => 'HBO']]],
             ['score' => 1, 'show' => ['id' => 83, 'name' => 'Night Court', 'premiered' => '1984-01-04', 'network' => ['name' => 'NBC']]],
@@ -164,11 +170,11 @@ class PossumTest extends TestCase
 
     public function test_the_calendar_feed_has_episodes_and_movie_releases(): void
     {
-        $show = Show::create(['tvmaze_id' => 1, 'name' => 'Night Shift', 'channel' => 'HBO']);
+        $show = $this->user->shows()->create(['tvmaze_id' => 1, 'name' => 'Night Shift', 'channel' => 'HBO']);
         $show->episodes()->create(['tvmaze_id' => 7, 'season' => 1, 'number' => 2, 'name' => 'Dawn, again', 'airs_at' => '2026-11-10 02:00:00', 'runtime' => 50]);
-        Movie::create(['tmdb_id' => 550, 'title' => 'Owl Light', 'digital_date' => '2026-12-10', 'digital_country' => 'AU']);
+        $this->user->movies()->create(['tmdb_id' => 550, 'title' => 'Owl Light', 'digital_date' => '2026-12-10', 'digital_country' => 'AU']);
 
-        $ics = $this->get('/calendar.ics')->assertOk()
+        $ics = $this->get(route('calendar', $this->user->calendar_token))->assertOk()
             ->assertHeader('Content-Type', 'text/calendar; charset=utf-8')
             ->getContent();
 
@@ -184,8 +190,8 @@ class PossumTest extends TestCase
 
     public function test_the_refresh_only_reloads_shows_that_changed(): void
     {
-        $fresh = Show::create(['tvmaze_id' => 82, 'name' => 'Fresh', 'refreshed_at' => now()->subHour()]);
-        Show::create(['tvmaze_id' => 90, 'name' => 'Changed', 'refreshed_at' => now()->subDay()]);
+        $fresh = $this->user->shows()->create(['tvmaze_id' => 82, 'name' => 'Fresh', 'refreshed_at' => now()->subHour()]);
+        $this->user->shows()->create(['tvmaze_id' => 90, 'name' => 'Changed', 'refreshed_at' => now()->subDay()]);
 
         Http::fake([
             'api.tvmaze.com/updates/shows*' => Http::response([82 => now()->subDays(2)->getTimestamp(), 90 => now()->subHours(2)->getTimestamp()]),
@@ -241,7 +247,7 @@ class PossumTest extends TestCase
     public function test_browse_asks_tmdb_for_the_service_in_the_region_and_shows_ratings(): void
     {
         config(['possum.tmdb_token' => 'abc123']);
-        Movie::create(['tmdb_id' => 1, 'title' => 'Followed Film']);
+        $this->user->movies()->create(['tmdb_id' => 1, 'title' => 'Followed Film']);
         Http::fake([
             'api.themoviedb.org/3/watch/providers/*' => Http::response(['results' => [['provider_id' => 8, 'logo_path' => '/netflix.png']]]),
             'api.themoviedb.org/3/discover/movie*' => Http::response(['total_pages' => 3, 'results' => [
@@ -288,7 +294,7 @@ class PossumTest extends TestCase
 
     public function test_for_you_lists_what_you_follow_with_the_calendar_feed(): void
     {
-        Movie::create(['tmdb_id' => 1, 'title' => 'Owl Light']);
+        $this->user->movies()->create(['tmdb_id' => 1, 'title' => 'Owl Light']);
 
         $this->get('/')->assertOk()
             ->assertSeeInOrder(['Following', '0 shows · 1 movie', 'Owl Light', 'Unfollow', 'In your calendar'])

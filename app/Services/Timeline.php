@@ -5,11 +5,12 @@ namespace App\Services;
 use App\Models\Episode;
 use App\Models\Movie;
 use App\Models\Show;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
 /**
- * Everything that comes out for the followed shows and movies, as releases sorted by time.
+ * Everything that comes out for the shows and movies someone follows, as releases sorted by time.
  *
  * A release is one of:
  *  - kind "episodes": one or more episodes of a show that come out at the same moment (a whole season dropping at once is one release)
@@ -20,9 +21,10 @@ class Timeline
     /**
      * @return Collection<int, array{kind: string, at: CarbonImmutable, timed: bool, key: string, show?: Show, episodes?: Collection<int, Episode>, movie?: Movie}>
      */
-    public function releases(CarbonImmutable $from, CarbonImmutable $until, string $timezone): Collection
+    public function releases(User $user, CarbonImmutable $from, CarbonImmutable $until, string $timezone): Collection
     {
         $episodes = Episode::with('show')
+            ->whereIn('show_id', $user->shows()->select('shows.id'))
             ->whereBetween('airs_at', [$from->utc(), $until->utc()])
             ->orderBy('airs_at')->orderBy('season')->orderBy('number')
             ->get()
@@ -40,7 +42,7 @@ class Timeline
         $untilDate = $until->setTimezone($timezone)->toDateString();
         $movies = collect();
 
-        foreach (Movie::all() as $movie) {
+        foreach ($user->movies as $movie) {
             foreach (['cinema', 'digital'] as $kind) {
                 $date = $movie->{$kind.'_date'};
                 if ($date && $date->toDateString() >= $fromDate && $date->toDateString() <= $untilDate) {
@@ -67,12 +69,13 @@ class Timeline
      *
      * @return array<string, array<string, Collection>> section title => [Y-m-d => releases]
      */
-    public function sections(string $timezone): array
+    public function sections(User $user, string $timezone): array
     {
         $now = CarbonImmutable::now($timezone);
         $today = $now->startOfDay();
 
         $releases = $this->releases(
+            $user,
             $today->subDays(config('possum.days_back')),
             $today->addDays(config('possum.days_ahead'))->endOfDay(),
             $timezone,

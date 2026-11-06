@@ -1,8 +1,10 @@
 // Tell the server which timezone this browser is in, so release times are shown in local time.
-// The first visit (or after travelling) reloads once with the right timezone.
+// The first visit (or after travelling) reloads once with the right timezone. Only app pages say
+// which timezone they used; the landing and login pages don't show times.
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const pageTimezone = document.documentElement.dataset.timezone;
 
-if (timezone && document.documentElement.dataset.timezone !== timezone) {
+if (timezone && pageTimezone && pageTimezone !== timezone) {
     document.cookie = `tz=${encodeURIComponent(timezone)}; path=/; max-age=31536000; samesite=lax`;
     if (!document.cookie.includes('tz-reloaded=1')) {
         document.cookie = 'tz-reloaded=1; path=/; max-age=60; samesite=lax';
@@ -98,15 +100,6 @@ if (searchDialog) {
     });
 }
 
-// The avatar in the top-left corner fades out once the page is scrolled.
-const avatar = document.querySelector('[data-avatar]');
-
-if (avatar) {
-    const update = () => avatar.toggleAttribute('data-scrolled', window.scrollY > 24);
-    update();
-    window.addEventListener('scroll', update, { passive: true });
-}
-
 // The status toast fades out after 3 seconds.
 const toast = document.querySelector('[data-toast]');
 
@@ -115,4 +108,13 @@ if (toast) {
         toast.toggleAttribute('data-hidden', true);
         toast.addEventListener('transitionend', () => toast.remove(), { once: true });
     }, 3000);
+}
+
+// The header gets its glass strip once the page is scrolled.
+const header = document.querySelector('[data-header]');
+
+if (header) {
+    const update = () => header.toggleAttribute('data-scrolled', window.scrollY > 8);
+    update();
+    window.addEventListener('scroll', update, { passive: true });
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Movie;
 use App\Models\Show;
+use App\Models\User;
 use App\Services\Browse;
 use App\Services\Calendar;
 use App\Services\Library;
@@ -24,10 +25,20 @@ use Throwable;
 
 class PossumController extends Controller
 {
-    public function home(Request $request, Timeline $timeline, StreamingServices $services): View
+    /** The landing page for guests, the For you page for everyone else. */
+    public function home(Request $request, Timeline $timeline, StreamingServices $services): View|RedirectResponse
     {
+        $user = $request->user();
+
+        if (! $user) {
+            return view('welcome');
+        }
+        if (! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
         $timezone = Timezone::for($request);
-        $sections = $timeline->sections($timezone);
+        $sections = $timeline->sections($user, $timezone);
 
         // The first release that isn't out yet, for the big card at the top.
         $next = collect($sections)->except('Just released')->flatten(1)->flatMap(fn ($day) => $day)
@@ -44,11 +55,11 @@ class PossumController extends Controller
             'recent' => $recent,
             'timezone' => $timezone,
             'logos' => $services->logos(),
-            'shows' => Show::with(['nextEpisode', 'episodes' => fn ($query) => $query->orderBy('number')->orderBy('airs_at')])->get()
+            'shows' => $user->shows()->with(['nextEpisode', 'episodes' => fn ($query) => $query->orderBy('number')->orderBy('airs_at')])->get()
                 // Shows with a next episode first, soonest first; then the rest by name.
                 ->sortBy(fn (Show $show) => [$show->nextEpisode ? 0 : 1, $show->nextEpisode?->airs_at?->getTimestamp() ?? 0, $show->name])
                 ->values(),
-            'movies' => Movie::orderBy('title')->get(),
+            'movies' => $user->movies()->orderBy('title')->get(),
         ]);
     }
 
@@ -85,7 +96,7 @@ class PossumController extends Controller
             'moviesEnabled' => $tmdb->configured(),
             'logos' => $services->logos(),
             'timezone' => Timezone::for($request),
-            'followedMovies' => Movie::pluck('tmdb_id')->flip(),
+            'followedMovies' => $request->user()->movies()->pluck('tmdb_id')->flip(),
         ];
 
         if ($filters['when'] === 'any') {
@@ -107,7 +118,7 @@ class PossumController extends Controller
                 'error' => $error,
                 'serviceCounts' => null,
                 'refreshedAt' => null,
-                'followedShows' => Show::whereNotNull('tmdb_id')->pluck('tmdb_id')->flip(),
+                'followedShows' => $request->user()->shows()->whereNotNull('tmdb_id')->pluck('tmdb_id')->flip(),
             ]);
         }
 
@@ -144,7 +155,7 @@ class PossumController extends Controller
             'error' => null,
             'serviceCounts' => $serviceCounts,
             'refreshedAt' => $data['refreshed_at'],
-            'followedShows' => Show::pluck('tvmaze_id')->flip(),
+            'followedShows' => $request->user()->shows()->pluck('tvmaze_id')->flip(),
         ]));
     }
 
@@ -181,8 +192,8 @@ class PossumController extends Controller
             'movies' => $movies,
             'searchErrors' => $errors,
             'moviesEnabled' => $tmdb->configured(),
-            'followedShows' => Show::pluck('tvmaze_id')->flip(),
-            'followedMovies' => Movie::pluck('tmdb_id')->flip(),
+            'followedShows' => $request->user()->shows()->pluck('tvmaze_id')->flip(),
+            'followedMovies' => $request->user()->movies()->pluck('tmdb_id')->flip(),
         ]);
     }
 
@@ -194,7 +205,7 @@ class PossumController extends Controller
         ]);
 
         try {
-            $show = isset($ids['tvmaze_id']) ? $library->followShow($ids['tvmaze_id']) : $library->followTmdbShow($ids['tmdb_id']);
+            $show = isset($ids['tvmaze_id']) ? $library->followShow($request->user(), $ids['tvmaze_id']) : $library->followTmdbShow($request->user(), $ids['tmdb_id']);
         } catch (Throwable $exception) {
             report($exception);
 
@@ -208,9 +219,9 @@ class PossumController extends Controller
         return back()->with('status', "Following {$show->name}.");
     }
 
-    public function unfollowShow(Show $show): RedirectResponse
+    public function unfollowShow(Request $request, Show $show, Library $library): RedirectResponse
     {
-        $show->delete();
+        $library->unfollow($request->user(), $show);
 
         return back()->with('status', "Stopped following {$show->name}.");
     }
@@ -220,7 +231,7 @@ class PossumController extends Controller
         $id = $request->validate(['tmdb_id' => ['required', 'integer', 'min:1']])['tmdb_id'];
 
         try {
-            $movie = $library->followMovie($id);
+            $movie = $library->followMovie($request->user(), $id);
         } catch (Throwable $exception) {
             report($exception);
 
@@ -230,19 +241,22 @@ class PossumController extends Controller
         return back()->with('status', "Following {$movie->title}.");
     }
 
-    public function unfollowMovie(Movie $movie): RedirectResponse
+    public function unfollowMovie(Request $request, Movie $movie, Library $library): RedirectResponse
     {
-        $movie->delete();
+        $library->unfollow($request->user(), $movie);
 
         return back()->with('status', "Stopped following {$movie->title}.");
     }
 
-    public function calendar(Calendar $calendar): Response
+    /** The feed has no login: the secret token in the URL says whose it is. */
+    public function calendar(string $token, Calendar $calendar): Response
     {
-        return response($calendar->ics(), 200, [
+        $user = User::where('calendar_token', $token)->firstOrFail();
+
+        return response($calendar->ics($user), 200, [
             'Content-Type' => 'text/calendar; charset=utf-8',
             'Content-Disposition' => 'inline; filename="possum.ics"',
-            'Cache-Control' => 'public, max-age=900',
+            'Cache-Control' => 'private, max-age=900',
         ]);
     }
 }

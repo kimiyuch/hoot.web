@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Movie;
 use App\Models\Show;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Sleep;
@@ -16,16 +17,22 @@ class Library
 {
     public function __construct(private TvMaze $tvmaze, private Tmdb $tmdb) {}
 
-    public function followShow(int $tvmazeId): Show
+    public function followShow(User $user, int $tvmazeId): Show
     {
-        return $this->syncShow($this->tvmaze->show($tvmazeId));
+        // Already in the catalog and fresh: no need to ask TVmaze again.
+        $show = Show::where('tvmaze_id', $tvmazeId)->where('refreshed_at', '>', now()->subDay())->first()
+            ?? $this->syncShow($this->tvmaze->show($tvmazeId));
+
+        $user->shows()->syncWithoutDetaching([$show->id => ['created_at' => now()]]);
+
+        return $show;
     }
 
     /**
      * Follows a show found on TMDB (Browse), through TVmaze, where the episodes come from.
      * Null if TVmaze doesn't have the show.
      */
-    public function followTmdbShow(int $tmdbId): ?Show
+    public function followTmdbShow(User $user, int $tmdbId): ?Show
     {
         $ids = $this->tmdb->tvExternalIds($tmdbId);
         $show = $this->tvmaze->lookup($ids['tvdb_id'] ?? null, $ids['imdb_id'] ?? null);
@@ -34,16 +41,31 @@ class Library
             return null;
         }
 
-        return tap($this->followShow($show['id']))->update(['tmdb_id' => $tmdbId]);
+        return tap($this->followShow($user, $show['id']))->update(['tmdb_id' => $tmdbId]);
     }
 
-    public function followMovie(int $tmdbId): Movie
+    public function followMovie(User $user, int $tmdbId): Movie
     {
-        return $this->syncMovie($this->tmdb->movie($tmdbId));
+        $movie = Movie::where('tmdb_id', $tmdbId)->where('refreshed_at', '>', now()->subDay())->first()
+            ?? $this->syncMovie($this->tmdb->movie($tmdbId));
+
+        $user->movies()->syncWithoutDetaching([$movie->id => ['created_at' => now()]]);
+
+        return $movie;
+    }
+
+    /** Stops following; once nobody follows it any more, it's removed from the catalog. */
+    public function unfollow(User $user, Show|Movie $item): void
+    {
+        $item instanceof Show ? $user->shows()->detach($item) : $user->movies()->detach($item);
+
+        if (! $item->users()->exists()) {
+            $item->delete();
+        }
     }
 
     /**
-     * Refreshes the shows TVmaze says have changed (and any not refreshed in a week) and all movies.
+     * Refreshes the followed shows TVmaze says have changed (and any not refreshed in a week) and all followed movies.
      *
      * @return array{shows: int, movies: int, failed: list<string>}
      */
@@ -52,7 +74,7 @@ class Library
         $result = ['shows' => 0, 'movies' => 0, 'failed' => []];
         $changed = $all ? [] : $this->tvmaze->updates();
 
-        foreach (Show::all() as $show) {
+        foreach (Show::followed()->get() as $show) {
             $stale = $all
                 || $show->refreshed_at === null
                 || $show->refreshed_at->lt(now()->subWeek())
@@ -75,7 +97,7 @@ class Library
         }
 
         if ($this->tmdb->configured()) {
-            foreach (Movie::all() as $movie) {
+            foreach (Movie::followed()->get() as $movie) {
                 try {
                     $this->syncMovie($this->tmdb->movie($movie->tmdb_id));
                     $result['movies']++;

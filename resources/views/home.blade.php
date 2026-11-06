@@ -258,10 +258,10 @@
 
                 <section id="calendar-feed" aria-labelledby="calendar-feed-title" class="border-t border-white/5 pt-8">
                     <h2 id="calendar-feed-title" class="font-display text-lg font-semibold tracking-tight">In your calendar</h2>
-                    <p class="mt-1 text-base/7 text-pretty text-white/50 sm:text-sm/6">Subscribe once and every episode and release shows up in Apple Calendar or Google Calendar (Other calendars → From URL). It updates by itself.</p>
+                    <p class="mt-1 text-base/7 text-pretty text-white/50 sm:text-sm/6">Subscribe once and every episode and release shows up in Apple Calendar or Google Calendar (Other calendars → From URL). It updates by itself. The link is yours alone; you can make a new one in <a href="{{ route('settings') }}#calendar" class="text-white/70 underline decoration-white/20 underline-offset-2 hover:text-white">Settings</a>.</p>
                     <div class="mt-4 flex items-center gap-2">
-                        <a href="{{ preg_replace('#^https?://#', 'webcal://', route('calendar')) }}" class="rounded-lg bg-white px-3 py-1.5 text-sm/6 font-semibold text-night-950 hover:bg-midnight-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-midnight-400">Subscribe</a>
-                        <button type="button" data-copy="{{ route('calendar') }}" class="rounded-lg bg-white/8 px-3 py-1.5 text-sm/6 font-medium hover:bg-white/12">Copy link</button>
+                        <a href="{{ auth()->user()->calendarSubscribeUrl() }}" class="rounded-lg bg-white px-3 py-1.5 text-sm/6 font-semibold text-night-950 hover:bg-midnight-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-midnight-400">Subscribe</a>
+                        <button type="button" data-copy="{{ auth()->user()->calendarUrl() }}" class="rounded-lg bg-white/8 px-3 py-1.5 text-sm/6 font-medium hover:bg-white/12">Copy link</button>
                     </div>
                 </section>
             </aside>

@@ -2,11 +2,25 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Movie extends Model
 {
     protected $guarded = [];
+
+    /** The people who follow it. */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class);
+    }
+
+    /** Only what someone follows; the rest stays in the catalog but isn't refreshed. */
+    public function scopeFollowed(Builder $query): void
+    {
+        $query->has('users');
+    }
 
     protected function casts(): array
     {

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use Carbon\CarbonImmutable;
 
 /**
@@ -11,7 +12,7 @@ class Calendar
 {
     public function __construct(private Timeline $timeline) {}
 
-    public function ics(): string
+    public function ics(User $user): string
     {
         $now = CarbonImmutable::now('UTC');
         $timezone = config('possum.timezone');
@@ -28,7 +29,7 @@ class Calendar
             'X-PUBLISHED-TTL:PT6H',
         ];
 
-        $releases = $this->timeline->releases($now->subDays(30), $now->addDays(config('possum.days_ahead')), $timezone);
+        $releases = $this->timeline->releases($user, $now->subDays(30), $now->addDays(config('possum.days_ahead')), $timezone);
 
         foreach ($releases as $release) {
             $lines[] = 'BEGIN:VEVENT';

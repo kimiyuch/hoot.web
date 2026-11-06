@@ -7,9 +7,8 @@
             This product uses the TMDB API but is not endorsed or certified by TMDB.
         </p>
         <div class="flex shrink-0 flex-wrap gap-x-6 gap-y-2 text-sm/6 text-white/40">
-            <a href="{{ route('calendar') }}" class="hover:text-white">Calendar feed</a>
             <a href="{{ config('possum.repository_url') }}" target="_blank" rel="noopener" class="hover:text-white">GitHub</a>
-            <a href="https://kimiyu.ch" target="_blank" rel="noopener" class="hover:text-white">kimiyu.ch</a>
+            <span>Possum, made with <span aria-label="love">❤️</span> by <a href="https://kimiyu.ch" target="_blank" rel="noopener" class="text-white/60 hover:text-white">kimiyu.ch</a></span>
         </div>
     </div>
 </footer>

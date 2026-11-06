@@ -1,31 +1,32 @@
 @php
     $links = ['home' => 'For you', 'discover' => 'Discover'];
+    $initial = Str::upper(Str::substr(auth()->user()->name, 0, 1));
+    $onSettings = request()->routeIs('settings');
+    $avatar = 'flex size-9 shrink-0 items-center justify-center rounded-full font-display text-sm font-semibold outline-1 -outline-offset-1 outline-white/10 transition-colors '
+        .($onSettings ? 'bg-white/20 text-white' : 'bg-white/8 text-white/70 hover:bg-white/12 hover:text-white');
+    $kbd = 'rounded-full px-2 font-sans text-xs/5 font-normal text-white/45 inset-ring inset-ring-white/10';
 @endphp
 
-{{-- The avatar sits fixed in the top-left corner, outside the pill, and fades out once you scroll (app.js sets data-scrolled). --}}
-<a href="{{ route('home') }}" aria-label="Homepage" data-avatar class="fixed top-4 left-4 z-50 transition-opacity duration-300 data-scrolled:pointer-events-none data-scrolled:opacity-0 sm:top-5 sm:left-6 lg:left-10">
-    <img src="{{ asset('images/possum-head.svg') }}" alt="" class="size-10">
-</a>
-
-{{-- A small floating pill, centred: the two pages and search. --}}
-<header class="pointer-events-none sticky top-0 z-40 flex justify-center px-4 pt-3 sm:px-6 sm:pt-4 lg:px-10">
-    <div class="pointer-events-auto flex h-12 items-center gap-x-1.25 rounded-full bg-night-900/75 p-1.5 sm:gap-x-2.5 shadow-lg shadow-black/25 inset-ring inset-ring-white/10 backdrop-blur-xl">
-
-        <nav class="flex items-center gap-x-1.25 sm:gap-x-2.5">
+{{-- Open and quiet: the possum and wordmark on the left, the pages as a small segmented control in the middle,
+     search and your initial (Settings) on the right. No surface at the top; a glass strip once you scroll (app.js sets data-scrolled). --}}
+<header data-header class="sticky top-0 z-40 transition-colors duration-300 data-scrolled:bg-night-950/75 data-scrolled:backdrop-blur-xl">
+    <div class="mx-auto grid h-16 max-w-[96rem] grid-cols-[1fr_auto_1fr] items-center gap-x-3 px-4 sm:px-6 lg:px-10">
+        <a href="{{ route('home') }}" aria-label="Homepage" class="flex items-center gap-2.5 justify-self-start font-display text-lg font-semibold tracking-tight">
+            <img src="{{ asset('images/possum-head.svg') }}" alt="" class="size-8">
+            <span class="max-md:hidden">Possum</span>
+        </a>
+        <nav class="flex items-center gap-x-0.5 rounded-full bg-white/5 p-1 inset-ring inset-ring-white/10">
             @foreach ($links as $route => $label)
-                <a href="{{ route($route) }}" @class([
-                    'rounded-full px-4 py-1.5 text-base/6 font-medium whitespace-nowrap transition-colors sm:text-sm/6',
-                    'bg-white/8 text-white' => request()->routeIs($route),
-                    'text-white/55 hover:text-white' => ! request()->routeIs($route),
-                ]) @if (request()->routeIs($route)) aria-current="page" @endif>{{ $label }}</a>
+                <a href="{{ route($route) }}" @class(['rounded-full px-3.5 py-1 text-base/6 font-medium whitespace-nowrap transition-colors sm:text-sm/6 max-sm:px-3', 'bg-white/12 text-white' => request()->routeIs($route), 'text-white/55 hover:text-white' => ! request()->routeIs($route)]) @if (request()->routeIs($route)) aria-current="page" @endif>{{ $label }}</a>
             @endforeach
         </nav>
-
-        {{-- A link, so it still works without JS; app.js opens the lightbox instead. --}}
-        <a href="{{ route('search') }}" data-search-open aria-keyshortcuts="Meta+K Control+K"
-            class="relative flex items-center gap-2 rounded-full py-1.5 pr-1.5 pl-4 text-base/6 font-medium text-white/55 transition-colors hover:text-white max-sm:pr-4 sm:text-sm/6">
-            Search
-            <kbd data-shortcut class="rounded-full px-2 font-sans text-xs/5 font-normal text-white/45 inset-ring inset-ring-white/10 max-sm:hidden">⌘K</kbd>
-        </a>
+        <div class="flex items-center gap-x-1 justify-self-end sm:gap-x-3">
+            <a href="{{ route('search') }}" data-search-open aria-keyshortcuts="Meta+K Control+K" aria-label="Search" class="flex items-center gap-2 rounded-full p-2 text-base/6 font-medium text-white/55 transition-colors hover:text-white sm:px-3 sm:text-sm/6">
+                <x-heroicon-m-magnifying-glass class="size-4 shrink-0 fill-current" />
+                <span class="max-lg:hidden">Search</span>
+                <kbd data-shortcut class="{{ $kbd }} max-lg:hidden">⌘K</kbd>
+            </a>
+            <a href="{{ route('settings') }}" aria-label="Settings" class="{{ $avatar }}" @if ($onSettings) aria-current="page" @endif>{{ $initial }}</a>
+        </div>
     </div>
 </header>
