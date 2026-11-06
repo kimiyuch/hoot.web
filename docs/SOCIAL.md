@@ -51,6 +51,38 @@ Following a show means "tell me about releases"; it says nothing about watching.
 - Optional, bigger step: per-episode tracking (`episode_user`: user_id, episode_id, watched_at). Gives "Pip watched S02E04", progress bars and "next to watch" (which overlaps with the open idea "marking episodes as watched"). Not needed for the first version; season-level or show-level status is enough to start.
 - UI: the Follow button grows a small status menu (Follow → Want to watch / Watching / Watched / Dropped). The "Following" details in For you show and change the status.
 
+### 3b. Favourites, and how they fit with following
+
+Favourites answer a different question than following. They're three separate things a user can say about a show or movie:
+
+| | Means | Typical for | Changes |
+|---|---|---|---|
+| **Follow** | "Tell me when something comes out" | Running shows, upcoming movies | The timeline, the calendar feed, the refresh |
+| **Watch status** | "Where I am with it" | Anything you watch | Your progress, the thread |
+| **Favourite** | "This is part of my taste" | Often finished things: *The Wire*, *Arrival* | Your profile, the thread |
+
+They're independent. *The Wire* can be a favourite without being followed (no new episodes, it would only sit in "Following" doing nothing). *Severance* can be followed and watched and not (yet) a favourite. A heart on something you follow doesn't follow it twice.
+
+**One library row instead of more tables.** Today a row in `show_user` / `movie_user` means "following". Turn that row into "this is in your library" and make following one of its flags:
+
+- `following` (bool, default true for existing rows): releases go into For you and the calendar.
+- `status`, `started_at`, `finished_at`, `rating` (from 3.).
+- `favourite_position` (null = not a favourite; 1, 2, 3 … = its place in your favourites, so they can be ordered).
+
+The row is deleted only when all of them are empty (not following, no status, no rating, not a favourite), and the show or movie is deleted from the catalog only when no row points at it any more. `Show::followed()` / `Movie::followed()` become `where following = true`, so **`hoot:refresh` only refreshes what someone follows**: a favourite-only classic costs no API calls after it's added. What you see of it (poster, title, year, overview) is enough from the first fetch.
+
+**Adding a favourite** without following: the cards (search, Discover, profiles) get a heart next to Follow. Favouriting something not in the catalog yet fetches it the same way following does, but with `following = false`, so it never shows up in the timeline.
+
+**Where favourites show:**
+- **On your profile, at the top:** "Favourite shows" and "Favourite movies", in your order. This is what makes a profile feel like a person (Letterboxd's "four favourites" works for exactly this reason). Suggestion: show the first 4–6 of each prominently and the rest behind "All favourites".
+- **Not in For you's timeline**, which stays about what's coming. At most a small "Favourites" entry in the sidebar or settings to manage and reorder them. Better: manage them on your own profile (drag to reorder, or up/down buttons with no JS needed).
+- **In the thread:** "Pip added *The Wire* to their favourites" (one entry per add, never for removing).
+- **Socially:** "2 people you follow love this" on a card, alongside "3 people you follow watch this".
+
+**Limit or not?** An unlimited list turns into a second library. A cap (for example 10 shows and 10 movies) keeps favourites meaningful and the profile tidy. Recommendation: a cap, with the top 4 shown big.
+
+**Without the network,** favourites still make sense on their own and could be built first: the library-row change, a heart on cards, and a favourites block in Settings or on a private profile page. It's also a good first step towards step 3 (watch status), since it does the same table change.
+
 ### 4. The thread (activity feed)
 
 A page (or tab) that lists what the people you follow did, newest first:
@@ -120,6 +152,7 @@ New routes, roughly: `/@{username}`, `/@{username}/followers`, `/@{username}/fol
 
 ## Suggested order
 
+0. **Favourites** (3b), possible on their own before anything social: turns `show_user`/`movie_user` into library rows with a `following` flag, adds a heart on cards and an ordered favourites list. Also lays the ground for the watch status.
 1. **Usernames and profiles** (`/@handle`, read-only, shows what someone follows). Small, and useful on its own for sharing.
 2. **Following people**, public accounts only, block. Followers/following lists, people in search.
 3. **Watch status** on shows and movies (want to watch / watching / watched / dropped, rating).
@@ -137,5 +170,6 @@ Steps 1–4 are the smallest version that does what the idea asks for; 5 should 
 - One "Follow" word for both, or Track for shows/movies?
 - Ratings: 5 stars with halves, or 10 points? Reviews at all?
 - Episode-level tracking now or later?
+- Favourites: capped (e.g. 10 + 10, top 4 big) or unlimited? Built before the social part or with it?
 - Should existing users be asked to pick a username (and visibility) on their next visit, with a clear explanation that Hoot became social?
 - Invite-only at first (invite links) or open sign-up as now?

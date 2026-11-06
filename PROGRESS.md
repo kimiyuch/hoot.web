@@ -42,7 +42,7 @@ Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.w
 
 ## Next
 
-- **Hoot as a network** (the next big step, asked for on 2026-11-06): follow people, see what they follow and watch, a thread of what the people you follow are up to. The plan is in [`docs/SOCIAL.md`](docs/SOCIAL.md): profiles with `/@handle`, following people, a watch status (want to watch / watching / watched / dropped), an `activities` table read fan-out-on-read, privacy and blocking, and a suggested order (steps 1–4 are the smallest useful version). Its "Open questions" need the user's answers before building; start there.
+- **Hoot as a network** (the next big step, asked for on 2026-11-06): follow people, see what they follow and watch, a thread of what the people you follow are up to. The plan is in [`docs/SOCIAL.md`](docs/SOCIAL.md): profiles with `/@handle`, following people, a watch status (want to watch / watching / watched / dropped), favourites (independent of following: one library row per user and show/movie with a `following` flag, so favourite-only classics aren't refreshed or in the timeline), an `activities` table read fan-out-on-read, privacy and blocking, and a suggested order (steps 1–4 are the smallest useful version). Its "Open questions" need the user's answers before building; start there.
 - Deploy: first `./deploy.sh`, the Hostpoint cron job, and in the server's `.env` the `TMDB_TOKEN` and a real mailer (`MAIL_*`), otherwise nobody can confirm their account.
 - Check the mails in Gmail and Outlook (only checked in Chrome via MailHog).
 
