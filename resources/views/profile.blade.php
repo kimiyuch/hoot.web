@@ -59,6 +59,10 @@
                         </a>
                     @endif
                     <a href="{{ route('settings') }}#profile" class="rounded-lg bg-white/8 px-3.5 py-2 text-base/6 font-medium hover:bg-white/12 sm:text-sm/6">Edit profile</a>
+                    <form method="post" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="rounded-lg px-3.5 py-2 text-base/6 font-medium text-white/55 hover:bg-white/5 hover:text-white sm:text-sm/6">Log out</button>
+                    </form>
                 </div>
             @else
                 <div class="self-start sm:self-center">

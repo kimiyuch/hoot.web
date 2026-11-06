@@ -25,7 +25,7 @@ class ProfilesTest extends TestCase
 
         $this->actingAs(User::factory()->create())->get('/@pip')->assertOk()
             ->assertSeeInOrder(['Pip', '@pip', '1 show · 0 movies followed', 'Late shows only.', 'Favourite shows', 'The Wire', 'Favourite movies', 'Arrival', 'Following', 'Night Shift'])
-            ->assertDontSee('Edit profile')
+            ->assertDontSee('Edit profile')->assertDontSee('Log out')
             ->assertDontSee($pip->email);
     }
 
@@ -38,7 +38,7 @@ class ProfilesTest extends TestCase
             ->assertSee('Pip’s profile is private.')->assertDontSee('Night Shift');
 
         $this->actingAs($pip)->get('/@pip')->assertOk()
-            ->assertSee('Night Shift')->assertSee('Edit profile');
+            ->assertSee('Night Shift')->assertSee('Edit profile')->assertSee('Log out');
     }
 
     public function test_unknown_profiles_are_not_found_and_profiles_need_an_account(): void
