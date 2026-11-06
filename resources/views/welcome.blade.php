@@ -60,8 +60,7 @@
             {{-- Hero --}}
             <section class="pt-10 pb-24 sm:pt-16 sm:pb-32">
                 <div class="mx-auto max-w-6xl px-6 text-center lg:px-8">
-                    <img src="{{ asset('images/hoot.png') }}" width="1024" height="1024" fetchpriority="high" alt="The Hoot app icon: an owl perched on a film clapperboard" class="mx-auto size-32 sm:size-40">
-                    <h1 class="mx-auto mt-8 max-w-[16ch] font-display text-5xl font-semibold tracking-tight text-balance sm:text-7xl">
+                    <h1 class="mx-auto max-w-[16ch] font-display text-5xl font-semibold tracking-tight text-balance sm:text-7xl">
                         Never miss a <span class="text-midnight-300">new episode</span>
                     </h1>
                     <p class="mx-auto mt-6 max-w-[48ch] text-lg/8 text-pretty text-white/60 sm:text-xl/8">
