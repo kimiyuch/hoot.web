@@ -7,11 +7,11 @@
     <img src="{{ asset('images/possum-head.svg') }}" alt="" class="size-10">
 </a>
 
-{{-- A small floating pill on the right: the two pages and search. --}}
-<header class="pointer-events-none sticky top-0 z-40 flex justify-end px-4 pt-3 sm:px-6 sm:pt-4 lg:px-10">
-    <div class="pointer-events-auto flex h-12 items-center gap-x-1 rounded-full bg-night-900/75 p-1.5 sm:gap-x-2 shadow-lg shadow-black/25 inset-ring inset-ring-white/10 backdrop-blur-xl">
+{{-- A small floating pill, centred: the two pages and search. --}}
+<header class="pointer-events-none sticky top-0 z-40 flex justify-center px-4 pt-3 sm:px-6 sm:pt-4 lg:px-10">
+    <div class="pointer-events-auto flex h-12 items-center gap-x-1.25 rounded-full bg-night-900/75 p-1.5 sm:gap-x-2.5 shadow-lg shadow-black/25 inset-ring inset-ring-white/10 backdrop-blur-xl">
 
-        <nav class="flex items-center gap-x-1 sm:gap-x-2">
+        <nav class="flex items-center gap-x-1.25 sm:gap-x-2.5">
             @foreach ($links as $route => $label)
                 <a href="{{ route($route) }}" @class([
                     'rounded-full px-4 py-1.5 text-base/6 font-medium whitespace-nowrap transition-colors sm:text-sm/6',

@@ -24,7 +24,7 @@
             </div>
         </div>
     @else
-        {{-- The heading sits in the left column, so the sidebar starts at the top too. --}}
+        {{-- The heading sits in the left column; the sidebar is pushed down to line up with the teaser. --}}
         <div class="grid grid-cols-1 gap-x-16 gap-y-16 lg:grid-cols-[minmax(0,48rem)_minmax(20rem,28rem)] lg:justify-between">
             <div class="min-w-0">
                 <h1 class="font-display text-3xl font-semibold tracking-tight">Upcoming</h1>
@@ -107,8 +107,9 @@
                 @endif
             </div>
 
-            {{-- Sidebar --}}
-            <aside class="flex flex-col gap-12">
+            {{-- Sidebar. On wide screens it starts level with the teaser (or the timeline when there's no teaser), not the heading:
+                 h1 (36px) + timezone line (4px + 24px) + the teaser's mt-10 (40px) = 104px; the timeline's mt-12 makes it 112px. --}}
+            <aside @class(['flex flex-col gap-12', 'lg:pt-26' => $next, 'lg:pt-28' => ! $next])>
                 @if ($recent->isNotEmpty())
                     <section aria-labelledby="just-released">
                         <h2 id="just-released" class="font-display text-lg font-semibold tracking-tight">Just released</h2>
