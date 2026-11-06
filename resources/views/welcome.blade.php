@@ -35,7 +35,11 @@
         <meta property="og:title" content="Hoot: never miss a new episode">
         <meta property="og:description" content="Follow shows and movies, and Hoot keeps watch: every new episode and release, on every service, in your timezone.">
         <meta property="og:url" content="{{ url('/') }}">
-        <meta property="og:image" content="{{ asset('images/hoot.png') }}">
+        <meta property="og:image" content="{{ asset('images/og.png') }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="Hoot: never miss a new episode">
+        <meta name="twitter:card" content="summary_large_image">
     </x-head>
 </head>
 <body class="font-sans text-white">

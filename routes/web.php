@@ -13,6 +13,11 @@ Route::get('/', [HootController::class, 'welcome'])->name('home');
 // What's stored, who sees what, and the few rules. Public, so it can be read before signing up.
 Route::view('/privacy', 'privacy')->name('privacy');
 
+// The source of the link preview image (scripts/og-image.sh renders it to public/images/og.png). Local only.
+if (app()->isLocal()) {
+    Route::view('/og-image', 'og-image');
+}
+
 // Subscribe to this in Apple Calendar or Google Calendar. No login: the token says whose feed it is.
 Route::get('/calendar/{token}.ics', [HootController::class, 'calendar'])->name('calendar');
 
