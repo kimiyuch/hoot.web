@@ -8,7 +8,7 @@ Last updated: 2026-11-06.
 
 Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.web`). 39 tests pass (`php artisan test`), Pint is clean. `public/build` is built.
 
-**Git:** in git since 2026-11-05 and pushed to https://github.com/kimiyuch/hoot.web (public, `main`). The tests run on GitHub Actions for every push and passed on the first push. `marceli-to` is a collaborator, so a plain `git push` works. **Not done yet:** the first deploy (`./deploy.sh`) and the Hostpoint cron job.
+**Git:** in git since 2026-11-05 and pushed to https://github.com/kimiyuch/hoot.web (public, `main`). The tests run on GitHub Actions for every push (all green so far). `marceli-to` is a collaborator, so a plain `git push` works. **Not done yet:** the first deploy (`./deploy.sh`) and the Hostpoint cron job.
 
 `.env` has a working `TMDB_TOKEN` (the long "API Read Access Token"). It has to be added to the server's `.env` by hand when deploying.
 
@@ -44,7 +44,14 @@ Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.w
 
 ## Next
 
-- **Hoot as a network**: the plan is in [`docs/SOCIAL.md`](docs/SOCIAL.md), the open questions are answered (its "Decisions" section) and step 0 (favourites) is built. Steps 0 and 1 (favourites, profiles) are built. Next is step 2: following people (public accounts; follows table, Follow button on profiles, followers/following lists, block, People in the ⌘K search).
+- **Hoot as a network**: the plan is in [`docs/SOCIAL.md`](docs/SOCIAL.md), its open questions are answered (the "Decisions" section), and steps 0 (favourites) and 1 (usernames, profiles) are built. **Next: step 2, following people**, public accounts only for now:
+  - a `follows` table (`follower_id`, `followed_id`, `accepted_at` nullable for the private-account requests of step 5, unique pair, cascade on delete) and a `Network` service that does all following/unfollowing/blocking;
+  - a Livewire Follow button on profiles (and the counts "N followers · N following" in the profile header), `/@{username}/followers` and `/@{username}/following` lists;
+  - blocking (`blocks` table): removes follows both ways and hides each from the other on profiles, lists and search;
+  - a People group in the ⌘K search (`SearchPanel`), by username and name;
+  - private accounts: for now, decide whether Follow on a private profile is hidden or sends a request (requests are step 5);
+  - feature tests for every "who can see what" case.
+  Then step 3 (watch status with ½–5 stars) and step 4 (the thread in For you).
 - Deploy: first `./deploy.sh`, the Hostpoint cron job, and in the server's `.env` the `TMDB_TOKEN` and a real mailer (`MAIL_*`), otherwise nobody can confirm their account.
 - Check the mails in Gmail and Outlook (only checked in Chrome via MailHog).
 
@@ -63,7 +70,7 @@ herd secure hoot.web                                 # if Webroot is parked in H
 php artisan hoot:refresh                             # about 70 s
 ```
 
-The local test user (`test@possum.local`) only exists in the old machine's database: sign up again (mail goes to MailHog, if it runs there) or create one with `php artisan tinker`.
+The local test user (`test@possum.local`) only exists in the old machine's database: sign up again (mail goes to MailHog, if it runs there) or create one with `php artisan tinker`. If you copy `database/database.sqlite` over from the other machine instead, run `php artisan migrate` afterwards; accounts without a username then land on `/choose-username` first.
 
 ## Open ideas
 
