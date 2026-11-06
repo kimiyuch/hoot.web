@@ -48,6 +48,15 @@
         color-scheme: dark;
     }
 
+    /* Tailwind 4 leaves buttons with the default cursor; everything clickable gets the hand (not while disabled). */
+    button:not(:disabled),
+    [role='button']:not(:disabled),
+    input:where([type='submit'], [type='button'], [type='reset'], [type='checkbox'], [type='radio']):not(:disabled),
+    summary,
+    select:not(:disabled) {
+        cursor: pointer;
+    }
+
     /* Dropdowns in the dark theme. */
     select option {
         background-color: var(--color-night-900);

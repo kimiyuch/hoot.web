@@ -6,12 +6,14 @@
 @endphp
 
 <div @class(['flex flex-wrap items-center gap-1', 'justify-end' => $compact])>
-    <button type="button" wire:click="toggleFavourite" wire:loading.attr="disabled" wire:target="toggleFavourite"
-        title="{{ $heartTitle }}" aria-label="{{ $heartTitle }}" aria-pressed="{{ $favourite ? 'true' : 'false' }}"
-        @class(['relative grid size-8 place-items-center rounded-lg hover:bg-white/5 disabled:opacity-50', 'text-calendar-400' => $favourite, 'text-white/40 hover:text-white' => ! $favourite])>
-        <svg viewBox="0 0 20 20" aria-hidden="true" class="size-4.5" @if ($favourite) fill="currentColor" @else fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" @endif><path d="{{ $heart }}"/></svg>
-        {!! $touch !!}
-    </button>
+    @if ($withHeart)
+        <button type="button" wire:click="toggleFavourite" wire:loading.attr="disabled" wire:target="toggleFavourite"
+            title="{{ $heartTitle }}" aria-label="{{ $heartTitle }}" aria-pressed="{{ $favourite ? 'true' : 'false' }}"
+            @class(['relative grid size-8 place-items-center rounded-lg hover:bg-white/5 disabled:opacity-50', 'text-calendar-400' => $favourite, 'text-white/40 hover:text-white' => ! $favourite])>
+            <svg viewBox="0 0 20 20" aria-hidden="true" class="size-4.5" @if ($favourite) fill="currentColor" @else fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" @endif><path d="{{ $heart }}"/></svg>
+            {!! $touch !!}
+        </button>
+    @endif
 
     @if ($withStatus)
         {{-- Watch status and rating: a small menu that opens upwards (Alpine, which comes with Livewire). --}}
@@ -84,16 +86,16 @@
     @if ($withFollow)
         @if ($following)
             <button type="button" wire:click="unfollow" wire:loading.attr="disabled" wire:target="unfollow" title="Unfollow {{ $label }}" aria-label="Unfollow {{ $label }}"
-                class="group/follow relative flex items-center gap-1.5 rounded-lg py-1 pr-2.5 pl-1.5 text-sm/6 text-midnight-300 hover:bg-white/5 hover:text-white disabled:opacity-50">
-                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4 group-hover/follow:hidden"><path fill-rule="evenodd" d="M12.4 4.2a.75.75 0 0 1 .15 1.05l-5 6.5a.75.75 0 0 1-1.13.08l-3-3a.75.75 0 1 1 1.06-1.06l2.4 2.4 4.47-5.81a.75.75 0 0 1 1.05-.16Z" clip-rule="evenodd"/></svg>
-                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="hidden size-4 group-hover/follow:block"><path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z"/></svg>
+                @class(['group/follow relative flex items-center rounded-lg text-midnight-300 hover:bg-white/5 hover:text-white disabled:opacity-50', 'gap-1.5 py-1 pr-2.5 pl-1.5 text-sm/6' => ! $small, 'gap-1 py-0.5 pr-2 pl-1 text-xs/5' => $small])>
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" @class(['group-hover/follow:hidden', 'size-4' => ! $small, 'size-3.5' => $small])><path fill-rule="evenodd" d="M12.4 4.2a.75.75 0 0 1 .15 1.05l-5 6.5a.75.75 0 0 1-1.13.08l-3-3a.75.75 0 1 1 1.06-1.06l2.4 2.4 4.47-5.81a.75.75 0 0 1 1.05-.16Z" clip-rule="evenodd"/></svg>
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" @class(['hidden group-hover/follow:block', 'size-4' => ! $small, 'size-3.5' => $small])><path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z"/></svg>
                 <span class="group-hover/follow:hidden">Following</span>
                 <span class="hidden group-hover/follow:inline">Unfollow</span>{!! $touch !!}
             </button>
         @else
             <button type="button" wire:click="follow" wire:loading.attr="disabled" wire:target="follow" title="Follow {{ $label }}"
-                class="relative flex items-center gap-1 rounded-lg bg-white/10 py-1 pr-2.5 pl-1.5 text-sm/6 font-medium text-white hover:bg-white/15 disabled:opacity-50">
-                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4"><path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z"/></svg>
+                @class(['relative flex items-center gap-1 rounded-lg bg-white/10 font-medium text-white hover:bg-white/15 disabled:opacity-50', 'py-1 pr-2.5 pl-1.5 text-sm/6' => ! $small, 'py-0.5 pr-2 pl-1 text-xs/5' => $small])>
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" @class(['size-4' => ! $small, 'size-3.5' => $small])><path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z"/></svg>
                 Follow{!! $touch !!}
             </button>
         @endif

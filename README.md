@@ -37,7 +37,7 @@ npm run build     # if you changed the design; commit public/build
 ./deploy.sh
 ```
 
-`deploy.sh` runs the tests, exports the committed code, installs production dependencies, syncs everything to Hostpoint over SSH and runs the migrations. It leaves the server's `.env`, `public/.htaccess`, `storage/` and `database/database.sqlite` alone. GitHub Actions only runs the tests.
+The full walkthrough (first-time server setup, `.env`, cron, checks, admin tasks, backups) is in [`DEPLOY.md`](DEPLOY.md). In short: `deploy.sh` runs the tests, exports the committed code, installs production dependencies, syncs everything to Hostpoint over SSH and runs the migrations. It leaves the server's `.env`, `public/.htaccess`, `storage/` and `database/database.sqlite` alone. GitHub Actions only runs the tests.
 
 On the server, add `TMDB_TOKEN` to `.env` and set up a cron job in the Hostpoint panel:
 

@@ -38,6 +38,14 @@ class LibraryActions extends Component
     /** The catalog id while it's one of your favourites. */
     public ?int $favourite = null;
 
+    /** False for no heart (the thread, where only Follow fits). */
+    #[Locked]
+    public bool $withHeart = true;
+
+    /** A smaller Follow button, for tight spots like the thread. */
+    #[Locked]
+    public bool $small = false;
+
     /** False for no status menu (the search lightbox, where a menu would be clipped). */
     #[Locked]
     public bool $withStatus = true;

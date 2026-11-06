@@ -26,6 +26,7 @@
 
         return count($names) > 1 ? implode(', ', array_slice($names, 0, -1)).' and '.end($names) : $names[0];
     };
+
 @endphp
 
 <div>
@@ -46,7 +47,8 @@
                         'followed_user' => 'followed '.$list($items),
                         default => null,
                     };
-                    $posters = collect($items)->where('kind', '!=', 'user')->take(3);
+                    $titles = collect($items)->where('kind', '!=', 'user')->values();
+                    $posters = $titles->take(3);
                 @endphp
                 @continue($what === null)
                 <li wire:key="activity-{{ $entry->id }}" class="relative flex items-start gap-3 py-3">
@@ -56,7 +58,38 @@
                             <a href="{{ $entry->user->profileUrl() }}" class="font-semibold text-white hover:text-midnight-200">{{ $entry->user->name }}</a>
                             {!! $what !!}@if (isset($first['rating']))<span class="text-white/40"> ·</span> <span class="whitespace-nowrap text-star" title="{{ $first['rating'] / 2 }} of 5 stars">{{ \App\Services\Library::stars($first['rating']) }}</span>@endif
                         </p>
-                        <p class="mt-0.5 text-sm/5 text-white/40"><time datetime="{{ $entry->updated_at->toIso8601String() }}">{{ $entry->updated_at->shortRelativeDiffForHumans() }}</time></p>
+                        <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <time datetime="{{ $entry->updated_at->toIso8601String() }}" class="text-sm/5 text-white/40">{{ $entry->updated_at->shortRelativeDiffForHumans() }}</time>
+                            @if ($titles->count() === 1)
+                                @php $only = $titles[0]; @endphp
+                                <livewire:library-actions :key="'thread-'.$entry->id.'-'.$only['kind'].'-'.$only['id']" :type="$only['kind']" :tvmaze-id="$only['kind'] === 'show' ? $only['id'] : null" :tmdb-id="$only['kind'] === 'movie' ? $only['id'] : null" :label="$only['title']" :following="$followed[$only['kind']]->has($only['id'])" :with-heart="false" :with-status="false" small />
+                            @endif
+                        </div>
+                        @if ($titles->count() > 1)
+                            {{-- Several shows or movies: each with its own Follow, folded away until asked for. --}}
+                            <details class="group/all mt-1" wire:ignore.self>
+                                <summary class="inline-flex cursor-pointer list-none items-center gap-1 rounded-lg py-1 text-sm/6 font-medium text-white/60 hover:text-white [&::-webkit-details-marker]:hidden">
+                                    <span class="group-open/all:hidden">Show all {{ $titles->count() }}</span>
+                                    <span class="hidden group-open/all:inline">Show fewer</span>
+                                    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4 transition-transform group-open/all:rotate-180"><path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
+                                </summary>
+                                <ul role="list" class="mt-1 divide-y divide-white/5">
+                                    @foreach ($titles as $item)
+                                        <li class="flex items-center gap-3 py-2">
+                                            <x-poster :src="$item['poster']" alt="" class="aspect-2/3 w-7 rounded" />
+                                            <p class="min-w-0 flex-1 truncate text-sm/5 font-medium">
+                                                @if ($item['url'])
+                                                    <a href="{{ $item['url'] }}" target="_blank" rel="noopener" class="hover:text-midnight-200">{{ $item['title'] }}</a>
+                                                @else
+                                                    {{ $item['title'] }}
+                                                @endif
+                                            </p>
+                                            <livewire:library-actions :key="'thread-'.$entry->id.'-'.$item['kind'].'-'.$item['id']" :type="$item['kind']" :tvmaze-id="$item['kind'] === 'show' ? $item['id'] : null" :tmdb-id="$item['kind'] === 'movie' ? $item['id'] : null" :label="$item['title']" :following="$followed[$item['kind']]->has($item['id'])" :with-heart="false" :with-status="false" small />
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </details>
+                        @endif
                     </div>
                     @if ($posters->isNotEmpty())
                         <div class="flex shrink-0 -space-x-4">

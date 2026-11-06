@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\LibraryActions;
 use App\Livewire\Thread;
 use App\Models\Activity;
 use App\Models\Movie;
@@ -183,5 +184,33 @@ class ThreadTest extends TestCase
             ->assertSee('Load more')
             ->call('loadMore')
             ->assertSet('limit', Thread::PAGE * 2);
+    }
+
+    public function test_shows_and_movies_in_the_thread_can_be_followed_from_there(): void
+    {
+        [$me, $pip] = [$this->person('me'), $this->person('pip')];
+        app(Network::class)->follow($me, $pip);
+        $library = app(Library::class);
+        $this->show(1, 'Severance');
+        $this->show(2, 'Andor');
+
+        Carbon::setTestNow(now()->addHour());
+        $library->setStatus($pip, Show::where('tvmaze_id', 1)->first(), 'watching');
+        Carbon::setTestNow(now()->addHour());
+        $library->followShow($pip, 1);
+        $library->followShow($pip, 2);
+        $library->followShow($me, 2);
+
+        Livewire::actingAs($me)->test(Thread::class)
+            ->assertSeeHtml('title="Follow Severance"')
+            ->assertSee('Show all 2')
+            ->assertSeeHtml('title="Unfollow Andor"')
+            ->assertDontSeeHtml('favourites"');
+
+        Livewire::actingAs($me)->test(LibraryActions::class, ['type' => 'show', 'tvmazeId' => 1, 'label' => 'Severance', 'withHeart' => false, 'withStatus' => false])
+            ->call('follow')
+            ->assertSet('following', true);
+
+        $this->assertTrue($me->shows()->where('tvmaze_id', 1)->exists());
     }
 }
