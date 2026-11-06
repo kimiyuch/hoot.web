@@ -3,7 +3,8 @@
 
 @php
     $isEpisodes = $release['kind'] === 'episodes';
-    $out = $release['timed'] && $release['at']->isPast();
+    // Already out: timed releases once their moment has passed, dated ones (movies) from the next day.
+    $out = $release['timed'] ? $release['at']->isPast() : $release['at']->lt(\Carbon\CarbonImmutable::now($release['at']->timezone)->startOfDay());
     if ($isEpisodes) {
         $show = $release['show'];
         $episodes = $release['episodes'];
@@ -38,7 +39,12 @@
 
     <div class="flex shrink-0 flex-col items-end text-right">
         @if ($release['timed'])
-            <time datetime="{{ $release['at']->toIso8601String() }}" class="text-base/6 font-medium tabular-nums sm:text-sm/6">{{ $release['at']->format('H:i') }}</time>
+            <div class="flex items-center gap-2">
+                @if ($isEpisodes && $out && ($search = \App\Services\EpisodeSearch::template()))
+                    <x-episode-search-link :template="$search" :show="$show->name" :episodes="$episodes" class="z-10" />
+                @endif
+                <time datetime="{{ $release['at']->toIso8601String() }}" class="text-base/6 font-medium tabular-nums sm:text-sm/6">{{ $release['at']->format('H:i') }}</time>
+            </div>
         @endif
         @if ($isEpisodes && $show->channel)
             <x-service :service="$show->service()" :channel="$show->channel" :logos="$logos" :href="\App\Services\StreamingServices::link($show->service(), $show->official_url, $show->name)" class="max-w-36 text-sm/6 text-white/45 max-sm:hidden" />

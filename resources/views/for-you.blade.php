@@ -127,6 +127,7 @@
                         @foreach ($shows as $show)
                             @php
                                 $now = now();
+                                $search = \App\Services\EpisodeSearch::template();
                                 // Seasons in order, specials last; it opens on the season of the next episode, or the newest.
                                 // (Keys are ints: PHP turns "3" into 3. 0 is specials.)
                                 $seasons = $show->episodes->groupBy(fn ($episode) => (int) $episode->season)
@@ -186,18 +187,25 @@
                                                 @foreach ($seasons as $season => $episodes)
                                                     <div x-show="season === @js($season)" @style(['display: none' => $season !== $currentSeason]) class="mt-2">
                                                         <p class="pb-1 text-xs/5 font-medium text-white/40">{{ $season === 0 ? 'Specials' : 'Season '.$season }} <span class="text-white/30 tabular-nums">· {{ trans_choice(':count episode|:count episodes', $episodes->count()) }}</span></p>
-                                                        <ul role="list" class="scrollbar-thin max-h-72 divide-y divide-white/5 overflow-y-auto overscroll-contain">
+                                                        <ul role="list" class="divide-y divide-white/5">
                                                             @foreach ($episodes as $episode)
                                                                 @php
                                                                     $at = $episode->airs_at?->setTimezone($timezone);
                                                                     $upcoming = $at && $at->isAfter($now);
                                                                     $isNext = $show->nextEpisode?->is($episode);
                                                                 @endphp
-                                                                <li @class(['flex items-baseline gap-2 py-2 pr-1 text-sm/5', 'text-white/45' => ! $upcoming, 'text-white/80' => $upcoming && ! $isNext, 'text-next' => $isNext])>
+                                                                <li @class(['flex items-baseline gap-2 py-2 text-sm/5', 'text-white/45' => ! $upcoming, 'text-white/80' => $upcoming && ! $isNext, 'text-next' => $isNext])>
                                                                     <span class="shrink-0 tabular-nums">{{ $episode->code() }}</span>
                                                                     <span @class(['min-w-0 flex-1 truncate', 'italic opacity-60' => blank($episode->name)])>{{ filled($episode->name) ? $episode->name : '[No title yet]' }}</span>
                                                                     @if ($at)
                                                                         <span class="shrink-0 text-xs/5 tabular-nums">{{ $at->format($at->year === $now->year ? 'j M' : 'j M Y') }}</span>
+                                                                    @endif
+                                                                    @if ($search)
+                                                                        <span class="flex w-3.5 shrink-0 self-center">
+                                                                            @if ($at && ! $upcoming)
+                                                                                <x-episode-search-link :template="$search" :show="$show->name" :episodes="$episode" />
+                                                                            @endif
+                                                                        </span>
                                                                     @endif
                                                                 </li>
                                                             @endforeach

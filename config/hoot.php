@@ -55,4 +55,6 @@ return [
     // How far ahead the Upcoming page and the calendar feed look, and how far back "Just released" goes.
     'days_ahead' => 120,
     'days_back' => 7,
+    // How far back the Upcoming timeline's "Show earlier" can go.
+    'days_history' => 365,
 ];

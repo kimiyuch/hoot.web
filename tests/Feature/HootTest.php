@@ -145,6 +145,61 @@ class HootTest extends TestCase
             ->assertDontSee('Load ');
     }
 
+    public function test_the_timeline_goes_back_a_month_at_a_time(): void
+    {
+        $show = Show::create(['tvmaze_id' => 7, 'name' => 'Night Shift']);
+        $this->user->shows()->attach($show);
+        foreach ([['2026-09-20', 'Before the Dark'], ['2026-11-03', 'Lights Out'], ['2026-11-20', 'Dawn']] as $i => [$date, $name]) {
+            $show->episodes()->create(['tvmaze_id' => 300 + $i, 'season' => 1, 'number' => $i + 1, 'name' => $name, 'airs_at' => $date.' 20:00:00']);
+        }
+
+        // It starts today, with a quiet way back: last month (with the rest of this one), then September.
+        Livewire::test(UpcomingDays::class)
+            ->assertSeeInOrder(['Missed something?', 'Show last month', 'Dawn'])
+            ->assertDontSee('Lights Out')
+            ->call('loadEarlier')
+            ->assertSet('since', '2026-10')
+            ->assertSeeInOrder(['Show September', 'Tue 3 Nov', 'Lights Out', 'Fri 20 Nov', 'Dawn'])
+            ->assertDontSee('Before the Dark')
+            ->call('loadEarlier')
+            ->assertSet('since', '2026-09')
+            ->assertSeeInOrder(['Sun 20 Sep', 'Before the Dark', 'Tue 3 Nov', 'Lights Out', 'Dawn'])
+            ->assertDontSee('Missed something?');
+    }
+
+    public function test_an_episode_search_link_shows_once_set_and_only_for_episodes_that_are_out(): void
+    {
+        $show = Show::create(['tvmaze_id' => 9, 'name' => 'Ted Lasso']);
+        $this->user->shows()->attach($show);
+        $show->episodes()->create(['tvmaze_id' => 401, 'season' => 4, 'number' => 3, 'name' => 'Out', 'airs_at' => '2026-11-04 20:00:00']);
+        $show->episodes()->create(['tvmaze_id' => 402, 'season' => 4, 'number' => 4, 'name' => 'Soon', 'airs_at' => '2026-11-11 20:00:00']);
+
+        $this->get('/for-you')->assertDontSee('search.example');
+
+        // It needs to be a web address, with {query} in it.
+        $this->from('/settings')->put('/settings/extras', ['episode_search_url' => 'search.example/?q={query}'])->assertSessionHasErrorsIn('extras', 'episode_search_url');
+        $this->from('/settings')->put('/settings/extras', ['episode_search_url' => 'https://search.example/'])->assertSessionHasErrorsIn('extras', 'episode_search_url');
+        $this->from('/settings')->put('/settings/extras', ['episode_search_url' => 'https://www.search.example/find?q={query}&type=tv'])
+            ->assertRedirect('/settings')->assertSessionHasNoErrors();
+
+        // In Following, for the episode that's out, not the one coming.
+        $this->get('/for-you')
+            ->assertSee('href="https://www.search.example/find?q=ted+lasso+s04e03&amp;type=tv"', false)
+            ->assertSee('Search on search.example')
+            ->assertDontSee('s04e04');
+
+        // In the timeline, once you go back.
+        Livewire::test(UpcomingDays::class)
+            ->assertDontSee('search.example')
+            ->call('loadEarlier')
+            ->assertSee('q=ted+lasso+s04e03', false)
+            ->assertDontSee('s04e04');
+
+        $this->put('/settings/extras', ['episode_search_url' => '']);
+        $this->assertNull($this->user->fresh()->episode_search_url);
+        $this->get('/for-you')->assertDontSee('search.example');
+    }
+
     public function test_following_shows_one_season_at_a_time_starting_with_the_next_episode(): void
     {
         $show = Show::create(['tvmaze_id' => 5, 'name' => 'True Detective']);

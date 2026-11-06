@@ -120,6 +120,21 @@
             </div>
         </section>
 
+        <section id="extras" aria-labelledby="extras-title" class="{{ $section }} scroll-mt-24">
+            <div>
+                <h2 id="extras-title" class="font-display text-lg font-semibold tracking-tight">Extras</h2>
+                <p class="{{ $intro }}">Off unless you set them, and only for you.</p>
+            </div>
+            <form method="post" action="{{ route('settings.extras') }}" class="flex flex-col gap-5">
+                @csrf
+                @method('put')
+                <x-field name="episode_search_url" type="url" label="Episode search link" :value="$user->episode_search_url" bag="extras"
+                    placeholder="https://example.org/search?q={query}" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="500"
+                    hint="A search of your choice, a small link next to every episode that’s out. {query} becomes the show and episode, like “ted lasso s04e03”. Leave it empty for no link." />
+                <x-button variant="secondary" class="self-start">Save</x-button>
+            </form>
+        </section>
+
         <section id="data" aria-labelledby="data-title" class="{{ $section }} scroll-mt-24">
             <div>
                 <h2 id="data-title" class="font-display text-lg font-semibold tracking-tight">Your data</h2>

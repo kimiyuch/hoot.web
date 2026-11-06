@@ -46,6 +46,7 @@ Route::middleware(['auth', 'verified', 'username'])->group(function () {
     });
 
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');
+    Route::put('/settings/extras', [SettingsController::class, 'updateExtras'])->name('settings.extras');
     Route::post('/settings/calendar', [SettingsController::class, 'resetCalendar'])->name('settings.calendar');
     Route::get('/settings/export', [SettingsController::class, 'export'])->name('settings.export');
     Route::delete('/settings', [SettingsController::class, 'destroy'])->name('settings.destroy');

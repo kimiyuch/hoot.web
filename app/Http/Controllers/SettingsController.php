@@ -6,6 +6,7 @@ use App\Models\Activity;
 use App\Models\Movie;
 use App\Models\Show;
 use App\Models\User;
+use App\Services\EpisodeSearch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,7 +42,7 @@ class SettingsController extends Controller
 
         $data = [
             'exported_at' => now()->toIso8601String(),
-            'account' => $user->only(['name', 'username', 'email', 'bio', 'is_private', 'shares_activity', 'created_at', 'email_verified_at']),
+            'account' => $user->only(['name', 'username', 'email', 'bio', 'is_private', 'shares_activity', 'episode_search_url', 'created_at', 'email_verified_at']),
             'library' => $user->libraryShows()->get()->map(fn ($show) => $entry($show, 'show'))
                 ->concat($user->libraryMovies()->get()->map(fn ($movie) => $entry($movie, 'movie')))->values(),
             'following' => $user->following()->get()->map($person)->values(),
@@ -55,6 +56,26 @@ class SettingsController extends Controller
         return response()->json($data, 200, [
             'Content-Disposition' => 'attachment; filename="hoot-'.$user->username.'-'.now()->format('Y-m-d').'.json"',
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    /** The extras, off unless you set them: for now, your own search link next to episodes that are out. */
+    public function updateExtras(Request $request): RedirectResponse
+    {
+        $input = $request->validateWithBag('extras', [
+            'episode_search_url' => ['nullable', 'string', 'max:500', function (string $attribute, mixed $value, \Closure $fail) {
+                // With a search filled in, it has to be a plain web address.
+                $filled = str_replace(EpisodeSearch::PLACEHOLDER, 'query', trim($value));
+                if (! preg_match('#^https?://#i', $filled) || filter_var($filled, FILTER_VALIDATE_URL) === false) {
+                    $fail('That doesn’t look like a web address. It should start with https://.');
+                } elseif (! str_contains($value, EpisodeSearch::PLACEHOLDER)) {
+                    $fail('Put {query} where the search goes, like https://example.org/search?q={query}.');
+                }
+            }],
+        ]);
+
+        $request->user()->forceFill(['episode_search_url' => filled($input['episode_search_url'] ?? null) ? trim($input['episode_search_url']) : null])->save();
+
+        return back()->with('status', filled($input['episode_search_url'] ?? null) ? 'Search link saved.' : 'Search link removed.');
     }
 
     public function resetCalendar(Request $request): RedirectResponse
