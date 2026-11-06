@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\FavouritesList;
+use App\Livewire\LibraryActions;
 use App\Models\Movie;
 use App\Models\Show;
 use App\Models\User;
@@ -10,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class FavouritesTest extends TestCase
@@ -36,22 +39,40 @@ class FavouritesTest extends TestCase
         $this->assertTrue(app(Library::class)->favourite($this->user, $item));
     }
 
-    public function test_a_favourite_show_is_in_the_library_without_being_followed(): void
+    public function test_the_heart_adds_a_favourite_without_following_it(): void
     {
         Http::fake(['api.tvmaze.com/shows/179*' => Http::response([
             'id' => 179, 'name' => 'The Wire', 'status' => 'Ended', 'network' => ['name' => 'HBO'],
             '_embedded' => ['episodes' => [['id' => 1, 'season' => 1, 'number' => 1, 'name' => 'The Target', 'airstamp' => '2002-06-03T01:00:00+00:00']]],
         ])]);
 
-        $this->post('/favourites/shows', ['tvmaze_id' => 179])->assertSessionHas('status', 'The Wire is one of your favourites.');
+        Livewire::test(LibraryActions::class, ['type' => 'show', 'tvmazeId' => 179, 'label' => 'The Wire'])
+            ->assertSee('Add The Wire to favourites')
+            ->call('toggleFavourite')
+            ->assertDispatched('toast', message: 'The Wire is one of your favourites.')
+            ->assertSet('favourite', Show::sole()->id)
+            ->assertSee('Remove The Wire from favourites')
+            ->assertSee('Follow The Wire');
 
-        $show = Show::sole();
-        $this->assertTrue($this->user->favouriteShows()->first()->is($show));
+        $this->assertTrue($this->user->favouriteShows()->first()->is(Show::sole()));
         $this->assertSame(0, $this->user->shows()->count());
         $this->assertSame(0, Show::followed()->count());
 
         $this->get('/for-you')->assertOk()->assertSee('Nothing followed yet');
         $this->get('/settings')->assertOk()->assertSeeInOrder(['Favourites', 'Shows', '1 of 10', 'The Wire', 'Movies', 'None yet']);
+    }
+
+    public function test_follow_follows_in_place(): void
+    {
+        $show = Show::create(['tvmaze_id' => 82, 'name' => 'Night Shift', 'refreshed_at' => now()]);
+
+        Livewire::test(LibraryActions::class, ['type' => 'show', 'tvmazeId' => 82, 'label' => 'Night Shift'])
+            ->call('follow')
+            ->assertDispatched('toast', message: 'Following Night Shift.')
+            ->assertSet('following', true)
+            ->assertDontSee('Follow Night Shift');
+
+        $this->assertTrue($this->user->shows()->first()->is($show));
     }
 
     public function test_unfollowing_keeps_a_favourite_and_unfavouriting_then_removes_it(): void
@@ -63,7 +84,11 @@ class FavouritesTest extends TestCase
         $this->assertSame(0, $this->user->shows()->count());
         $this->assertSame(1, $this->user->favouriteShows()->count());
 
-        $this->delete("/favourites/shows/{$show->id}")->assertSessionHas('status', 'Removed The Wire from your favourites.');
+        Livewire::test(LibraryActions::class, ['type' => 'show', 'tvmazeId' => 179, 'label' => 'The Wire', 'favourite' => $show->id])
+            ->call('toggleFavourite')
+            ->assertDispatched('toast', message: 'Removed The Wire from your favourites.')
+            ->assertSet('favourite', null);
+
         $this->assertSame(0, Show::count());
     }
 
@@ -72,7 +97,7 @@ class FavouritesTest extends TestCase
         $show = $this->user->shows()->create(['tvmaze_id' => 179, 'name' => 'The Wire']);
         $this->favourite($show);
 
-        $this->delete("/favourites/shows/{$show->id}");
+        Livewire::test(FavouritesList::class, ['type' => 'show'])->call('remove', $show->id)->assertSee('None yet');
 
         $this->assertSame(1, $this->user->shows()->count());
         $this->assertSame(0, $this->user->favouriteShows()->count());
@@ -83,16 +108,15 @@ class FavouritesTest extends TestCase
         $movies = collect(['Arrival', 'Heat', 'Alien'])->map(fn ($title, $i) => Movie::create(['tmdb_id' => $i + 1, 'title' => $title]));
         $movies->each(fn (Movie $movie) => $this->favourite($movie));
 
-        $this->post("/favourites/movies/{$movies[2]->id}/move", ['direction' => 'up']);
-        $this->assertSame(['Arrival', 'Alien', 'Heat'], $this->user->favouriteMovies()->pluck('title')->all());
+        $list = Livewire::test(FavouritesList::class, ['type' => 'movie'])
+            ->call('move', $movies[2]->id, 'up')
+            ->assertSeeInOrder(['Arrival', 'Alien', 'Heat']);
 
         // The first one can't move further up.
-        $this->post("/favourites/movies/{$movies[0]->id}/move", ['direction' => 'up']);
-        $this->assertSame(['Arrival', 'Alien', 'Heat'], $this->user->favouriteMovies()->pluck('title')->all());
+        $list->call('move', $movies[0]->id, 'up')->assertSeeInOrder(['Arrival', 'Alien', 'Heat']);
 
-        $this->delete("/favourites/movies/{$movies[0]->id}");
+        $list->call('remove', $movies[0]->id)->assertSeeInOrder(['2 of 10', 'Alien', 'Heat']);
         $this->assertSame([1, 2], $this->user->favouriteMovies()->get()->pluck('pivot.favourite_position')->all());
-        $this->assertSame(['Alien', 'Heat'], $this->user->favouriteMovies()->pluck('title')->all());
     }
 
     public function test_there_are_at_most_ten_favourite_movies(): void
@@ -102,8 +126,10 @@ class FavouritesTest extends TestCase
         }
 
         // Full: TMDB isn't even asked.
-        $this->post('/favourites/movies', ['tmdb_id' => 999])
-            ->assertSessionHas('status', 'You already have 10 favourite movies. Remove one in Settings first.');
+        Livewire::test(LibraryActions::class, ['type' => 'movie', 'tmdbId' => 999, 'label' => 'One more'])
+            ->call('toggleFavourite')
+            ->assertDispatched('toast', message: 'You already have 10 favourite movies. Remove one in Settings first.')
+            ->assertSet('favourite', null);
 
         $this->assertSame(10, Movie::count());
     }
@@ -121,8 +147,7 @@ class FavouritesTest extends TestCase
 
     public function test_cards_show_the_heart_filled_for_favourites(): void
     {
-        $show = Show::create(['tvmaze_id' => 82, 'name' => 'Night Shift']);
-        $this->favourite($show);
+        $this->favourite(Show::create(['tvmaze_id' => 82, 'name' => 'Night Shift']));
 
         Http::fake(['api.tvmaze.com/search/shows*' => Http::response([
             ['show' => ['id' => 82, 'name' => 'Night Shift', 'premiered' => '2024-04-01']],
@@ -131,8 +156,7 @@ class FavouritesTest extends TestCase
 
         $this->get('/search?q=night')->assertOk()
             ->assertSee('Remove Night Shift from favourites')
-            ->assertSee('Add Night Owls to favourites')
-            ->assertSee(route('favourites.shows.destroy', $show), false);
+            ->assertSee('Add Night Owls to favourites');
     }
 
     public function test_deleting_the_account_removes_favourite_only_items_from_the_catalog(): void

@@ -16,13 +16,7 @@ class SettingsController extends Controller
 {
     public function edit(Request $request): View
     {
-        $user = $request->user();
-
-        return view('settings', [
-            'user' => $user,
-            'favouriteShows' => $user->favouriteShows()->get(),
-            'favouriteMovies' => $user->favouriteMovies()->get(),
-        ]);
+        return view('settings', ['user' => $request->user()]);
     }
 
     public function resetCalendar(Request $request): RedirectResponse

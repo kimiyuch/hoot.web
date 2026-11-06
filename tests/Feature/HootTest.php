@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\DiscoverPage;
+use App\Livewire\SearchPanel;
 use App\Models\Episode;
 use App\Models\Movie;
 use App\Models\Show;
@@ -12,6 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class HootTest extends TestCase
@@ -155,10 +158,10 @@ class HootTest extends TestCase
             ->assertSeeInOrder(['Night Shift', '2024 · HBO', 'Following', 'Night Court', '1984 · NBC', 'Follow Night Court'])
             ->assertSee('Movies need a TMDB key');
 
-        // The search lightbox only gets the results, without the page around them.
-        $this->get('/search?q=night', ['X-Hoot-Partial' => '1'])->assertOk()
-            ->assertSeeInOrder(['Shows', 'Night Shift', 'Following', 'Night Court', 'Show all results'])
-            ->assertDontSee('<html', false);
+        // The search lightbox loads results as you type, from the second letter.
+        Livewire::test(SearchPanel::class)
+            ->set('query', 'n')->assertSee('Search shows on TVmaze')
+            ->set('query', 'night')->assertSeeInOrder(['Shows', 'Night Shift', 'Night Court', 'Show all results']);
     }
 
     public function test_search_says_so_when_tvmaze_is_down(): void
@@ -230,6 +233,15 @@ class HootTest extends TestCase
 
         $this->get('/discover?when=new&service=apple')->assertOk()
             ->assertSee('Nocturne')->assertDontSee('Old Network Favourite');
+
+        // The filters apply in place.
+        Livewire::withQueryParams(['when' => 'new'])->test(DiscoverPage::class)
+            ->call('choose', 'service', 'apple')
+            ->assertSet('service', 'apple')->assertSee('Nocturne')->assertDontSee('Old Network Favourite')
+            ->call('choose', 'when', 'soon')
+            ->assertSet('service', '')->assertSeeInOrder(['Shows premiering soon', 'Big Return', 'Brand New'])
+            ->call('choose', 'service', 'nope')
+            ->assertSet('service', '');
 
         Http::assertSent(fn ($request) => str_contains($request->url(), 'schedule/web?date=2026-10-06'));
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'date=2026-10-05'));

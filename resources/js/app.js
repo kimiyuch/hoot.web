@@ -22,11 +22,6 @@ document.addEventListener('click', async (event) => {
     setTimeout(() => (button.textContent = label), 1500);
 });
 
-// Filter dropdowns (Browse) apply as soon as they change.
-document.addEventListener('change', (event) => {
-    if (event.target.matches('[data-autosubmit]')) event.target.form.requestSubmit();
-});
-
 // Dialogs (the Browse filters drawer on small screens).
 document.addEventListener('click', (event) => {
     const opener = event.target.closest('[data-dialog-open]');
@@ -38,20 +33,14 @@ document.addEventListener('click', (event) => {
     if (event.target instanceof HTMLDialogElement) event.target.close();
 });
 
-// Search lightbox: ⌘K / Ctrl K or the header button opens it; results load as you type.
+// Search lightbox: ⌘K / Ctrl K or the header button opens it. Livewire (SearchPanel) loads the results.
 const searchDialog = document.getElementById('search-dialog');
 
 if (searchDialog) {
-    const input = searchDialog.querySelector('[data-search-input]');
-    const results = searchDialog.querySelector('[data-search-results]');
-    const hint = results.innerHTML;
-    let timer;
-    let request;
-
     const openSearch = () => {
         if (searchDialog.open) return;
         searchDialog.showModal();
-        input.select();
+        searchDialog.querySelector('[data-search-input]')?.select();
     };
 
     // Show the shortcut for this platform.
@@ -71,44 +60,29 @@ if (searchDialog) {
         event.preventDefault();
         openSearch();
     });
-
-    input.addEventListener('input', () => {
-        clearTimeout(timer);
-        request?.abort();
-        const query = input.value.trim();
-
-        if (query.length < 2) {
-            results.innerHTML = hint;
-            return;
-        }
-
-        timer = setTimeout(async () => {
-            request = new AbortController();
-            results.setAttribute('aria-busy', 'true');
-            try {
-                const response = await fetch(`/search?q=${encodeURIComponent(query)}`, {
-                    headers: { 'X-Hoot-Partial': '1' },
-                    signal: request.signal,
-                });
-                results.innerHTML = await response.text();
-            } catch (error) {
-                if (error.name !== 'AbortError') results.innerHTML = '<p class="px-3 py-6 text-center text-sm/6 text-white/45">Search isn’t available right now.</p>';
-            } finally {
-                results.removeAttribute('aria-busy');
-            }
-        }, 250);
-    });
 }
 
-// The status toast fades out after 3 seconds.
-const toast = document.querySelector('[data-toast]');
-
-if (toast) {
+// The status toast fades out after 3 seconds. One comes with the page after a form; Livewire
+// components send more with a "toast" event (following, favourites).
+const hideToast = (toast) => {
     setTimeout(() => {
         toast.toggleAttribute('data-hidden', true);
         toast.addEventListener('transitionend', () => toast.remove(), { once: true });
     }, 3000);
-}
+};
+
+document.querySelectorAll('[data-toast]').forEach(hideToast);
+
+window.addEventListener('toast', (event) => {
+    const template = document.getElementById('toast-template');
+    if (!template || !event.detail?.message) return;
+    document.querySelectorAll('[data-toast]').forEach((old) => old.remove());
+    const toast = template.content.firstElementChild.cloneNode(true);
+    toast.textContent = event.detail.message;
+    // Inside an open dialog the toast has to be in the dialog to show above its backdrop.
+    (document.querySelector('dialog[open]') ?? document.body).append(toast);
+    hideToast(toast);
+});
 
 // The header gets its glass strip once the page is scrolled.
 const header = document.querySelector('[data-header]');

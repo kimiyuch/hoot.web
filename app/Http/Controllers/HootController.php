@@ -9,16 +9,14 @@ use App\Services\Browse;
 use App\Services\Calendar;
 use App\Services\Library;
 use App\Services\Premieres;
+use App\Services\Search;
 use App\Services\StreamingServices;
 use App\Services\Timeline;
 use App\Services\Tmdb;
-use App\Services\TvMaze;
 use App\Timezone;
-use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
@@ -62,12 +60,12 @@ class HootController extends Controller
     }
 
     /**
-     * Premieres and the TMDB catalog on one page. "When" picks the source: soon and new come from
-     * the premieres that hoot:refresh builds, "any" asks TMDB discover.
+     * Premieres and the TMDB catalog on one page. The Livewire DiscoverPage does the work; this only turns
+     * away URLs with filters that don't exist.
      */
-    public function discover(Request $request, Premieres $premieres, Browse $browse, Tmdb $tmdb, StreamingServices $services): View
+    public function discover(Request $request): View
     {
-        $input = $request->validate([
+        $request->validate([
             'when' => [Rule::in(['soon', 'new', 'any'])],
             'type' => [Rule::in(['movie', 'tv'])],
             'service' => [Rule::in(array_keys(StreamingServices::all()))],
@@ -78,120 +76,19 @@ class HootController extends Controller
             'page' => ['integer', 'between:1,500'],
         ]);
 
-        $filters = [
-            'when' => $input['when'] ?? 'soon',
-            'type' => $input['type'] ?? 'tv',
-            'service' => $input['service'] ?? null,
-            'region' => $input['region'] ?? config('hoot.region'),
-            'from' => (int) ($input['from'] ?? config('hoot.browse_from_year') ?? now()->year),
-            'sort' => $input['sort'] ?? 'popular',
-            'min_rating' => (int) ($input['min_rating'] ?? 0),
-            'page' => (int) ($input['page'] ?? 1),
-        ];
-
-        $shared = [
-            'filters' => $filters,
-            'moviesEnabled' => $tmdb->configured(),
-            'logos' => $services->logos(),
-            'timezone' => Timezone::for($request),
-            'followedMovies' => $request->user()->movies()->pluck('tmdb_id')->flip(),
-            'favouriteMovies' => $request->user()->favouriteMovies()->pluck('movies.id', 'tmdb_id'),
-        ];
-
-        if ($filters['when'] === 'any') {
-            $results = ['results' => [], 'total_pages' => 0];
-            $error = null;
-
-            if ($tmdb->configured()) {
-                try {
-                    $results = $browse->results($filters);
-                } catch (Throwable $exception) {
-                    report($exception);
-                    $error = 'TMDB can’t be reached right now.';
-                }
-            }
-
-            return view('discover', $shared + [
-                'items' => collect($results['results']),
-                'totalPages' => $results['total_pages'],
-                'error' => $error,
-                'serviceCounts' => null,
-                'refreshedAt' => null,
-                'followedShows' => $request->user()->shows()->whereNotNull('tmdb_id')->pluck('tmdb_id')->flip(),
-                'favouriteShows' => $request->user()->favouriteShows()->whereNotNull('tmdb_id')->pluck('shows.id', 'tmdb_id'),
-            ]);
-        }
-
-        $data = $premieres->get();
-        $now = CarbonImmutable::now()->utc()->toIso8601String();
-        $today = now()->toDateString();
-
-        $items = $filters['type'] === 'tv'
-            ? collect($data['shows'])->filter(fn ($show) => $filters['when'] === 'soon' ? $show['airs_at'] > $now : $show['airs_at'] <= $now)
-            // A movie is "soon" while one of its releases is still to come, and "new" when one was in the last month.
-            : collect($data['movies'])->filter(function ($movie) use ($filters, $today) {
-                $dates = array_filter([$movie['cinema_date'] ?? null, $movie['digital_date'] ?? null]);
-
-                return $filters['when'] === 'soon'
-                    ? collect($dates)->contains(fn ($date) => $date > $today)
-                    : collect($dates)->contains(fn ($date) => $date <= $today);
-            });
-
-        // Which services have anything here, with how many.
-        $serviceKeys = fn (array $item) => isset($item['services']) ? $item['services'] : array_filter([$item['service'] ?? null]);
-        $serviceCounts = $items->flatMap($serviceKeys)->countBy()->sortDesc();
-
-        if ($filters['service'] && ! $serviceCounts->has($filters['service'])) {
-            $filters['service'] = null;
-        }
-        if ($filters['service']) {
-            $items = $items->filter(fn ($item) => in_array($filters['service'], $serviceKeys($item), true));
-        }
-
-        return view('discover', array_merge($shared, [
-            'filters' => $filters,
-            'items' => $items->values(),
-            'totalPages' => 1,
-            'error' => null,
-            'serviceCounts' => $serviceCounts,
-            'refreshedAt' => $data['refreshed_at'],
-            'followedShows' => $request->user()->shows()->pluck('tvmaze_id')->flip(),
-            'favouriteShows' => $request->user()->favouriteShows()->pluck('shows.id', 'tvmaze_id'),
-        ]));
+        return view('discover');
     }
 
-    public function search(Request $request, TvMaze $tvmaze, Tmdb $tmdb): View
+    public function search(Request $request, Search $search, Tmdb $tmdb): View
     {
         $query = trim((string) $request->query('q'));
-        $shows = $movies = [];
-        $errors = [];
+        $results = $search->run($query);
 
-        if ($query !== '') {
-            try {
-                // Cached for a day, so going back and forth between results doesn't ask TVmaze again.
-                $shows = Cache::remember('search:tv:'.mb_strtolower($query), now()->addDay(), fn () => $tvmaze->search($query));
-            } catch (Throwable $exception) {
-                report($exception);
-                $errors[] = 'TVmaze can’t be reached right now.';
-            }
-
-            if ($tmdb->configured()) {
-                try {
-                    $movies = Cache::remember('search:movie:'.mb_strtolower($query), now()->addDay(),
-                        fn () => collect($tmdb->searchMovies($query))->sortByDesc('popularity')->take(18)->values()->all());
-                } catch (Throwable $exception) {
-                    report($exception);
-                    $errors[] = 'TMDB can’t be reached right now.';
-                }
-            }
-        }
-
-        // The lightbox fetches just the results.
-        return view($request->header('X-Hoot-Partial') ? 'partials.search-results' : 'search', [
+        return view('search', [
             'query' => $query,
-            'shows' => $shows,
-            'movies' => $movies,
-            'searchErrors' => $errors,
+            'shows' => $results['shows'],
+            'movies' => $results['movies'],
+            'searchErrors' => $results['errors'],
             'moviesEnabled' => $tmdb->configured(),
             'followedShows' => $request->user()->shows()->pluck('tvmaze_id')->flip(),
             'followedMovies' => $request->user()->movies()->pluck('tmdb_id')->flip(),

@@ -1,7 +1,7 @@
 {{-- One streaming service in the Discover filter: logo, name and, on premieres, how many. --}}
-@props(['service', 'active' => false, 'count' => null, 'logos' => []])
+@props(['discover', 'service', 'active' => false, 'count' => null, 'logos' => []])
 
-<a href="{{ request()->fullUrlWithQuery(['service' => $service, 'page' => null]) }}" @class([
+<a href="{{ $discover->url(['service' => $service, 'page' => 1]) }}" wire:click.prevent="choose('service', '{{ $service }}')" @class([
     'flex items-center gap-3 rounded-lg px-2 py-1.5 text-base/6 sm:text-sm/6',
     'bg-white/8 text-white' => $active,
     'text-white/60 hover:bg-white/5 hover:text-white' => ! $active,

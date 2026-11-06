@@ -28,8 +28,8 @@
                 <p class="{{ $intro }}">The shows and movies that are part of your taste, in your order. A favourite doesn’t need to be followed: nothing about it shows up in For you unless you follow it too.</p>
             </div>
             <div class="flex flex-col gap-8">
-                <x-favourites-list :items="$favouriteShows" type="show" heading="Shows" />
-                <x-favourites-list :items="$favouriteMovies" type="movie" heading="Movies" />
+                <livewire:favourites-list type="show" />
+                <livewire:favourites-list type="movie" />
             </div>
         </section>
 
