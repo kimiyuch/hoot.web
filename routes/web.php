@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Route;
 // The landing page. Signed-in users go on to For you. Fortify adds login, register and the rest.
 Route::get('/', [HootController::class, 'welcome'])->name('home');
 
+// What's stored, who sees what, and the few rules. Public, so it can be read before signing up.
+Route::view('/privacy', 'privacy')->name('privacy');
+
 // Subscribe to this in Apple Calendar or Google Calendar. No login: the token says whose feed it is.
 Route::get('/calendar/{token}.ics', [HootController::class, 'calendar'])->name('calendar');
 
@@ -39,6 +42,7 @@ Route::middleware(['auth', 'verified', 'username'])->group(function () {
 
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');
     Route::post('/settings/calendar', [SettingsController::class, 'resetCalendar'])->name('settings.calendar');
+    Route::get('/settings/export', [SettingsController::class, 'export'])->name('settings.export');
     Route::delete('/settings', [SettingsController::class, 'destroy'])->name('settings.destroy');
 });
 

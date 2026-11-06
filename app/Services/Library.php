@@ -16,7 +16,7 @@ use Throwable;
  */
 class Library
 {
-    public function __construct(private TvMaze $tvmaze, private Tmdb $tmdb) {}
+    public function __construct(private TvMaze $tvmaze, private Tmdb $tmdb, private Activities $activities) {}
 
     /** At most this many favourite shows, and as many favourite movies. */
     public const MAX_FAVOURITES = 10;
@@ -66,6 +66,17 @@ class Library
         $this->put($user, $item, ['status' => $status] + $values);
         $this->tidy($user, $item);
 
+        if ($status !== $row?->status) {
+            // A change of mind within minutes takes back the entry; only starting and finishing are news.
+            $this->activities->retract($user, ['started', 'finished'], $item);
+
+            match ($status) {
+                'watching' => $this->activities->record($user, 'started', $item),
+                'watched' => $this->activities->finished($user, $item, $row?->rating),
+                default => null,
+            };
+        }
+
         return true;
     }
 
@@ -76,15 +87,20 @@ class Library
             return false;
         }
 
+        $previous = $this->library($user, $item)->newPivotStatementForId($item->id)->value('rating');
         $this->put($user, $item, ['rating' => $rating]);
         $this->tidy($user, $item);
+
+        if ($rating !== $previous) {
+            $this->activities->rated($user, $item, $rating);
+        }
 
         return true;
     }
 
     public function followShow(User $user, int $tvmazeId): Show
     {
-        return tap($this->show($tvmazeId), fn (Show $show) => $this->put($user, $show, ['following' => true]));
+        return tap($this->show($tvmazeId), fn (Show $show) => $this->follow($user, $show));
     }
 
     /**
@@ -96,7 +112,7 @@ class Library
         $show = $this->tmdbShow($tmdbId);
 
         if ($show) {
-            $this->put($user, $show, ['following' => true]);
+            $this->follow($user, $show);
         }
 
         return $show;
@@ -104,7 +120,18 @@ class Library
 
     public function followMovie(User $user, int $tmdbId): Movie
     {
-        return tap($this->movie($tmdbId), fn (Movie $movie) => $this->put($user, $movie, ['following' => true]));
+        return tap($this->movie($tmdbId), fn (Movie $movie) => $this->follow($user, $movie));
+    }
+
+    /** Follows something already in the catalog. Only newly following it is news. */
+    private function follow(User $user, Show|Movie $item): void
+    {
+        $was = (bool) $this->library($user, $item)->newPivotStatementForId($item->id)->value('following');
+        $this->put($user, $item, ['following' => true]);
+
+        if (! $was) {
+            $this->activities->record($user, 'followed', $item);
+        }
     }
 
     /** Stops following. Favourites, statuses and ratings stay in your library; anything nobody has any more leaves the catalog. */
@@ -112,6 +139,7 @@ class Library
     {
         $this->library($user, $item)->newPivotStatementForId($item->id)->update(['following' => false]);
         $this->tidy($user, $item);
+        $this->activities->retract($user, ['followed'], $item);
     }
 
     /** Whether there's room for another favourite show (or movie). */
@@ -141,6 +169,7 @@ class Library
 
         $last = (int) $relation->newPivotQuery()->max('favourite_position');
         $this->put($user, $item, ['favourite_position' => $last + 1]);
+        $this->activities->record($user, 'favourited', $item);
 
         return true;
     }
@@ -161,6 +190,7 @@ class Library
         });
 
         $this->tidy($user, $item);
+        $this->activities->retract($user, ['favourited'], $item);
     }
 
     /** Swaps a favourite with the one before it (-1) or after it (1). */

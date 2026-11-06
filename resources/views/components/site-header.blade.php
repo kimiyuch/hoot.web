@@ -1,6 +1,7 @@
 @php
     $links = ['for-you' => 'For you', 'discover' => 'Discover'];
     $me = auth()->user();
+    $requests = $me->followRequests()->whereNull('users.suspended_at')->count();
     $onOwnPages = request()->routeIs('settings') || request()->route('user')?->is($me);
     $kbd = 'rounded-full px-2 font-sans text-xs/5 font-normal text-white/45 inset-ring inset-ring-white/10';
 @endphp
@@ -24,8 +25,11 @@
                 <span class="max-lg:hidden">Search</span>
                 <kbd data-shortcut class="{{ $kbd }} max-lg:hidden">⌘K</kbd>
             </a>
-            <a href="{{ $me->profileUrl() }}" aria-label="Your profile" @class(['rounded-full transition', 'ring-2 ring-white/60 ring-offset-2 ring-offset-night-950' => $onOwnPages, 'opacity-85 hover:opacity-100' => ! $onOwnPages]) @if ($onOwnPages) aria-current="page" @endif>
+            <a href="{{ $me->profileUrl() }}" aria-label="Your profile{{ $requests ? ', '.trans_choice(':count follow request|:count follow requests', $requests) : '' }}" @class(['relative rounded-full transition', 'ring-2 ring-white/60 ring-offset-2 ring-offset-night-950' => $onOwnPages, 'opacity-85 hover:opacity-100' => ! $onOwnPages]) @if ($onOwnPages) aria-current="page" @endif>
                 <x-avatar :user="$me" />
+                @if ($requests)
+                    <span class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-calendar-400 ring-2 ring-night-950" aria-hidden="true"></span>
+                @endif
             </a>
         </div>
     </div>

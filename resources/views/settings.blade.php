@@ -22,6 +22,14 @@
                 <x-field name="bio" label="Bio" :value="$user->bio" bag="updateProfileInformation" maxlength="160" placeholder="What you watch, in a sentence" hint="Optional. Up to 160 characters." />
                 <x-field name="email" type="email" label="Email" :value="$user->email" bag="updateProfileInformation" required autocomplete="email" />
                 <x-visibility-choice :value="$user->is_private ? 'private' : 'public'" bag="updateProfileInformation" />
+                <label class="flex cursor-pointer gap-3">
+                    <input type="hidden" name="shares_activity" value="0">
+                    <input type="checkbox" name="shares_activity" value="1" @checked(old('shares_activity', $user->shares_activity)) class="mt-1 size-4 shrink-0 accent-midnight-400">
+                    <span>
+                        <span class="block text-base/6 font-medium sm:text-sm/6">Share my activity</span>
+                        <span class="block text-sm/5 text-pretty text-white/50">What you follow, start, finish, rate and favourite shows up for your followers under “From people you follow”. Turned off, nothing new is shared and what was shared is hidden.</span>
+                    </span>
+                </label>
                 <x-button class="self-start">Save</x-button>
             </form>
         </section>
@@ -36,6 +44,28 @@
                 <livewire:favourites-list type="movie" />
             </div>
         </section>
+
+        @if ($user->is_private || $requests->isNotEmpty())
+            <section id="requests" aria-labelledby="requests-title" class="{{ $section }} scroll-mt-24">
+                <div>
+                    <h2 id="requests-title" class="font-display text-lg font-semibold tracking-tight">Follow requests</h2>
+                    <p class="{{ $intro }}">Your profile is private, so people ask before following you. Accepted, they see your favourites, what you watch and follow, and your activity. Declining isn’t told to them.</p>
+                </div>
+                @if ($requests->isEmpty())
+                    <p class="rounded-lg px-3 py-3 text-sm/6 text-white/40 inset-ring inset-ring-white/5 lg:self-start">No requests right now.</p>
+                @else
+                    <ul role="list" class="divide-y divide-white/5 lg:-mt-4">
+                        @foreach ($requests as $person)
+                            <x-person-row :person="$person">
+                                <x-slot:actions>
+                                    <livewire:person-actions :key="'request-'.$person->id" :user-id="$person->id" context="requests" />
+                                </x-slot:actions>
+                            </x-person-row>
+                        @endforeach
+                    </ul>
+                @endif
+            </section>
+        @endif
 
         <section id="blocked" aria-labelledby="blocked-title" class="{{ $section }} scroll-mt-24">
             <div>
@@ -90,6 +120,16 @@
             </div>
         </section>
 
+        <section id="data" aria-labelledby="data-title" class="{{ $section }} scroll-mt-24">
+            <div>
+                <h2 id="data-title" class="font-display text-lg font-semibold tracking-tight">Your data</h2>
+                <p class="{{ $intro }}">Everything Hoot keeps about you, as a JSON file: your account, library, ratings, the people you follow and who follows you, and your activity. What’s stored and who sees it is in the <a href="{{ route('privacy') }}" class="text-white/80 underline decoration-white/30 underline-offset-2 hover:text-white">privacy notes</a>.</p>
+            </div>
+            <div>
+                <a href="{{ route('settings.export') }}" class="inline-block rounded-lg bg-white/8 px-3.5 py-2 text-base/6 font-medium hover:bg-white/12 sm:text-sm/6">Download my data</a>
+            </div>
+        </section>
+
         <section aria-labelledby="session" class="{{ $section }}">
             <div>
                 <h2 id="session" class="font-display text-lg font-semibold tracking-tight">Log out</h2>
@@ -104,7 +144,7 @@
         <section aria-labelledby="delete" class="{{ $section }}">
             <div>
                 <h2 id="delete" class="font-display text-lg font-semibold tracking-tight">Delete account</h2>
-                <p class="{{ $intro }}">Your account, what you follow, your favourites and your calendar feed are deleted right away. This can’t be undone.</p>
+                <p class="{{ $intro }}">Your account, your library, ratings and activity, who you follow and who follows you, and your calendar feed are deleted right away. This can’t be undone.</p>
             </div>
             <form method="post" action="{{ route('settings.destroy') }}" class="flex flex-col gap-5">
                 @csrf

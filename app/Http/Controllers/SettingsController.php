@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Activity;
 use App\Models\Movie;
 use App\Models\Show;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +22,39 @@ class SettingsController extends Controller
         return view('settings', [
             'user' => $request->user(),
             'blocked' => $request->user()->blocked()->orderByPivot('created_at', 'desc')->get(),
+            'requests' => $request->user()->followRequests()->whereNull('users.suspended_at')->orderByPivot('created_at', 'desc')->get(),
         ]);
+    }
+
+    /** Everything stored about you, as a JSON download. The calendar token and password stay out. */
+    public function export(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $person = fn (User $other) => ['name' => $other->name, 'username' => $other->username];
+        $entry = fn ($item, string $kind) => [
+            'kind' => $kind,
+            'title' => $kind === 'show' ? $item->name : $item->title,
+            'tvmaze_id' => $item->tvmaze_id ?? null,
+            'tmdb_id' => $item->tmdb_id,
+            ...collect($item->pivot->only(User::LIBRARY_PIVOT))->map(fn ($value) => $value instanceof \DateTimeInterface ? $value->format(DATE_ATOM) : $value)->all(),
+        ];
+
+        $data = [
+            'exported_at' => now()->toIso8601String(),
+            'account' => $user->only(['name', 'username', 'email', 'bio', 'is_private', 'shares_activity', 'created_at', 'email_verified_at']),
+            'library' => $user->libraryShows()->get()->map(fn ($show) => $entry($show, 'show'))
+                ->concat($user->libraryMovies()->get()->map(fn ($movie) => $entry($movie, 'movie')))->values(),
+            'following' => $user->following()->get()->map($person)->values(),
+            'followers' => $user->followers()->get()->map($person)->values(),
+            'follow_requests' => $user->followRequests()->get()->map($person)->values(),
+            'blocked' => $user->blocked()->get()->map($person)->values(),
+            'activity' => Activity::where('user_id', $user->id)->orderBy('created_at')->get()
+                ->map(fn (Activity $activity) => ['type' => $activity->type, 'items' => $activity->items(), 'created_at' => $activity->created_at->toIso8601String(), 'updated_at' => $activity->updated_at->toIso8601String()]),
+        ];
+
+        return response()->json($data, 200, [
+            'Content-Disposition' => 'attachment; filename="hoot-'.$user->username.'-'.now()->format('Y-m-d').'.json"',
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
     public function resetCalendar(Request $request): RedirectResponse

@@ -5,7 +5,7 @@
     $value = old('visibility', $value);
     $options = [
         'public' => ['Public', 'Anyone with a Hoot account can see your profile: your favourites and what you follow.'],
-        'private' => ['Private', 'Only your name and username show. Later, people will have to ask to follow you.'],
+        'private' => ['Private', 'Only your name and username show. People ask to follow you, and only those you accept see the rest.'],
     ];
 @endphp
 

@@ -7,6 +7,7 @@
             This product uses the TMDB API but is not endorsed or certified by TMDB.
         </p>
         <div class="flex shrink-0 flex-wrap gap-x-6 gap-y-2 text-sm/6 text-white/40">
+            <a href="{{ route('privacy') }}" class="hover:text-white">Privacy and rules</a>
             <a href="{{ config('hoot.repository_url') }}" target="_blank" rel="noopener" class="hover:text-white">GitHub</a>
             <span>Hoot, made with <span aria-label="love">❤️</span> by <a href="https://kimiyu.ch" target="_blank" rel="noopener" class="text-white/60 hover:text-white">kimiyu.ch</a></span>
         </div>

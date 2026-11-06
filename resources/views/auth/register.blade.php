@@ -9,6 +9,7 @@
         <x-field name="password_confirmation" type="password" label="Password again" required autocomplete="new-password" />
         <x-visibility-choice />
         <x-button class="mt-1 w-full">Create account</x-button>
+        <p class="-mt-1 text-center text-sm/6 text-pretty text-white/45">By signing up you agree to <a href="{{ route('privacy') }}#rules" class="text-white/70 underline decoration-white/20 underline-offset-2 hover:text-white">the rules</a>. <a href="{{ route('privacy') }}" class="text-white/70 underline decoration-white/20 underline-offset-2 hover:text-white">What’s stored and who sees it</a>.</p>
     </form>
 
     <x-slot:below>

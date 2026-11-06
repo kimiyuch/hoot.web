@@ -12,6 +12,9 @@ return [
     // GitHub repository of this site.
     'repository_url' => 'https://github.com/kimiyuch/hoot.web',
 
+    // Where "Report" on a profile and the privacy page's contact go.
+    'report_email' => env('HOOT_REPORT_EMAIL', env('MAIL_FROM_ADDRESS')),
+
     // Used until the browser has told us its own timezone (it does on the first page load), and for the calendar feed.
     'timezone' => env('HOOT_TIMEZONE', 'Europe/Zurich'),
 

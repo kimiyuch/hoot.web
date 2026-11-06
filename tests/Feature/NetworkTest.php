@@ -47,25 +47,29 @@ class NetworkTest extends TestCase
         $this->assertFalse($rue->isFollowing($pip));
     }
 
-    public function test_you_cant_follow_yourself_or_a_private_account_yet(): void
+    public function test_you_cant_follow_yourself_and_a_private_account_needs_a_request(): void
     {
         $pip = $this->person('pip');
         $secret = $this->person('secret', ['is_private' => true]);
         $network = app(Network::class);
 
         $this->assertFalse($network->follow($pip, $pip));
-        $this->assertFalse($network->follow($pip, $secret));
-        $this->assertSame(0, $pip->following()->count());
 
         $this->actingAs($pip)->get('/@secret')->assertOk()
             ->assertSee('Secret’s profile is private.')
-            ->assertDontSee('aria-label="Follow @secret"', false)
+            ->assertSee('aria-label="Ask to follow @secret"', false)
             ->assertDontSee(route('profile.followers', $secret));
 
         Livewire::actingAs($pip)->test(PersonActions::class, ['userId' => $secret->id])
             ->call('follow')
             ->assertSet('following', false)
-            ->assertDispatched('toast', message: 'You can’t follow Secret.');
+            ->assertSet('requested', true)
+            ->assertDispatched('toast', message: 'Asked to follow Secret. You’ll see their profile once they accept.')
+            ->assertSee('Requested');
+
+        $this->assertFalse($pip->isFollowing($secret));
+        $this->assertTrue($pip->hasRequestedToFollow($secret));
+        $this->get('/@secret')->assertSee('Secret’s profile is private.');
     }
 
     public function test_someone_who_followed_before_an_account_went_private_still_sees_it(): void

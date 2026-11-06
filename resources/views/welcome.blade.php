@@ -198,6 +198,7 @@
                 <nav class="flex flex-wrap gap-x-6 gap-y-2 text-sm/6 whitespace-nowrap text-white/50">
                     <a href="{{ route('login') }}" class="hover:text-white">Log in</a>
                     <a href="{{ route('register') }}" class="hover:text-white">Sign up</a>
+                    <a href="{{ route('privacy') }}" class="hover:text-white">Privacy and rules</a>
                     <a href="{{ config('hoot.repository_url') }}" class="hover:text-white">GitHub</a>
                 </nav>
             </div>

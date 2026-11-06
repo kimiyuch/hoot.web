@@ -51,7 +51,15 @@
                 @endunless
             </div>
             @if ($own)
-                <a href="{{ route('settings') }}#profile" class="self-start rounded-lg bg-white/8 px-3.5 py-2 text-base/6 font-medium hover:bg-white/12 sm:self-center sm:text-sm/6">Edit profile</a>
+                <div class="flex items-center gap-2 self-start sm:self-center">
+                    @if ($requestCount)
+                        <a href="{{ route('settings') }}#requests" class="flex items-center gap-2 rounded-lg px-3.5 py-2 text-base/6 font-medium text-white/80 hover:bg-white/5 hover:text-white sm:text-sm/6">
+                            <span class="size-2 rounded-full bg-calendar-400" aria-hidden="true"></span>
+                            {{ trans_choice(':count follow request|:count follow requests', $requestCount) }}
+                        </a>
+                    @endif
+                    <a href="{{ route('settings') }}#profile" class="rounded-lg bg-white/8 px-3.5 py-2 text-base/6 font-medium hover:bg-white/12 sm:text-sm/6">Edit profile</a>
+                </div>
             @else
                 <div class="self-start sm:self-center">
                     <livewire:person-actions :user-id="$user->id" context="profile" />
@@ -62,7 +70,7 @@
         @if ($blockedByYou)
             <x-empty-state class="mt-16">You blocked {{ '@'.$user->username }}. You don’t see each other on Hoot, and neither of you can follow the other.</x-empty-state>
         @elseif (! $visible)
-            <x-empty-state class="mt-16">{{ $user->name }}’s profile is private. Following private accounts comes later.</x-empty-state>
+            <x-empty-state class="mt-16">{{ $user->name }}’s profile is private. Ask to follow them, and once they accept you see their favourites and what they watch and follow.</x-empty-state>
         @else
             {{-- Favourites: the first four big, the rest smaller. --}}
             @foreach ($favourites as $heading => $tiles)

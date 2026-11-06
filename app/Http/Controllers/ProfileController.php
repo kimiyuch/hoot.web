@@ -23,6 +23,7 @@ class ProfileController extends Controller
             'own' => $viewer->is($user),
             'visible' => $visible,
             'blockedByYou' => $viewer->hasBlocked($user),
+            'requestCount' => $viewer->is($user) ? $user->followRequests()->whereNull('users.suspended_at')->count() : 0,
             'followsYou' => ! $viewer->is($user) && $viewer->isFollowedBy($user),
             'followerCount' => $user->followers()->count(),
             'followingCount' => $user->following()->count(),
@@ -75,9 +76,9 @@ class ProfileController extends Controller
         ]);
     }
 
-    /** Someone who blocked you doesn't exist for you. */
+    /** Someone who blocked you doesn't exist for you, and a suspended account doesn't exist for anyone else. */
     private function hideFromBlocked(User $viewer, User $user): void
     {
-        abort_if($user->hasBlocked($viewer), 404);
+        abort_if($user->hasBlocked($viewer) || ($user->isSuspended() && ! $viewer->is($user)), 404);
     }
 }

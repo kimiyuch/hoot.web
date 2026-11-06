@@ -13,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'password', 'username', 'bio', 'is_private'])]
+#[Fillable(['name', 'email', 'password', 'username', 'bio', 'is_private', 'shares_activity'])]
 #[Hidden(['password', 'remember_token', 'calendar_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -37,6 +37,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_private' => 'boolean',
+            'shares_activity' => 'boolean',
+            'suspended_at' => 'datetime',
         ];
     }
 
@@ -54,7 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Whether $viewer may see this profile's library and lists: on public profiles, on your own, and on a
-     * private one you follow. Never across a block.
+     * private one you follow (accepted). Never across a block, and never a suspended account.
      */
     public function profileVisibleTo(?User $viewer): bool
     {
@@ -62,7 +64,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return true;
         }
 
-        if ($viewer && $this->blocksEitherWay($viewer)) {
+        if ($this->isSuspended() || ($viewer && $this->blocksEitherWay($viewer))) {
             return false;
         }
 
@@ -81,6 +83,24 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsToMany(User::class, 'follows', 'followed_id', 'follower_id')
             ->withPivot('accepted_at')->withTimestamps()->wherePivotNotNull('accepted_at');
+    }
+
+    /** People asking to follow you (your account is private): follows not accepted yet. */
+    public function followRequests(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'follows', 'followed_id', 'follower_id')
+            ->withPivot('accepted_at')->withTimestamps()->wherePivotNull('accepted_at');
+    }
+
+    /** Whether you asked to follow $user and they haven't answered yet. */
+    public function hasRequestedToFollow(User $user): bool
+    {
+        return $user->followRequests()->whereKey($this->id)->exists();
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
     }
 
     /** The people you blocked. */
@@ -110,10 +130,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasBlocked($user) || $user->hasBlocked($this);
     }
 
-    /** Leaves out everyone $viewer blocked or was blocked by, and anyone without a username yet. */
+    /** Leaves out everyone $viewer blocked or was blocked by, anyone without a username yet, and suspended accounts. */
     public function scopeVisibleTo(Builder $query, User $viewer): void
     {
         $query->whereNotNull('users.username')
+            ->whereNull('users.suspended_at')
             ->whereNotIn('users.id', fn ($blocks) => $blocks->select('blocked_id')->from('blocks')->where('blocker_id', $viewer->id))
             ->whereNotIn('users.id', fn ($blocks) => $blocks->select('blocker_id')->from('blocks')->where('blocked_id', $viewer->id));
     }

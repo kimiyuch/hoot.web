@@ -1,6 +1,6 @@
 # Hoot as a network: plan
 
-Status: decided 2026-11-06 (see "Decisions" at the end); steps 0 (favourites), 1 (usernames and profiles), 2 (following people, blocking) and 3 (watch status, ratings) are built. This is what it would take to turn Hoot from a personal release tracker into a small network for movie and TV nerds: you follow people, see what they follow and watch, and get a thread of what the people you follow are up to.
+Status: decided 2026-11-06 (see "Decisions" at the end); steps 0 (favourites), 1 (usernames and profiles), 2 (following people, blocking), 3 (watch status, ratings), 4 (the thread) and 5 (private accounts with requests, sharing, suspension, privacy page) are built. This is what it would take to turn Hoot from a personal release tracker into a small network for movie and TV nerds: you follow people, see what they follow and watch, and get a thread of what the people you follow are up to.
 
 ## What it means
 
@@ -176,4 +176,8 @@ Steps 1–4 are the smallest version that does what the idea asks for; 5 should 
 - **Blocking (step 2):** the blocked person gets a 404 on the blocker's profile and lists; the blocker still sees who it is, with Unblock (and Settings → Blocked people). Unblocking doesn't bring follows back.
 - **Finding people (step 2):** its own mode in Discover (What: Shows / Movies / People) rather than a third header tab: a name search, "Follow what you follow", popular and new. Private accounts only show up in the name search, not in those lists. For you suggests a few people until you follow someone.
 - **Watch status (step 3):** shows have all five statuses, movies only Want to watch and Watched. Status and rating are independent of following and favourites. Profiles show Watching now, Watched lately and Want to watch (public like the rest of a public profile).
+- **Thread (step 4):** no subject columns; each entry holds a list of snapshots in `data.items`, so one row can be "Pip followed 5 shows". Collapse and undo window 10 minutes. "Followed someone" is news (filtered by who the viewer may see); "followed you" shows in the thread of people you follow, other new followers wait for notifications (step 7). No "Share my activity" switch yet (step 5).
+- **Private accounts (step 5):** Follow on a private profile sends a request; the account answers in Settings → Follow requests (a dot on the header avatar while some wait). Going public accepts everyone waiting. Requests aren't news; accepting is. The bio stays visible on private profiles.
+- **Sharing (step 5):** "Share my activity" is on by default; off, nothing new is noted and what was shared is hidden.
+- **Moderation (step 5):** Report is a `mailto:` to the admin; suspending is an artisan command (`hoot:suspend`), no admin UI. A privacy and rules page at `/privacy` (a draft, not lawyer-checked), a JSON export in Settings.
 - **Sign-up:** stays open. Lean on rate limits, block, reserved usernames, and the report/suspend tools from step 5.

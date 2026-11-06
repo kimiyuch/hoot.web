@@ -56,8 +56,9 @@ class HootController extends Controller
                 ->sortBy(fn (Show $show) => [$show->nextEpisode ? 0 : 1, $show->nextEpisode?->airs_at?->getTimestamp() ?? 0, $show->name])
                 ->values(),
             'movies' => $user->movies()->orderBy('title')->get(),
+            'followsPeople' => $followsPeople = $user->following()->exists(),
             // Until you follow someone: a few people to start with.
-            'peopleSuggestions' => $user->following()->exists() ? null : $people->suggestions($user, 3),
+            'peopleSuggestions' => $followsPeople ? null : $people->suggestions($user, 3),
         ]);
     }
 

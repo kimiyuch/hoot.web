@@ -9,6 +9,13 @@
                 <a href="{{ route('discover', ['when' => 'any']) }}" class="text-sm/6 font-semibold text-white/70 hover:text-white">Browse everything <span aria-hidden="true">→</span></a>
             </div>
         </div>
+
+        @if ($followsPeople)
+            <section aria-labelledby="thread" class="mx-auto max-w-xl border-t border-white/5 pt-8">
+                <h2 id="thread" class="font-display text-lg font-semibold tracking-tight">From people you follow</h2>
+                <livewire:thread />
+            </section>
+        @endif
     @else
         {{-- The heading sits in the left column; the sidebar is pushed down to line up with the teaser. --}}
         <div class="grid grid-cols-1 gap-x-16 gap-y-16 lg:grid-cols-[minmax(0,48rem)_minmax(20rem,28rem)] lg:justify-between">
@@ -98,6 +105,13 @@
                                 </li>
                             @endforeach
                         </ul>
+                    </section>
+                @endif
+
+                @if ($followsPeople)
+                    <section aria-labelledby="thread" class="border-t border-white/5 pt-8 first:border-t-0 first:pt-0">
+                        <h2 id="thread" class="font-display text-lg font-semibold tracking-tight">From people you follow</h2>
+                        <livewire:thread />
                     </section>
                 @endif
 

@@ -7,6 +7,15 @@
 <div class="flex items-center gap-2">
     @if ($self)
         {{-- Nothing to do with yourself. --}}
+    @elseif ($context === 'requests')
+        @if ($answer)
+            <span class="py-1.5 text-sm/6 text-white/45">{{ $answer === 'accepted' ? 'Accepted' : 'Declined' }}</span>
+        @else
+            <button type="button" wire:click="decline" wire:loading.attr="disabled"
+                class="relative rounded-lg px-3 py-1.5 text-sm/6 font-medium text-white/55 hover:bg-white/5 hover:text-white disabled:opacity-50" aria-label="Decline {{ $handle }}">Decline{!! $touch !!}</button>
+            <button type="button" wire:click="accept" wire:loading.attr="disabled"
+                class="relative rounded-lg bg-white px-3 py-1.5 text-sm/6 font-semibold text-night-950 hover:bg-midnight-100 disabled:opacity-50" aria-label="Accept {{ $handle }}">Accept{!! $touch !!}</button>
+        @endif
     @elseif ($context === 'blocked' || $blocked)
         @if ($blocked)
             <button type="button" wire:click="unblock" wire:loading.attr="disabled" class="relative {{ $quiet }}" aria-label="Unblock {{ $handle }}">Unblock{!! $touch !!}</button>
@@ -30,8 +39,15 @@
                 <span class="group-hover/follow:hidden">Following</span>
                 <span class="hidden group-hover/follow:inline">Unfollow</span>{!! $touch !!}
             </button>
+        @elseif ($requested)
+            <button type="button" wire:click="unfollow" wire:loading.attr="disabled" aria-label="Take back your request to follow {{ $handle }}" title="Take back your request"
+                class="group/follow relative flex items-center gap-1.5 {{ $quiet }}">
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4 text-white/45 group-hover/follow:hidden"><path fill-rule="evenodd" d="M1 8a7 7 0 1 1 14 0A7 7 0 0 1 1 8Zm7.75-4.25a.75.75 0 0 0-1.5 0V8c0 .2.08.39.22.53l2.5 2.5a.75.75 0 1 0 1.06-1.06L8.75 7.69V3.75Z" clip-rule="evenodd"/></svg>
+                <span class="group-hover/follow:hidden">Requested</span>
+                <span class="hidden group-hover/follow:inline">Take back</span>{!! $touch !!}
+            </button>
         @elseif ($canFollow)
-            <button type="button" wire:click="follow" wire:loading.attr="disabled" aria-label="Follow {{ $handle }}"
+            <button type="button" wire:click="follow" wire:loading.attr="disabled" aria-label="{{ $person->is_private ? 'Ask to follow' : 'Follow' }} {{ $handle }}"
                 class="relative flex items-center gap-1 rounded-lg bg-white py-1.5 pr-3 pl-2 text-sm/6 font-semibold text-night-950 hover:bg-midnight-100 disabled:opacity-50">
                 <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4"><path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z"/></svg>
                 Follow{!! $touch !!}
@@ -45,6 +61,9 @@
                     <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="size-4"><path d="M2 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm4.5 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM12.5 6.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"/></svg>
                 </summary>
                 <div class="absolute right-0 z-10 mt-1 w-56 rounded-xl bg-night-900 p-1 shadow-xl outline-1 outline-white/10">
+                    @if ($reportUrl)
+                        <a href="{{ $reportUrl }}" class="block w-full rounded-lg px-3 py-2 text-left text-sm/6 text-white/75 hover:bg-white/5 hover:text-white">Report {{ $handle }}</a>
+                    @endif
                     <button type="button" wire:click="block" wire:confirm="Block {{ $handle }}? You stop following each other, and neither of you sees the other on Hoot. They aren’t told."
                         class="w-full rounded-lg px-3 py-2 text-left text-sm/6 text-calendar-400 hover:bg-white/5">Block {{ $handle }}</button>
                 </div>

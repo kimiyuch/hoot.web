@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Services\Network;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -29,6 +30,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'username' => $this->usernameRules($user),
             'bio' => ['nullable', 'string', 'max:160'],
             'visibility' => ['required', 'in:public,private'],
+            'shares_activity' => ['sometimes', 'boolean'],
 
             'email' => [
                 'required',
@@ -39,11 +41,19 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             ],
         ], $this->usernameMessages())->validateWithBag('updateProfileInformation');
 
+        $wasPrivate = $user->is_private;
+
         $user->forceFill([
             'username' => $input['username'],
             'bio' => filled($input['bio'] ?? null) ? trim($input['bio']) : null,
             'is_private' => $input['visibility'] === 'private',
+            'shares_activity' => (bool) ($input['shares_activity'] ?? $user->shares_activity ?? true),
         ]);
+
+        // Going public: whoever was waiting can follow now.
+        if ($wasPrivate && ! $user->is_private) {
+            app(Network::class)->acceptAll($user);
+        }
 
         if ($input['email'] !== $user->email &&
             $user instanceof MustVerifyEmail) {

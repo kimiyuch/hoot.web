@@ -11,22 +11,27 @@ use Illuminate\Support\Facades\DB;
  */
 class Network
 {
+    public function __construct(private Activities $activities) {}
+
     /**
-     * Whether $follower may start following $user: not yourself, not across a block, and not a private
-     * account yet (follow requests come with step 5).
+     * Whether $follower may follow $user (or, if the account is private, ask to): not yourself, not across a
+     * block, not a suspended account.
      */
     public function canFollow(User $follower, User $user): bool
     {
         return ! $follower->is($user)
             && $user->username !== null
-            && ! $user->is_private
+            && ! $user->isSuspended()
             && ! $follower->blocksEitherWay($user);
     }
 
-    /** Follows $user. False if that isn't allowed; true if it worked or you already did. */
+    /**
+     * Follows $user, or asks to if their account is private (the follow waits, with accepted_at null, until
+     * they accept). False if that isn't allowed; true if it worked or was already done.
+     */
     public function follow(User $follower, User $user): bool
     {
-        if ($follower->isFollowing($user)) {
+        if ($follower->isFollowing($user) || $follower->hasRequestedToFollow($user)) {
             return true;
         }
 
@@ -34,26 +39,62 @@ class Network
             return false;
         }
 
-        DB::table('follows')->insertOrIgnore([
+        $accepted = ! $user->is_private;
+
+        $added = DB::table('follows')->insertOrIgnore([
             'follower_id' => $follower->id,
             'followed_id' => $user->id,
-            'accepted_at' => now(),
+            'accepted_at' => $accepted ? now() : null,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
+        if ($added && $accepted) {
+            $this->activities->record($follower, 'followed_user', $user);
+        }
+
         return true;
     }
 
+    /** Lets $follower follow you. False if there was no request from them. */
+    public function accept(User $user, User $follower): bool
+    {
+        $accepted = DB::table('follows')->where('follower_id', $follower->id)->where('followed_id', $user->id)
+            ->whereNull('accepted_at')->update(['accepted_at' => now(), 'updated_at' => now()]);
+
+        if ($accepted) {
+            $this->activities->record($follower, 'followed_user', $user);
+        }
+
+        return (bool) $accepted;
+    }
+
+    /** Says no to a request. They aren't told, and they can ask again. */
+    public function decline(User $user, User $follower): void
+    {
+        DB::table('follows')->where('follower_id', $follower->id)->where('followed_id', $user->id)->whereNull('accepted_at')->delete();
+    }
+
+    /** Accepts every waiting request, for when an account goes public. */
+    public function acceptAll(User $user): void
+    {
+        foreach ($user->followRequests()->get() as $follower) {
+            $this->accept($user, $follower);
+        }
+    }
+
+    /** Stops following $user, or takes back the request. */
     public function unfollow(User $follower, User $user): void
     {
         $this->forget($follower, $user);
+        $this->activities->retract($follower, ['followed_user'], $user);
     }
 
     /** Takes $follower off your followers, without blocking them. They can follow you again. */
     public function removeFollower(User $user, User $follower): void
     {
         $this->forget($follower, $user);
+        $this->activities->retract($follower, ['followed_user'], $user);
     }
 
     /** Blocks $user: the follows between you go, both ways, and you stop seeing each other. */
@@ -72,6 +113,8 @@ class Network
                 'blocked_id' => $user->id,
                 'created_at' => now(),
             ]);
+
+            $this->activities->forgetBetween($blocker, $user);
         });
     }
 

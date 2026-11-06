@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserHasUsername;
+use App\Http\Middleware\EnsureUserIsNotSuspended;
 use App\Timezone;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Accounts without a username (from before profiles) are sent to pick one first.
         $middleware->alias(['username' => EnsureUserHasUsername::class]);
+
+        // Suspended accounts are signed out wherever they are.
+        $middleware->web(append: [EnsureUserIsNotSuspended::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
