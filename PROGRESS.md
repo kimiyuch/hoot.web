@@ -42,8 +42,26 @@ Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.w
 
 ## Next
 
+- **Hoot as a network** (the next big step, asked for on 2026-11-06): follow people, see what they follow and watch, a thread of what the people you follow are up to. The plan is in [`docs/SOCIAL.md`](docs/SOCIAL.md): profiles with `/@handle`, following people, a watch status (want to watch / watching / watched / dropped), an `activities` table read fan-out-on-read, privacy and blocking, and a suggested order (steps 1–4 are the smallest useful version). Its "Open questions" need the user's answers before building; start there.
 - Deploy: first `./deploy.sh`, the Hostpoint cron job, and in the server's `.env` the `TMDB_TOKEN` and a real mailer (`MAIL_*`), otherwise nobody can confirm their account.
 - Check the mails in Gmail and Outlook (only checked in Chrome via MailHog).
+
+## On another machine
+
+The repo doesn't carry `.env` or the SQLite database. After cloning:
+
+```sh
+git clone https://github.com/kimiyuch/hoot.web.git ~/Jamon.digital/Webroot/hoot.web
+cd ~/Jamon.digital/Webroot/hoot.web
+composer install && npm install
+cp .env.example .env && php artisan key:generate   # then copy TMDB_TOKEN from the old machine's .env
+touch database/database.sqlite && php artisan migrate
+npm run build
+herd secure hoot.web                                 # if Webroot is parked in Herd; otherwise: herd link hoot.web
+php artisan hoot:refresh                             # about 70 s
+```
+
+The local test user (`test@possum.local`) only exists in the old machine's database: sign up again (mail goes to MailHog, if it runs there) or create one with `php artisan tinker`.
 
 ## Open ideas
 
