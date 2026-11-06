@@ -3,17 +3,18 @@
 namespace App\Services;
 
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Sleep;
 use Throwable;
 
 /**
  * New shows, season premieres and upcoming movies across all services, most popular first.
- * Built by the scheduled refresh and kept in the cache, because TVmaze's full schedule is too big to load on a page view.
+ * Built by the scheduled refresh, because TVmaze's full schedule is too big to load on a page view. Kept as a file in
+ * storage/app/private, not in the cache: deploys clear the cache (optimize:clear), and rebuilding takes over a minute.
  */
 class Premieres
 {
-    private const KEY = 'premieres';
+    private const FILE = 'premieres.json';
 
     public const DAYS_AHEAD = 30;
 
@@ -30,7 +31,9 @@ class Premieres
      */
     public function get(): array
     {
-        return Cache::get(self::KEY, ['shows' => [], 'movies' => [], 'refreshed_at' => null]);
+        $saved = json_decode(Storage::disk('local')->get(self::FILE) ?? '', true);
+
+        return is_array($saved) ? $saved : ['shows' => [], 'movies' => [], 'refreshed_at' => null];
     }
 
     public function refresh(): array
@@ -43,7 +46,7 @@ class Premieres
             'refreshed_at' => now()->toIso8601String(),
         ];
 
-        Cache::forever(self::KEY, $premieres);
+        Storage::disk('local')->put(self::FILE, json_encode($premieres, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         return $premieres;
     }
