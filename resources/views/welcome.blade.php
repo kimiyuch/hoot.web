@@ -20,8 +20,8 @@
         ['question' => 'Does Hoot stream anything?', 'answer' => 'No. It tells you when and where something comes out. You watch it on the service you already have.'],
         ['question' => 'Where do the dates come from?', 'answer' => 'Episodes come from TVmaze, movies and streaming services from TMDB. When they change a date, Hoot picks it up within a few hours.'],
         ['question' => 'What does it cost?', 'answer' => 'Nothing. Hoot is a small side project by kimiyu, with no ads and no tracking.'],
-        ['question' => 'Can other people see what I follow?', 'answer' => 'No. Your For you page is yours. Only your calendar feed link shows your list, and you can make a new link at any time.'],
-        ['question' => 'Can I delete my account?', 'answer' => 'Yes, at any time in Settings. Your account and what you follow are deleted with it.'],
+        ['question' => 'Can other people see what I follow?', 'answer' => 'Only if you want them to. With a public profile, people on Hoot see your favourites and what you follow and watch, and your followers see what you’re up to. Make it private and only people you accept see it, or stop sharing your activity in Settings. Your email and calendar link stay private either way.'],
+        ['question' => 'Can I delete my account?', 'answer' => 'Yes, at any time in Settings. Your account, what you follow and your activity are deleted with it. You can download your data first.'],
     ];
 
     $link = 'text-base/6 font-medium text-white/60 hover:text-white sm:text-sm/6';

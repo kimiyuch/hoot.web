@@ -31,7 +31,7 @@ Do these in order. Steps 1–5 prepare what `deploy.sh` never touches; it would 
 - **Subdomain** `hoot.kimiyu.ch`, with its document root set to `www/hoot.kimiyu.ch/public`.
 - **PHP version** 8.3 (or newer) for that site. Hostpoint writes it into `public/.htaccess` (see step 4).
 - **SSL**: turn on Let's Encrypt for the subdomain. Hoot's links (the calendar feed, mails) use `https://`.
-- **Mailbox** for sending, e.g. `hoot@kimiyu.ch`. Note its password. You need it for `MAIL_*` in step 3.
+- **Mailbox** for sending. Hoot uses `bot@kimiyu.ch`, the same as stackr; its login was copied from stackr's `.env` on the server (`grep -E "^MAIL_(USERNAME|PASSWORD)=" ../stackr.kimiyu.ch/.env >> .env`), so the password never left the server.
 
 ### 2. Check SSH and PHP on the server
 
@@ -81,16 +81,16 @@ QUEUE_CONNECTION=sync
 
 MAIL_MAILER=smtp
 MAIL_SCHEME=smtp
-MAIL_HOST=asmtp.mail.hostpoint.ch    # check the SMTP server in the Hostpoint panel
+MAIL_HOST=asmtp.mail.hostpoint.ch    # Hostpoint's SMTP, as stackr uses it
 MAIL_PORT=587
-MAIL_USERNAME=hoot@kimiyu.ch
+MAIL_USERNAME="bot@kimiyu.ch"
 MAIL_PASSWORD=…
-MAIL_FROM_ADDRESS="hoot@kimiyu.ch"
+MAIL_FROM_ADDRESS="bot@kimiyu.ch"
 MAIL_FROM_NAME="Hoot"
 
 HOOT_TIMEZONE=Europe/Zurich
 HOOT_REGION=CH
-HOOT_REPORT_EMAIL=                   # where profile reports go; empty = MAIL_FROM_ADDRESS
+HOOT_REPORT_EMAIL=m@marceli.to       # where profile reports go; empty = MAIL_FROM_ADDRESS
 TMDB_TOKEN=…                         # the long "API Read Access Token"
 ```
 
@@ -160,7 +160,7 @@ git status          # must be clean; commit public/build if it changed
 
 The first run uploads everything and creates all tables in the empty `database.sqlite`.
 
-Then load the data once. It takes a few minutes: TVmaze's full schedule plus 30 days of daily schedules.
+Then load the data once. It took 75 s on the first deploy: TVmaze's full schedule plus 30 days of daily schedules.
 
 ```sh
 ssh pumutuxu@pumutuxu.myhostpoint.ch 'cd ~/www/hoot.kimiyu.ch && php artisan hoot:refresh --all'
@@ -170,11 +170,13 @@ On an empty database this mainly builds the premieres for Discover. With a copie
 
 ### 7. Cron job
 
-In the Hostpoint panel (Cron jobs), every 15 minutes:
+The shared crontab has one line per site (`crontab -l` over SSH). Hoot's runs the scheduler every minute, like the other sites, with the versioned PHP binary:
 
 ```
-*/15 * * * * cd ~/www/hoot.kimiyu.ch && php artisan schedule:run >/dev/null 2>&1
+* * * * * cd /home/pumutuxu/www/hoot.kimiyu.ch && /usr/local/php83/bin/php artisan schedule:run >> /dev/null 2>&1
 ```
+
+To add it without touching the other lines: `(crontab -l; echo "<the line>") | crontab -` (back up first: `crontab -l > ~/crontab.backup`).
 
 The scheduler then runs `hoot:refresh` every six hours (`routes/console.php`), with no overlap. Check that it's registered:
 
@@ -274,7 +276,7 @@ Hostpoint's own backups cover the account as well.
 | 404 on every page but `/` | `public/.htaccess` lost Laravel's rewrite rules (step 4). |
 | 403 on everything | Folder permissions: `chmod 755 ~/www/hoot.kimiyu.ch ~/www/hoot.kimiyu.ch/public`. |
 | "Database is locked" / can't write | `database/` and `database.sqlite` must be writable by your user. SQLite also writes a temporary `database.sqlite-journal` next to the file. |
-| No confirmation mails | `MAIL_*` in `.env`; the log shows the SMTP error. Try `php artisan tinker` → `Mail::raw('test', fn ($m) => $m->to('you@…')->subject('test'));` |
+| No confirmation mails | `MAIL_*` in `.env`; the log shows the SMTP error. To test the login without sending: `php artisan tinker --execute '$t = Mail::mailer()->getSymfonyTransport(); $t->start(); echo "ok";'`. Try `php artisan tinker` → `Mail::raw('test', fn ($m) => $m->to('you@…')->subject('test'));` |
 | Dates stop updating | The cron job: is it set, and does `php -v` in it give 8.3+? Run `php artisan hoot:refresh` by hand and read its output. |
 | Movies or Any time empty | `TMDB_TOKEN` missing or wrong. |
 | Old CSS after a deploy | `public/build` wasn't rebuilt and committed before `./deploy.sh`. |

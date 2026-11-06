@@ -6,9 +6,9 @@ Last updated: 2026-11-06.
 
 ## State
 
-Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.web`). 70 tests pass (`php artisan test`), Pint is clean. `public/build` is built.
+Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.web`). 71 tests pass (`php artisan test`), Pint is clean. `public/build` is built.
 
-**Git:** in git since 2026-11-05 and pushed to https://github.com/kimiyuch/hoot.web (public, `main`). The tests run on GitHub Actions for every push (all green so far). `marceli-to` is a collaborator, so a plain `git push` works. **Not done yet:** the first deploy (`./deploy.sh`) and the Hostpoint cron job.
+**Git:** in git since 2026-11-05 and pushed to https://github.com/kimiyuch/hoot.web (public, `main`). The tests run on GitHub Actions for every push (all green so far). `marceli-to` is a collaborator, so a plain `git push` works. **Live since 2026-11-06** at https://hoot.kimiyu.ch (Hostpoint, deployed `c7bc6f4` with `./deploy.sh`; how-to in [`DEPLOY.md`](DEPLOY.md)). The local database was copied over (so kimi, marceli_to and the test user exist there too), mail goes out as `bot@kimiyu.ch` (stackr's SMTP login, copied server-side), reports go to `m@marceli.to`, and the cron line (`schedule:run` every minute with `/usr/local/php83/bin/php`) is in the shared crontab.
 
 `.env` has a working `TMDB_TOKEN` (the long "API Read Access Token"). It has to be added to the server's `.env` by hand when deploying.
 
@@ -42,16 +42,19 @@ Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.w
 ## Decisions
 
 - Accounts since 2026-11-06 (before, there was no login). Pages are `noindex` except the landing page. Mail goes to MailHog locally (`127.0.0.1:1025`, inbox at http://127.0.0.1:8025); mails use the published, restyled templates in `resources/views/vendor/{mail,notifications}`, with the wording in `AppServiceProvider`. The server needs a real mailer in `.env` for verification and reset mails.
-- The pages are Blade with a little vanilla JS, not Inertia. Since 2026-11-06 the interactive bits are **Livewire 4 islands** (not full-page components, and not htmx, which the user ruled out): `LibraryActions` (the heart and Follow on every card and in For you's Following), `FavouritesList` (Settings) and `SearchPanel` (inside the ⌘K dialog; the `<dialog>` stays plain Blade so Livewire's morphing doesn't close it) and `DiscoverPage` (the whole Discover page: filters and pages apply in place, the URL follows via `#[Url]`, the links keep real hrefs; the drawer and "Show more" have `wire:ignore.self` so they stay open). They change in place and send a `toast` browser event, which app.js shows with `#toast-template`. Unfollow in For you and the Settings forms still post and reload normally. Use Livewire for the social features too (follow buttons, status menu, thread "Load more").
+- The pages are Blade with a little vanilla JS, not Inertia. Since 2026-11-06 the interactive bits are **Livewire 4 islands** (not full-page components, and not htmx, which the user ruled out): `LibraryActions` (the heart and Follow on every card and in For you's Following), `FavouritesList` (Settings) and `SearchPanel` (inside the ⌘K dialog; the `<dialog>` stays plain Blade so Livewire's morphing doesn't close it) and `DiscoverPage` (the whole Discover page: filters and pages apply in place, the URL follows via `#[Url]`, the links keep real hrefs; the drawer and "Show more" have `wire:ignore.self` so they stay open). Also `PersonActions` (follow, request, accept, block), `UpcomingDays` (the timeline) and `Thread` (From people you follow, with small Follow buttons via `LibraryActions`' `small`, `with-heart` and `with-status` flags). They change in place and send a `toast` browser event, which app.js shows with `#toast-template`. Unfollow in For you and the Settings forms still post and reload normally. Use Livewire for the social features too (follow buttons, status menu, thread "Load more").
+- Tailwind 4 dropped the pointer cursor on buttons; one rule in `resources/css/app.css` (`@layer base`) gives it back to buttons, `summary`, checkboxes, radios and selects, so no `cursor-pointer` classes are needed.
 - TV comes only from TVmaze. Movies come from TMDB.
 - There's no region filter for release dates (the earliest release anywhere counts). Browse does need a country for its service filter, because TMDB only knows availability per country.
 - Premieres only cover shows that premiered in the last 30 days. Past regular-TV premieres only come from the US and UK. Streaming premieres are covered worldwide.
 
 ## Next
 
-- **Hoot as a network**: the plan is in [`docs/SOCIAL.md`](docs/SOCIAL.md); steps 0–5 are built (favourites, profiles, following people with blocking and Discover → People, watch status with ratings, the thread, private accounts with requests, sharing, suspension, privacy page, export). **Next: step 6**, "people you follow watch this" on cards and in search. Also possible: someone's recent activity on their profile (the `Activities` service would need a per-user query); an imprint/operator address on `/privacy` once the user decides what to put there.
-- Deploy, step by step in [`DEPLOY.md`](DEPLOY.md): first `./deploy.sh`, the Hostpoint cron job, and in the server's `.env` the `TMDB_TOKEN`, a real mailer (`MAIL_*`), otherwise nobody can confirm their account, and `HOOT_REPORT_EMAIL` if reports shouldn't go to `MAIL_FROM_ADDRESS`. After migrating, run `php artisan hoot:refresh --all` once so existing shows get `official_url` (the service links).
-- Check the mails in Gmail and Outlook (only checked in Chrome via MailHog).
+1. **After the first deploy**: try it live (sign up with a real address, the confirmation and reset mails, following, the calendar feed). The SMTP login was tested, but no mail has been sent yet. Delete the local test user (`test@possum.local`) on the live site. Open points:
+   - Maybe widen `deploy.sh`'s rsync protect filter to `/database/database.sqlite*`, so a deploy can't delete SQLite's temporary journal file mid-write (not changed yet; the user hasn't decided).
+   - Check the mails in Gmail and Outlook (only checked in Chrome via MailHog).
+   - `/privacy` is a draft from the code, not lawyer-checked, and has no operator name or address (an imprint); the user decides what goes there. Bios stay visible on private profiles (intended for now; the page says so).
+2. **Hoot as a network**: the plan is in [`docs/SOCIAL.md`](docs/SOCIAL.md); steps 0–5 are built (favourites, profiles, following people with blocking and Discover → People, watch status with ratings, the thread with Follow buttons, private accounts with requests, sharing, suspension, privacy page, export). **Next: step 6**, "people you follow watch this" on cards and in search. Then step 7 (in-app notifications: new followers, requests, accepted requests; maybe a weekly digest). Smaller: someone's recent activity on their profile (the `Activities` service would need a per-user query), an invite link (`/@pip` → sign up and follow in one go).
 
 ## On another machine
 
