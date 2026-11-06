@@ -12,7 +12,7 @@ use Illuminate\Support\Sleep;
 use Throwable;
 
 /**
- * Following, favourites, and keeping the followed shows and movies up to date.
+ * Following, favourites, watch status and ratings, and keeping the followed shows and movies up to date.
  */
 class Library
 {
@@ -20,6 +20,67 @@ class Library
 
     /** At most this many favourite shows, and as many favourite movies. */
     public const MAX_FAVOURITES = 10;
+
+    /** The watch statuses, with their labels. Movies only have the first and the fourth. */
+    public const STATUSES = [
+        'plan' => 'Want to watch',
+        'watching' => 'Watching',
+        'paused' => 'Paused',
+        'watched' => 'Watched',
+        'dropped' => 'Dropped',
+    ];
+
+    public const MOVIE_STATUSES = ['plan', 'watched'];
+
+    /** A rating in half stars as text: 9 → "★★★★½". */
+    public static function stars(int $rating): string
+    {
+        return str_repeat('★', intdiv($rating, 2)).($rating % 2 ? '½' : '');
+    }
+
+    /** @return array<string, string> the statuses for a show or a movie */
+    public static function statuses(string $type): array
+    {
+        return $type === 'movie' ? array_intersect_key(self::STATUSES, array_flip(self::MOVIE_STATUSES)) : self::STATUSES;
+    }
+
+    /**
+     * Sets (or with null clears) where you are with it. Watching notes when you started, Watched when you
+     * finished; Want to watch starts over. False if the status doesn't exist for this type.
+     */
+    public function setStatus(User $user, Show|Movie $item, ?string $status): bool
+    {
+        if ($status !== null && ! array_key_exists($status, self::statuses($item instanceof Movie ? 'movie' : 'show'))) {
+            return false;
+        }
+
+        $row = $this->library($user, $item)->newPivotStatementForId($item->id)->first();
+
+        $values = match ($status) {
+            null, 'plan' => ['started_at' => null, 'finished_at' => null],
+            'watching' => ['started_at' => $row?->started_at ?? now(), 'finished_at' => null],
+            'watched' => ['finished_at' => now()],
+            default => [],
+        };
+
+        $this->put($user, $item, ['status' => $status] + $values);
+        $this->tidy($user, $item);
+
+        return true;
+    }
+
+    /** Rates it in half stars (1–10), or with null takes the rating away. */
+    public function rate(User $user, Show|Movie $item, ?int $rating): bool
+    {
+        if ($rating !== null && ($rating < 1 || $rating > 10)) {
+            return false;
+        }
+
+        $this->put($user, $item, ['rating' => $rating]);
+        $this->tidy($user, $item);
+
+        return true;
+    }
 
     public function followShow(User $user, int $tvmazeId): Show
     {
@@ -46,7 +107,7 @@ class Library
         return tap($this->movie($tmdbId), fn (Movie $movie) => $this->put($user, $movie, ['following' => true]));
     }
 
-    /** Stops following. A favourite stays in your library; anything nobody has any more leaves the catalog. */
+    /** Stops following. Favourites, statuses and ratings stay in your library; anything nobody has any more leaves the catalog. */
     public function unfollow(User $user, Show|Movie $item): void
     {
         $this->library($user, $item)->newPivotStatementForId($item->id)->update(['following' => false]);
@@ -156,11 +217,11 @@ class Library
             : $relation->attach($item->id, $values + ['following' => false, 'created_at' => now()]);
     }
 
-    /** Drops your library row once it's neither followed nor a favourite, and the item once nobody has it. */
+    /** Drops your library row once there's nothing on it any more, and the item once nobody has it. */
     private function tidy(User $user, Show|Movie $item): void
     {
         $this->library($user, $item)->newPivotStatementForId($item->id)
-            ->where('following', false)->whereNull('favourite_position')->delete();
+            ->where('following', false)->whereNull('favourite_position')->whereNull('status')->whereNull('rating')->delete();
 
         if (! $item->users()->exists()) {
             $item->delete();

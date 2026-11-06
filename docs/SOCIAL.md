@@ -1,6 +1,6 @@
 # Hoot as a network: plan
 
-Status: decided 2026-11-06 (see "Decisions" at the end); steps 0 (favourites), 1 (usernames and profiles) and 2 (following people, blocking) are built. This is what it would take to turn Hoot from a personal release tracker into a small network for movie and TV nerds: you follow people, see what they follow and watch, and get a thread of what the people you follow are up to.
+Status: decided 2026-11-06 (see "Decisions" at the end); steps 0 (favourites), 1 (usernames and profiles), 2 (following people, blocking) and 3 (watch status, ratings) are built. This is what it would take to turn Hoot from a personal release tracker into a small network for movie and TV nerds: you follow people, see what they follow and watch, and get a thread of what the people you follow are up to.
 
 ## What it means
 
@@ -175,4 +175,5 @@ Steps 1–4 are the smallest version that does what the idea asks for; 5 should 
 - **Following private accounts (step 2):** not possible until follow requests exist (step 5): no Follow button, and `Network::canFollow` refuses. Followers from before an account went private keep seeing it.
 - **Blocking (step 2):** the blocked person gets a 404 on the blocker's profile and lists; the blocker still sees who it is, with Unblock (and Settings → Blocked people). Unblocking doesn't bring follows back.
 - **Finding people (step 2):** its own mode in Discover (What: Shows / Movies / People) rather than a third header tab: a name search, "Follow what you follow", popular and new. Private accounts only show up in the name search, not in those lists. For you suggests a few people until you follow someone.
+- **Watch status (step 3):** shows have all five statuses, movies only Want to watch and Watched. Status and rating are independent of following and favourites. Profiles show Watching now, Watched lately and Want to watch (public like the rest of a public profile).
 - **Sign-up:** stays open. Lean on rate limits, block, reserved usernames, and the report/suspend tools from step 5.

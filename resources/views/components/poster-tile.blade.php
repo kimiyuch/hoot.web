@@ -7,6 +7,6 @@
         <a href="{{ $href }}" target="_blank" rel="noopener" class="before:absolute before:inset-0">{{ $title }}</a>
     </p>
     @if ($meta)
-        <p class="text-sm/5 text-white/45">{{ $meta }}</p>
+        <p class="text-sm/5 text-star tabular-nums">{{ $meta }}</p>
     @endif
 </li>

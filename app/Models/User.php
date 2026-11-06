@@ -17,6 +17,9 @@ use Illuminate\Support\Str;
 #[Hidden(['password', 'remember_token', 'calendar_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
+    /** The columns of a library row (show_user, movie_user). */
+    public const LIBRARY_PIVOT = ['created_at', 'following', 'favourite_position', 'status', 'started_at', 'finished_at', 'rating'];
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
@@ -118,13 +121,13 @@ class User extends Authenticatable implements MustVerifyEmail
     /** Every show in your library: followed, a favourite or both. */
     public function libraryShows(): BelongsToMany
     {
-        return $this->belongsToMany(Show::class)->withPivot('created_at', 'following', 'favourite_position');
+        return $this->belongsToMany(Show::class)->withPivot(self::LIBRARY_PIVOT);
     }
 
     /** Every movie in your library: followed, a favourite or both. */
     public function libraryMovies(): BelongsToMany
     {
-        return $this->belongsToMany(Movie::class)->withPivot('created_at', 'following', 'favourite_position');
+        return $this->belongsToMany(Movie::class)->withPivot(self::LIBRARY_PIVOT);
     }
 
     /** The shows you follow: their episodes are in For you and the calendar feed. */

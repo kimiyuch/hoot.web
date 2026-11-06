@@ -28,6 +28,16 @@ class ProfileController extends Controller
             'followingCount' => $user->following()->count(),
             'favouriteShows' => $visible ? $user->favouriteShows()->get() : collect(),
             'favouriteMovies' => $visible ? $user->favouriteMovies()->get() : collect(),
+            // Shows being watched, latest started first.
+            'watching' => $visible ? $user->libraryShows()->wherePivot('status', 'watching')->orderByPivot('started_at', 'desc')->get() : collect(),
+            // Shows and movies finished, latest first.
+            'watched' => $visible ? $user->libraryShows()->wherePivot('status', 'watched')->get()
+                ->concat($user->libraryMovies()->wherePivot('status', 'watched')->get())
+                ->sortByDesc(fn ($item) => $item->pivot->finished_at)->take(12)->values() : collect(),
+            // Want to watch, latest added first.
+            'planned' => $visible ? $user->libraryShows()->wherePivot('status', 'plan')->get()
+                ->concat($user->libraryMovies()->wherePivot('status', 'plan')->get())
+                ->sortByDesc(fn ($item) => $item->pivot->created_at)->values() : collect(),
             'shows' => $visible ? $user->shows()->orderBy('name')->get() : collect(),
             'movies' => $visible ? $user->movies()->orderBy('title')->get() : collect(),
         ]);

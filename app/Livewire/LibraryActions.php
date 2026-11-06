@@ -11,8 +11,8 @@ use Livewire\Component;
 use Throwable;
 
 /**
- * The heart and the Follow button for a show or movie, on cards and in For you. They change in place;
- * the toast says what happened.
+ * The heart, the watch status and rating menu, and the Follow button for a show or movie, on cards and in
+ * For you. They change in place; the toast says what happened.
  */
 class LibraryActions extends Component
 {
@@ -37,6 +37,67 @@ class LibraryActions extends Component
 
     /** The catalog id while it's one of your favourites. */
     public ?int $favourite = null;
+
+    /** False for no status menu (the search lightbox, where a menu would be clipped). */
+    #[Locked]
+    public bool $withStatus = true;
+
+    public ?string $status = null;
+
+    /** Half stars, 1–10. */
+    public ?int $rating = null;
+
+    /** The status and rating come from your library row, if there is one. */
+    public function mount(): void
+    {
+        if (! $this->withStatus) {
+            return;
+        }
+
+        $relation = $this->type === 'movie' ? auth()->user()->libraryMovies() : auth()->user()->libraryShows();
+        $item = match (true) {
+            $this->type === 'movie' => $relation->where('movies.tmdb_id', $this->tmdbId),
+            $this->tvmazeId !== null => $relation->where('shows.tvmaze_id', $this->tvmazeId),
+            default => $relation->where('shows.tmdb_id', $this->tmdbId),
+        };
+        $row = $item->first()?->pivot;
+
+        [$this->status, $this->rating] = [$row?->status, $row?->rating];
+    }
+
+    public function setStatus(?string $status, Library $library): void
+    {
+        $status = $status === '' ? null : $status;
+
+        if (! $item = $this->resolve($library)) {
+            return;
+        }
+
+        if (! $library->setStatus(auth()->user(), $item, $status)) {
+            return;
+        }
+
+        $this->status = $status;
+        $this->toast($status === null
+            ? 'Cleared the status of '.$this->title($item).'.'
+            : $this->title($item).': '.Library::STATUSES[$status].'.');
+    }
+
+    public function rate(?int $rating, Library $library): void
+    {
+        if (! $item = $this->resolve($library)) {
+            return;
+        }
+
+        if (! $library->rate(auth()->user(), $item, $rating ?: null)) {
+            return;
+        }
+
+        $this->rating = $rating ?: null;
+        $this->toast($this->rating
+            ? 'You rated '.$this->title($item).' '.Library::stars($this->rating).'.'
+            : 'Took away your rating of '.$this->title($item).'.');
+    }
 
     public function follow(Library $library): void
     {
@@ -88,22 +149,7 @@ class LibraryActions extends Component
             return;
         }
 
-        try {
-            $item = match (true) {
-                $this->type === 'movie' => $library->movie($this->tmdbId),
-                $this->tvmazeId !== null => $library->show($this->tvmazeId),
-                default => $library->tmdbShow($this->tmdbId),
-            };
-        } catch (Throwable $exception) {
-            report($exception);
-            $this->toast("That {$this->type} couldn’t be loaded. Try again in a moment.");
-
-            return;
-        }
-
-        if (! $item) {
-            $this->toast('TVmaze doesn’t have that show, so it can’t be added.');
-
+        if (! $item = $this->resolve($library)) {
             return;
         }
 
@@ -119,7 +165,30 @@ class LibraryActions extends Component
 
     public function render(): View
     {
-        return view('livewire.library-actions');
+        return view('livewire.library-actions', ['statuses' => Library::statuses($this->type)]);
+    }
+
+    /** The show or movie, from the catalog or fetched into it. Null (with a toast) if that fails. */
+    private function resolve(Library $library): Show|Movie|null
+    {
+        try {
+            $item = match (true) {
+                $this->type === 'movie' => $library->movie($this->tmdbId),
+                $this->tvmazeId !== null => $library->show($this->tvmazeId),
+                default => $library->tmdbShow($this->tmdbId),
+            };
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->toast("That {$this->type} couldn’t be loaded. Try again in a moment.");
+
+            return null;
+        }
+
+        if (! $item) {
+            $this->toast('TVmaze doesn’t have that show, so it can’t be added.');
+        }
+
+        return $item;
     }
 
     /** @return class-string<Show|Movie> */

@@ -1,7 +1,13 @@
 <x-layouts.app :title="$user->name.' (@'.$user->username.')'">
     @php
-        $showTile = fn ($show) => ['title' => $show->name, 'image' => $show->image_url, 'href' => $show->url];
-        $movieTile = fn ($movie) => ['title' => $movie->title, 'image' => $movie->posterUrl(), 'href' => $movie->url()];
+        // Their rating, if they gave one, under the title.
+        $stars = fn ($item) => $item->pivot?->rating ? \App\Services\Library::stars($item->pivot->rating) : null;
+        $showTile = fn ($show) => ['title' => $show->name, 'image' => $show->image_url, 'href' => $show->url, 'meta' => $stars($show)];
+        $movieTile = fn ($movie) => ['title' => $movie->title, 'image' => $movie->posterUrl(), 'href' => $movie->url(), 'meta' => $stars($movie)];
+        $anyTile = fn ($item) => $item instanceof \App\Models\Movie ? $movieTile($item) : $showTile($item);
+        $watchingTiles = $watching->map($showTile);
+        $watchedTiles = $watched->map($anyTile);
+        $plannedTiles = $planned->map($anyTile);
         $favourites = [
             'Favourite shows' => $favouriteShows->map($showTile),
             'Favourite movies' => $favouriteMovies->map($movieTile),
@@ -68,17 +74,30 @@
                     @else
                         <ol role="list" class="mt-6 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 sm:gap-x-6">
                             @foreach ($tiles->take(4) as $tile)
-                                <x-poster-tile big :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" />
+                                <x-poster-tile big :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
                             @endforeach
                         </ol>
                         @if ($tiles->count() > 4)
                             <ol role="list" start="5" class="mt-8 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-6">
                                 @foreach ($tiles->skip(4) as $tile)
-                                    <x-poster-tile :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" />
+                                    <x-poster-tile :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
                                 @endforeach
                             </ol>
                         @endif
                     @endif
+                </section>
+            @endforeach
+
+            {{-- Where they are: watching now, and what they finished lately. --}}
+            @foreach (['Watching now' => $watchingTiles, 'Watched lately' => $watchedTiles, 'Want to watch' => $plannedTiles] as $heading => $tiles)
+                @continue($tiles->isEmpty())
+                <section class="mt-16" aria-label="{{ $heading }}">
+                    <h2 class="font-display text-xl font-semibold tracking-tight">{{ $heading }}</h2>
+                    <ul role="list" class="mt-6 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-5 lg:grid-cols-8">
+                        @foreach ($tiles as $tile)
+                            <x-poster-tile :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
+                        @endforeach
+                    </ul>
                 </section>
             @endforeach
 
@@ -93,7 +112,7 @@
                     <h3 class="mt-8 text-sm/6 font-medium text-white/60">{{ $heading }} <span class="text-white/35 tabular-nums">{{ $tiles->count() }}</span></h3>
                     <ul role="list" class="mt-4 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-5 lg:grid-cols-8">
                         @foreach ($tiles as $tile)
-                            <x-poster-tile :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" />
+                            <x-poster-tile :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
                         @endforeach
                     </ul>
                 @endforeach

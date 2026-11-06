@@ -33,7 +33,7 @@
                                 </div>
                                 <div class="relative shrink-0">
                                     <livewire:library-actions :key="'search-'.$item['key']" :type="$item['type']" :tvmaze-id="$item['tvmaze_id']" :tmdb-id="$item['tmdb_id']"
-                                        :label="$item['title']" :following="$item['following']" :favourite="$item['favourite']" />
+                                        :label="$item['title']" :following="$item['following']" :favourite="$item['favourite']" :with-status="false" />
                                 </div>
                             </li>
                         @endforeach
