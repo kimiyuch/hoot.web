@@ -25,7 +25,7 @@ class ProfilesTest extends TestCase
 
         $this->actingAs(User::factory()->create())->get('/@pip')->assertOk()
             ->assertSeeInOrder(['Pip', '@pip', '1 show · 0 movies followed', 'Late shows only.', 'Favourite shows', 'The Wire', 'Favourite movies', 'Arrival', 'Following', 'Night Shift'])
-            ->assertDontSee('Edit profile')->assertDontSee('Log out')
+            ->assertDontSee('Edit profile')
             ->assertDontSee($pip->email);
     }
 
@@ -38,7 +38,7 @@ class ProfilesTest extends TestCase
             ->assertSee('Pip’s profile is private.')->assertDontSee('Night Shift');
 
         $this->actingAs($pip)->get('/@pip')->assertOk()
-            ->assertSee('Night Shift')->assertSee('Edit profile')->assertSee('Log out')->assertDontSee('aria-label="Follow @', false);
+            ->assertSee('Night Shift')->assertSee('Edit profile')->assertDontSee('aria-label="Follow @', false);
     }
 
     public function test_unknown_profiles_are_not_found_and_profiles_need_an_account(): void
@@ -67,9 +67,14 @@ class ProfilesTest extends TestCase
         $this->get('/choose-username')->assertRedirect('/for-you');
     }
 
-    public function test_the_header_avatar_links_to_your_profile(): void
+    public function test_the_header_avatar_opens_a_menu_with_your_profile_settings_and_log_out(): void
     {
         $this->actingAs(User::factory()->create(['name' => 'Pip', 'username' => 'pip']))
-            ->get('/for-you')->assertSee('href="'.url('/@pip').'" aria-label="Your profile"', false);
+            ->get('/for-you')->assertSeeInOrder([
+                'aria-label="Your account"', '@pip',
+                'href="'.url('/@pip').'"', 'Your profile',
+                'href="'.route('settings').'"', 'Settings',
+                'action="'.route('logout').'"', 'Log out',
+            ], false);
     }
 }

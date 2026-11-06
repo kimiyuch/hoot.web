@@ -23,28 +23,31 @@
         <p class="truncate text-base/6 font-medium sm:text-sm/6">
             <a href="{{ $href }}" target="_blank" rel="noopener" class="before:absolute before:inset-0 group-hover:text-midnight-200">{{ $title }}</a>
         </p>
-        <p class="truncate text-base/6 text-white/50 sm:text-sm/6">
-            @if ($isEpisodes)
-                <span class="text-white/75 tabular-nums">{{ \App\Services\Calendar::codes($episodes) }}</span>
-                @if ($episodes->count() > 1)
-                    · all {{ $episodes->count() }} episodes
-                @elseif ($episodes->first()->name)
-                    · {{ $episodes->first()->name }}
+        @if ($isEpisodes)
+            {{-- The episode, and the search link from Settings → Extras once it's out. --}}
+            <div class="flex items-center gap-2 text-base/6 text-white/50 sm:text-sm/6">
+                <p class="min-w-0 truncate">
+                    <span class="text-white/75 tabular-nums">{{ \App\Services\Calendar::codes($episodes) }}</span>
+                    @if ($episodes->count() > 1)
+                        · all {{ $episodes->count() }} episodes
+                    @elseif ($episodes->first()->name)
+                        · {{ $episodes->first()->name }}
+                    @endif
+                </p>
+                @if ($out && ($search = \App\Services\EpisodeSearch::template()))
+                    <x-episode-search-link :template="$search" :show="$show->name" :episodes="$episodes" class="z-10" />
                 @endif
-            @else
+            </div>
+        @else
+            <p class="truncate text-base/6 text-white/50 sm:text-sm/6">
                 <span class="text-white/75">{{ $release['kind'] === 'digital' ? 'Digital release' : 'In cinemas' }}</span>@if ($country) · first in {{ $country }}@endif
-            @endif
-        </p>
+            </p>
+        @endif
     </div>
 
     <div class="flex shrink-0 flex-col items-end text-right">
         @if ($release['timed'])
-            <div class="flex items-center gap-2">
-                @if ($isEpisodes && $out && ($search = \App\Services\EpisodeSearch::template()))
-                    <x-episode-search-link :template="$search" :show="$show->name" :episodes="$episodes" class="z-10" />
-                @endif
-                <time datetime="{{ $release['at']->toIso8601String() }}" class="text-base/6 font-medium tabular-nums sm:text-sm/6">{{ $release['at']->format('H:i') }}</time>
-            </div>
+            <time datetime="{{ $release['at']->toIso8601String() }}" class="text-base/6 font-medium tabular-nums sm:text-sm/6">{{ $release['at']->format('H:i') }}</time>
         @endif
         @if ($isEpisodes && $show->channel)
             <x-service :service="$show->service()" :channel="$show->channel" :logos="$logos" :href="\App\Services\StreamingServices::link($show->service(), $show->official_url, $show->name)" class="max-w-36 text-sm/6 text-white/45 max-sm:hidden" />

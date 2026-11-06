@@ -84,6 +84,21 @@ window.addEventListener('toast', (event) => {
     hideToast(toast);
 });
 
+// Menus (the avatar menu in the header) are <details>: a click outside or Escape closes them.
+document.addEventListener('click', (event) => {
+    document.querySelectorAll('details[data-menu][open]').forEach((menu) => {
+        if (!menu.contains(event.target)) menu.open = false;
+    });
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    document.querySelectorAll('details[data-menu][open]').forEach((menu) => {
+        menu.open = false;
+        menu.querySelector('summary')?.focus();
+    });
+});
+
 // The header gets its glass strip once the page is scrolled.
 const header = document.querySelector('[data-header]');
 
