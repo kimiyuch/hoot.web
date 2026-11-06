@@ -47,7 +47,6 @@ class HootController extends Controller
             ->values();
 
         return view('for-you', [
-            'sections' => collect($sections)->except('Just released')->all(),
             'next' => $next,
             'recent' => $recent,
             'timezone' => $timezone,

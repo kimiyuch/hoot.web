@@ -1,18 +1,4 @@
 <x-layouts.app title="For you">
-    @php
-        $today = \Carbon\CarbonImmutable::now($timezone)->startOfDay();
-        $days = collect($sections)->flatMap(fn ($days) => $days);
-        $dayLabel = function (\Carbon\CarbonImmutable $date) use ($today) {
-            $diff = (int) $today->diffInDays($date->startOfDay());
-            return match (true) {
-                $diff === 0 => 'Today',
-                $diff === 1 => 'Tomorrow',
-                $diff < 7 => $date->format('l'),
-                default => $date->format('D j M'),
-            };
-        };
-    @endphp
-
     @if ($shows->isEmpty() && $movies->isEmpty())
         <div class="mx-auto flex max-w-xl flex-col items-center py-16 text-center">
             <img src="{{ asset('images/hoot-head.svg') }}" alt="" class="size-24">
@@ -81,30 +67,8 @@
                     </section>
                 @endif
 
-                {{-- Timeline --}}
-                @if ($days->isEmpty())
-                    <x-empty-state class="mt-8">Nothing comes out in the next {{ config('hoot.days_ahead') }} days for what you follow.</x-empty-state>
-                @else
-                    <div class="mt-12 flex flex-col gap-10">
-                        @foreach ($days as $day => $releases)
-                            @php $date = \Carbon\CarbonImmutable::parse($day, $timezone); @endphp
-                            <section aria-label="{{ $date->format('l j F') }}">
-                                {{-- A small label above the line, then that day's releases. --}}
-                                <h2 class="flex items-baseline gap-2 border-b border-white/8 pb-2 text-sm/6">
-                                    <span class="font-semibold text-white">{{ $dayLabel($date) }}</span>
-                                    @if ($dayLabel($date) !== $date->format('D j M'))
-                                        <span class="text-white/40">{{ $date->format('D j M') }}</span>
-                                    @endif
-                                </h2>
-                                <ul role="list" class="mt-2">
-                                    @foreach ($releases as $release)
-                                        <x-release-row :release="$release" :logos="$logos" />
-                                    @endforeach
-                                </ul>
-                            </section>
-                        @endforeach
-                    </div>
-                @endif
+                {{-- Timeline: this month, then a month more with every Load more. --}}
+                <livewire:upcoming-days />
             </div>
 
             {{-- Sidebar. On wide screens it starts level with the teaser (or the timeline when there's no teaser), not the heading:
@@ -149,8 +113,11 @@
                         @foreach ($shows as $show)
                             @php
                                 $now = now();
-                                // Newest season first; episodes in order within a season.
-                                $seasons = $show->episodes->groupBy('season')->sortKeysDesc();
+                                // Seasons in order, specials last; it opens on the season of the next episode, or the newest.
+                                // (Keys are ints: PHP turns "3" into 3. 0 is specials.)
+                                $seasons = $show->episodes->groupBy(fn ($episode) => (int) $episode->season)
+                                    ->sortKeysUsing(fn ($a, $b) => [$a === 0, $a] <=> [$b === 0, $b]);
+                                $currentSeason = (int) $show->nextEpisode?->season ?: $seasons->keys()->reject(fn ($key) => $key === 0)->last() ?? $seasons->keys()->first();
                             @endphp
                             {{-- Each show opens to all its episodes. --}}
                             <li>
@@ -186,25 +153,40 @@
                                         @if ($seasons->isEmpty())
                                             <p class="mt-3 text-sm/6 text-white/40">No episodes listed yet.</p>
                                         @else
-                                            <div class="scrollbar-thin mt-3 max-h-72 overflow-y-auto overscroll-contain">
-                                                @foreach ($seasons as $season => $episodes)
-                                                    <p class="pt-2 pb-1 text-xs/5 font-medium text-white/40 first:pt-0">{{ $season ? 'Season '.$season : 'Specials' }}</p>
-                                                    <ul role="list" class="divide-y divide-white/5">
-                                                        @foreach ($episodes as $episode)
-                                                            @php
-                                                                $at = $episode->airs_at?->setTimezone($timezone);
-                                                                $upcoming = $at && $at->isAfter($now);
-                                                                $isNext = $show->nextEpisode?->is($episode);
-                                                            @endphp
-                                                            <li @class(['flex items-baseline gap-2 py-2 pr-1 text-sm/5', 'text-white/45' => ! $upcoming, 'text-white/80' => $upcoming && ! $isNext, 'text-next' => $isNext])>
-                                                                <span class="shrink-0 tabular-nums">{{ $episode->code() }}</span>
-                                                                <span @class(['min-w-0 flex-1 truncate', 'italic opacity-60' => blank($episode->name)])>{{ filled($episode->name) ? $episode->name : '[No title yet]' }}</span>
-                                                                @if ($at)
-                                                                    <span class="shrink-0 text-xs/5 tabular-nums">{{ $at->format($at->year === $now->year ? 'j M' : 'j M Y') }}</span>
-                                                                @endif
-                                                            </li>
+                                            {{-- One season at a time; the badges switch between them (Alpine, which comes with Livewire). --}}
+                                            <div x-data="{ season: @js($currentSeason) }" class="mt-3">
+                                                @if ($seasons->count() > 1)
+                                                    <div class="flex flex-wrap items-center gap-1.5" aria-label="Seasons">
+                                                        @foreach ($seasons->keys() as $season)
+                                                            <button type="button" x-on:click="season = @js($season)" x-bind:aria-pressed="season === @js($season)"
+                                                                aria-label="{{ $season === 0 ? 'Specials' : 'Season '.$season }}"
+                                                                x-bind:class="season === @js($season) ? 'bg-white text-night-950' : 'bg-white/8 text-white/60 hover:bg-white/12 hover:text-white'"
+                                                                @class(['min-w-7 rounded-full px-2 text-xs/6 font-medium tabular-nums', 'bg-white text-night-950' => $season === $currentSeason, 'bg-white/8 text-white/60' => $season !== $currentSeason])>
+                                                                {{ $season === 0 ? 'Specials' : $season }}
+                                                            </button>
                                                         @endforeach
-                                                    </ul>
+                                                    </div>
+                                                @endif
+                                                @foreach ($seasons as $season => $episodes)
+                                                    <div x-show="season === @js($season)" @style(['display: none' => $season !== $currentSeason]) class="mt-2">
+                                                        <p class="pb-1 text-xs/5 font-medium text-white/40">{{ $season === 0 ? 'Specials' : 'Season '.$season }} <span class="text-white/30 tabular-nums">· {{ trans_choice(':count episode|:count episodes', $episodes->count()) }}</span></p>
+                                                        <ul role="list" class="scrollbar-thin max-h-72 divide-y divide-white/5 overflow-y-auto overscroll-contain">
+                                                            @foreach ($episodes as $episode)
+                                                                @php
+                                                                    $at = $episode->airs_at?->setTimezone($timezone);
+                                                                    $upcoming = $at && $at->isAfter($now);
+                                                                    $isNext = $show->nextEpisode?->is($episode);
+                                                                @endphp
+                                                                <li @class(['flex items-baseline gap-2 py-2 pr-1 text-sm/5', 'text-white/45' => ! $upcoming, 'text-white/80' => $upcoming && ! $isNext, 'text-next' => $isNext])>
+                                                                    <span class="shrink-0 tabular-nums">{{ $episode->code() }}</span>
+                                                                    <span @class(['min-w-0 flex-1 truncate', 'italic opacity-60' => blank($episode->name)])>{{ filled($episode->name) ? $episode->name : '[No title yet]' }}</span>
+                                                                    @if ($at)
+                                                                        <span class="shrink-0 text-xs/5 tabular-nums">{{ $at->format($at->year === $now->year ? 'j M' : 'j M Y') }}</span>
+                                                                    @endif
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
                                                 @endforeach
                                             </div>
                                         @endif

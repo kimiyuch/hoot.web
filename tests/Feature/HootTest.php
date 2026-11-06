@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\DiscoverPage;
 use App\Livewire\SearchPanel;
+use App\Livewire\UpcomingDays;
 use App\Models\Episode;
 use App\Models\Movie;
 use App\Models\Show;
@@ -133,7 +134,30 @@ class HootTest extends TestCase
         $this->assertSame('AU', $movie->cinema_country);
         $this->assertSame('2026-12-10', $movie->digital_date->toDateString());
 
-        $this->get('/for-you')->assertSeeInOrder(['Tue 10 Nov', 'Owl Light', 'In cinemas', 'first in AU', 'Thu 10 Dec', 'Owl Light', 'Digital release']);
+        // This month first; December comes with Load more.
+        $this->get('/for-you')->assertSeeInOrder(['Tue 10 Nov', 'Owl Light', 'In cinemas', 'first in AU', 'Load December', '1 more release later'])
+            ->assertDontSee('Thu 10 Dec');
+
+        Livewire::test(UpcomingDays::class)
+            ->call('loadMore')
+            ->assertSet('until', '2026-12')
+            ->assertSeeInOrder(['Tue 10 Nov', 'Owl Light', 'Thu 10 Dec', 'Owl Light', 'Digital release'])
+            ->assertDontSee('Load ');
+    }
+
+    public function test_following_shows_one_season_at_a_time_starting_with_the_next_episode(): void
+    {
+        $show = Show::create(['tvmaze_id' => 5, 'name' => 'True Detective']);
+        $this->user->shows()->attach($show);
+        foreach ([[1, 1, '2014-01-12', 'The Long Bright Dark'], [2, 1, '2015-06-21', 'The Western Book of the Dead'], [0, null, '2016-01-01', 'Making Of'], [3, 1, '2026-12-20', 'Night Again']] as $i => [$season, $number, $date, $name]) {
+            $show->episodes()->create(['tvmaze_id' => 100 + $i, 'season' => $season, 'number' => $number, 'name' => $name, 'airs_at' => $date.' 20:00:00']);
+        }
+
+        $this->get('/for-you')->assertOk()
+            // Badges in order, specials last; season 3 (the next episode) is the one shown.
+            ->assertSeeInOrder(['aria-label="Seasons"', 'aria-label="Season 1"', 'aria-label="Season 2"', 'aria-label="Season 3"', 'aria-label="Specials"'], false)
+            ->assertSee('x-data="{ season: 3 }"', false)
+            ->assertSeeInOrder(['display: none', 'The Long Bright Dark', 'Night Again'], false);
     }
 
     public function test_a_long_tmdb_token_is_sent_as_a_bearer_token(): void
