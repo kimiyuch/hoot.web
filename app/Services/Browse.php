@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 /**
  * Browsing TMDB's catalogue: movies or shows since a year, on a streaming service in a country, by popularity or rating.
@@ -33,10 +34,15 @@ class Browse
     public function __construct(private Tmdb $tmdb) {}
 
     /**
+     * One page of the catalog. $hidden is what the user hides from Discover (Hidden::for); TMDB can't leave
+     * out languages itself, so with anything hidden the page comes from merge(), which filters as it goes.
+     * "counted" is false when the page count is only what's known so far (the view then says just "Page 3").
+     *
      * @param  array{type: 'movie'|'tv', service: ?string, region: string, from: int, sort: string, min_rating: int, page: int}  $filters
-     * @return array{results: list<array>, total_pages: int}
+     * @param  list<string>  $hidden
+     * @return array{results: list<array>, total_pages: int, counted: bool}
      */
-    public function results(array $filters): array
+    public function results(array $filters, array $hidden = []): array
     {
         $tv = $filters['type'] === 'tv';
         $date = $tv ? 'first_air_date' : 'primary_release_date';
@@ -58,36 +64,62 @@ class Browse
             $query['vote_average.gte'] = $filters['min_rating'];
         }
 
-        if ($filters['service'] !== null) {
-            $query['with_watch_providers'] = implode('|', StreamingServices::all()[$filters['service']]['tmdb']);
-            $query['watch_region'] = $filters['region'];
-            $query['with_watch_monetization_types'] = 'flatrate|free|ads';
+        // Anime that TMDB tagged as such stays out of the query already; merge() catches the rest.
+        if (in_array('anime', $hidden, true)) {
+            $query['without_keywords'] = Hidden::TMDB_ANIME_KEYWORD;
         }
 
-        return Cache::remember('browse:v2:'.md5(json_encode([$filters['type'], $query])), now()->addHours(6), function () use ($filters, $query, $tv) {
-            $found = ($query['watch_region'] ?? null) === self::ALL_REGIONS
-                ? $this->everyRegion($filters, $query, $tv)
-                : $this->tmdb->discover($filters['type'], $query);
+        // The countries to ask: one, all of hoot.regions, or none (no service, no country needed).
+        $regions = [null];
+        if ($filters['service'] !== null) {
+            $query['with_watch_providers'] = implode('|', StreamingServices::all()[$filters['service']]['tmdb']);
+            $query['with_watch_monetization_types'] = 'flatrate|free|ads';
+            $regions = $filters['region'] === self::ALL_REGIONS ? array_keys(config('hoot.regions')) : [$filters['region']];
+        }
+
+        $cacheKey = 'browse:v3:'.md5(json_encode([$filters['type'], $query, $regions, $hidden]));
+        $page = Cache::remember($cacheKey, now()->addHours(6), function () use ($filters, $query, $tv, $regions, $hidden) {
+            if (count($regions) === 1 && $hidden === []) {
+                $found = $this->tmdb->discover($filters['type'], array_filter(['watch_region' => $regions[0]]) + $query);
+                $found['counted'] = true;
+            } else {
+                $found = $this->merge($filters, $query, $tv, $regions, $hidden);
+            }
 
             return [
                 'results' => array_map(fn (array $item) => Tmdb::summary($item, $tv), $found['results']),
                 // TMDB never returns more than 500 pages.
                 'total_pages' => min($found['total_pages'], 500),
+                'counted' => $found['counted'],
             ];
         });
+
+        // The cast isn't in TMDB's discover results; it's looked up per title (and cached a week), and a
+        // card simply goes without it if that fails.
+        try {
+            $casts = $this->tmdb->casts($filters['type'], array_column($page['results'], 'tmdb_id'));
+        } catch (Throwable $exception) {
+            report($exception);
+            $casts = [];
+        }
+        $page['results'] = array_map(fn (array $item) => $item + ['cast' => $casts[$item['tmdb_id']] ?? []], $page['results']);
+
+        return $page;
     }
 
     /**
-     * TMDB only filters by service within one country, so "all regions" merges the countries in hoot.regions.
+     * Pages of 20 cut from TMDB's results, for when TMDB can't do it alone: a service in all regions (TMDB only
+     * filters by service within one country) and hidden titles (TMDB can't leave out a language).
      * Each country's results come sorted by the same key (popularity, rating and dates are the same everywhere),
-     * so this takes the best next title from any country, skips ones it already has, and cuts pages of 20 from
-     * the merged list, fetching (and caching) each country's next TMDB page as needed. Page p asks TMDB for at
-     * most p pages per country. How many titles the union holds isn't known, so the page count is the biggest
-     * country's, plus one more while the merge still has titles left.
+     * so this takes the best next title from any country, skips ones it already has or that are hidden, and
+     * fetches (and caches) each country's next TMDB page as needed. Page p asks TMDB for at least p pages per
+     * country, more when a lot is hidden. How many titles are left in the end isn't known, so the page count
+     * is what's known so far: this page, plus one more while there are titles left.
      *
-     * @return array{results: list<array>, total_pages: int}
+     * @param  list<?string>  $regions
+     * @return array{results: list<array>, total_pages: int, counted: false}
      */
-    private function everyRegion(array $filters, array $query, bool $tv): array
+    private function merge(array $filters, array $query, bool $tv, array $regions, array $hidden): array
     {
         $date = $tv ? 'first_air_date' : 'release_date';
         $key = match ($filters['sort']) {
@@ -97,20 +129,20 @@ class Browse
         };
 
         $wanted = $filters['page'] * self::PER_PAGE;
+        // At most this many TMDB pages per country, in case nearly everything is hidden.
+        $budget = min(3 * $filters['page'] + 5, 500);
         $streams = [];
-        $largest = 0;
-        foreach (array_keys(config('hoot.regions')) as $region) {
-            $streams[$region] = ['items' => [], 'page' => 0, 'pages' => 1];
+        foreach ($regions as $region) {
+            $streams[(string) $region] = ['items' => [], 'page' => 0, 'pages' => 1];
         }
 
         // The next title of a country, fetching its next page when it has run out; null when it has no more.
-        $head = function (string $region) use (&$streams, &$largest, $filters, $query): ?array {
+        $head = function (string $region) use (&$streams, $filters, $query, $budget): ?array {
             $stream = &$streams[$region];
-            while ($stream['items'] === [] && $stream['page'] < min($stream['pages'], 500)) {
-                $found = $this->regionPage($filters['type'], ['watch_region' => $region, 'page' => ++$stream['page']] + $query);
+            while ($stream['items'] === [] && $stream['page'] < min($stream['pages'], $budget)) {
+                $found = $this->regionPage($filters['type'], array_filter(['watch_region' => $region]) + ['page' => ++$stream['page']] + $query);
                 $stream['items'] = $found['results'];
                 $stream['pages'] = $found['total_pages'];
-                $largest = max($largest, $found['total_results']);
             }
 
             return $stream['items'][0] ?? null;
@@ -121,9 +153,9 @@ class Browse
         while (count($merged) <= $wanted) {
             $best = null;
             foreach (array_keys($streams) as $region) {
-                $item = $head($region);
+                $item = $head((string) $region);
                 if ($item !== null && ($best === null || $key($item) > $key($head($best)))) {
-                    $best = $region;
+                    $best = (string) $region;
                 }
             }
             if ($best === null) {
@@ -131,23 +163,22 @@ class Browse
             }
 
             $item = array_shift($streams[$best]['items']);
-            if (! isset($seen[$item['id']])) {
-                $seen[$item['id']] = true;
+            if (! isset($seen[$item['id']]) && ! Hidden::tmdb($item, $hidden)) {
                 $merged[] = $item;
             }
+            $seen[$item['id']] = true;
         }
-
-        $more = count($merged) > $wanted;
 
         return [
             'results' => array_slice($merged, $wanted - self::PER_PAGE, self::PER_PAGE),
-            'total_pages' => max((int) ceil($largest / self::PER_PAGE), $filters['page'] + ($more ? 1 : 0)),
+            'total_pages' => $filters['page'] + (count($merged) > $wanted ? 1 : 0),
+            'counted' => false,
         ];
     }
 
     /** One page of one country, cached on its own so the merged pages can share it. */
     private function regionPage(string $type, array $query): array
     {
-        return Cache::remember('browse:v2:region:'.md5(json_encode([$type, $query])), now()->addHours(6), fn () => $this->tmdb->discover($type, $query));
+        return Cache::remember('browse:v3:region:'.md5(json_encode([$type, $query])), now()->addHours(6), fn () => $this->tmdb->discover($type, $query));
     }
 }

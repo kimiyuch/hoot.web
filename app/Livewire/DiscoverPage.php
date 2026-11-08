@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Services\Browse;
+use App\Services\Hidden;
 use App\Services\People;
 use App\Services\Premieres;
 use App\Services\Search;
@@ -108,7 +109,9 @@ class DiscoverPage extends Component
             ]);
         }
 
+        $hidden = Hidden::for($user);
         $view = [
+            'hidden' => $hidden,
             'moviesEnabled' => $tmdb->configured(),
             'logos' => $services->logos(),
             'timezone' => Timezone::for(request()),
@@ -122,7 +125,7 @@ class DiscoverPage extends Component
 
             if ($tmdb->configured()) {
                 try {
-                    $results = $browse->results($filters);
+                    $results = $browse->results($filters, $hidden);
                 } catch (Throwable $exception) {
                     report($exception);
                     $error = 'TMDB can’t be reached right now.';
@@ -134,6 +137,7 @@ class DiscoverPage extends Component
                 'items' => collect($results['results']),
                 // TMDB serves at most 500 pages.
                 'totalPages' => min($results['total_pages'], 500),
+                'pagesCounted' => $results['counted'] ?? true,
                 'error' => $error,
                 'serviceCounts' => null,
                 'refreshedAt' => null,
@@ -143,7 +147,8 @@ class DiscoverPage extends Component
         }
 
         $data = $premieres->get();
-        $items = $this->premieres($data, $filters);
+        $items = $this->premieres($data, $filters)
+            ->reject(fn (array $item) => $filters['type'] === 'tv' ? Hidden::show($item, $hidden) : Hidden::tmdb($item, $hidden));
 
         // Which services have anything here, with how many.
         $serviceCounts = $items->flatMap(fn (array $item) => self::serviceKeys($item))->countBy()->sortDesc();

@@ -120,6 +120,32 @@
             </div>
         </section>
 
+        <section id="hidden" aria-labelledby="hidden-title" class="{{ $section }} scroll-mt-24">
+            <div>
+                <h2 id="hidden-title" class="font-display text-lg font-semibold tracking-tight">Hide from Discover</h2>
+                <p class="{{ $intro }}">Never see these in Discover’s premieres and catalog. Search, For you and profiles still show everything.</p>
+            </div>
+            <form method="post" action="{{ route('settings.hidden') }}" class="flex flex-col gap-5">
+                @csrf
+                @method('put')
+                @php $hiddenNow = old('hidden', \App\Services\Hidden::for($user)); @endphp
+                <div class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+                    @foreach (config('hoot.hideable') as $key => $option)
+                        <label class="flex cursor-pointer gap-3">
+                            <input type="checkbox" name="hidden[]" value="{{ $key }}" @checked(in_array($key, $hiddenNow, true)) class="mt-1 size-4 shrink-0 accent-midnight-400">
+                            <span>
+                                <span class="block text-base/6 font-medium sm:text-sm/6">{{ $option['label'] }}</span>
+                                @isset($option['hint'])
+                                    <span class="block text-sm/5 text-pretty text-white/50">{{ $option['hint'] }}</span>
+                                @endisset
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+                <x-button variant="secondary" class="self-start">Save</x-button>
+            </form>
+        </section>
+
         <section id="extras" aria-labelledby="extras-title" class="{{ $section }} scroll-mt-24">
             <div>
                 <h2 id="extras-title" class="font-display text-lg font-semibold tracking-tight">Extras</h2>

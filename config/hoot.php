@@ -27,6 +27,22 @@ return [
     'region' => env('HOOT_REGION', 'CH'),
     'regions' => ['CH' => 'Switzerland', 'DE' => 'Germany', 'AT' => 'Austria', 'FR' => 'France', 'IT' => 'Italy', 'GB' => 'United Kingdom', 'US' => 'United States'],
 
+    // What someone can hide from Discover (Settings → Hide from Discover). languages: TMDB's original_language
+    // codes; tvmaze_languages: TVmaze's language names; countries: a TMDB show's origin, a TVmaze show's channel.
+    // Anime is TVmaze's "Anime" genre, or animation in Japanese.
+    'hideable' => [
+        'anime' => ['label' => 'Anime', 'hint' => 'Japanese animation'],
+        'korean' => ['label' => 'Korean', 'languages' => ['ko'], 'tvmaze_languages' => ['Korean'], 'countries' => ['KR']],
+        'indian' => ['label' => 'Indian', 'hint' => 'Hindi, Tamil, Telugu and other Indian languages',
+            'languages' => ['hi', 'ta', 'te', 'ml', 'kn', 'bn', 'mr', 'pa', 'gu', 'or'],
+            'tvmaze_languages' => ['Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Bengali', 'Marathi', 'Punjabi', 'Gujarati', 'Oriya'],
+            'countries' => ['IN']],
+        'japanese' => ['label' => 'Japanese', 'languages' => ['ja'], 'tvmaze_languages' => ['Japanese'], 'countries' => ['JP']],
+        'chinese' => ['label' => 'Chinese', 'languages' => ['zh', 'cn'], 'tvmaze_languages' => ['Chinese', 'Mandarin', 'Cantonese'], 'countries' => ['CN', 'TW', 'HK']],
+        'turkish' => ['label' => 'Turkish', 'languages' => ['tr'], 'tvmaze_languages' => ['Turkish'], 'countries' => ['TR']],
+        'thai' => ['label' => 'Thai', 'languages' => ['th'], 'tvmaze_languages' => ['Thai'], 'countries' => ['TH']],
+    ],
+
     // The streaming services to filter by: TMDB's provider ids, and the channel names TVmaze uses for their shows.
     // Shown first in the Discover service filter; the rest are behind "Show more".
     'featured_services' => ['netflix', 'max', 'apple', 'prime', 'disney'],

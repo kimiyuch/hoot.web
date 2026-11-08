@@ -36,6 +36,9 @@
                 <div>
                     <h1 class="font-display text-3xl font-semibold tracking-tight text-balance">{{ $heading }}</h1>
                     <p class="mt-2 max-w-[60ch] text-base/7 text-pretty text-white/50 sm:text-sm/6">{{ $intro }}</p>
+                    @if (($hidden ?? []) && $filters['type'] !== 'people')
+                        <p class="mt-1 text-base/7 text-white/35 sm:text-sm/6">Hiding {{ \App\Services\Hidden::describe($hidden) }}. <a href="{{ route('settings') }}#hidden" class="text-white/50 underline decoration-white/20 underline-offset-2 hover:text-white">Change</a></p>
+                    @endif
                 </div>
                 <button type="button" data-dialog-open="filter-drawer" class="flex shrink-0 items-center gap-2 rounded-lg bg-white/8 py-2 pr-3 pl-2.5 text-base/6 font-medium hover:bg-white/12 lg:hidden">
                     <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-5"><path d="M10 3.75a2 2 0 1 0-4 0 2 2 0 0 0 4 0ZM17.25 4.5a.75.75 0 0 0 0-1.5h-5.5a.75.75 0 0 0 0 1.5h5.5ZM5 3.75a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75ZM4.25 17a.75.75 0 0 0 0-1.5h-1.5a.75.75 0 0 0 0 1.5h1.5ZM17.25 17a.75.75 0 0 0 0-1.5h-5.5a.75.75 0 0 0 0 1.5h5.5ZM9 10a.75.75 0 0 1-.75.75h-5.5a.75.75 0 0 1 0-1.5h5.5A.75.75 0 0 1 9 10ZM17.25 10.75a.75.75 0 0 0 0-1.5h-1.5a.75.75 0 0 0 0 1.5h1.5ZM14 10a2 2 0 1 0-4 0 2 2 0 0 0 4 0ZM10 16.25a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z"/></svg>
@@ -67,7 +70,7 @@
                             {{-- The TMDB catalog --}}
                             <x-media-card :title="$item['title']" :href="'https://www.themoviedb.org/'.($isTv ? 'tv' : 'movie').'/'.$item['tmdb_id']"
                                 :image="$item['poster_path'] ? 'https://image.tmdb.org/t/p/w342'.$item['poster_path'] : null"
-                                :overview="$item['overview'] ?? null" :rating="$item['rating']">
+                                :overview="$item['overview'] ?? null" :rating="$item['rating']" :cast="$item['cast'] ?? []">
                                 <x-slot:meta>{{ $item['year'] }}</x-slot:meta>
                                 <x-slot:action>
                                     @if ($isTv)
@@ -80,7 +83,7 @@
                         @elseif ($isTv)
                             {{-- Show premieres --}}
                             @php $at = \Carbon\CarbonImmutable::parse($item['airs_at'])->setTimezone($timezone); @endphp
-                            <x-media-card :title="$item['name']" :href="$item['url']" :image="$item['image_url']" :overview="$item['overview'] ?? null" :rating="$item['rating'] ?? null">
+                            <x-media-card :title="$item['name']" :href="$item['url']" :image="$item['image_url']" :overview="$item['overview'] ?? null" :rating="$item['rating'] ?? null" :cast="$item['cast'] ?? []">
                                 <x-slot:meta>
                                     <span class="flex min-w-0 flex-wrap items-center gap-x-1.5">
                                         <span @class(['text-calendar-400' => $item['season'] === 1])>{{ $item['season'] === 1 ? 'New show' : 'Season '.$item['season'] }}</span>
@@ -104,7 +107,7 @@
                             @endphp
                             <x-media-card :title="$item['title']" :href="'https://www.themoviedb.org/movie/'.$item['tmdb_id']"
                                 :image="$item['poster_path'] ? 'https://image.tmdb.org/t/p/w342'.$item['poster_path'] : null"
-                                :overview="$item['overview'] ?? null" :rating="$item['rating'] ?? null">
+                                :overview="$item['overview'] ?? null" :rating="$item['rating'] ?? null" :cast="$item['cast'] ?? []">
                                 <x-slot:meta>
                                     {{ collect([$cinema ? 'Cinema '.$cinema->format('j M') : null, $digital ? 'Digital '.$digital->format('j M') : null])->filter()->join(' · ') ?: $item['year'] }}
                                 </x-slot:meta>
@@ -130,7 +133,7 @@
                                 <a href="{{ $this->url(['page' => $filters['page'] - 1]) }}" wire:click.prevent="goToPage({{ $filters['page'] - 1 }})" class="text-sm/6 font-medium text-white/60 hover:text-white"><span aria-hidden="true">←</span> Previous</a>
                             @endif
                         </div>
-                        <p class="text-sm/6 text-white/40 tabular-nums max-sm:hidden">Page {{ $filters['page'] }} of {{ $totalPages }}</p>
+                        <p class="text-sm/6 text-white/40 tabular-nums max-sm:hidden">{{ 'Page '.$filters['page'].(($pagesCounted ?? true) ? ' of '.$totalPages : '') }}</p>
                         <div class="flex flex-1 justify-end">
                             @if ($filters['page'] < $totalPages)
                                 <a href="{{ $this->url(['page' => $filters['page'] + 1]) }}" wire:click.prevent="goToPage({{ $filters['page'] + 1 }})" class="text-sm/6 font-medium text-white/60 hover:text-white">Next <span aria-hidden="true">→</span></a>

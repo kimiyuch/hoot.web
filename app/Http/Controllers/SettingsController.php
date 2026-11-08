@@ -7,10 +7,12 @@ use App\Models\Movie;
 use App\Models\Show;
 use App\Models\User;
 use App\Services\EpisodeSearch;
+use App\Services\Hidden;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -42,7 +44,7 @@ class SettingsController extends Controller
 
         $data = [
             'exported_at' => now()->toIso8601String(),
-            'account' => $user->only(['name', 'username', 'email', 'bio', 'is_private', 'shares_activity', 'episode_search_url', 'created_at', 'email_verified_at']),
+            'account' => $user->only(['name', 'username', 'email', 'bio', 'is_private', 'shares_activity', 'episode_search_url', 'discover_hidden', 'created_at', 'email_verified_at']),
             'library' => $user->libraryShows()->get()->map(fn ($show) => $entry($show, 'show'))
                 ->concat($user->libraryMovies()->get()->map(fn ($movie) => $entry($movie, 'movie')))->values(),
             'following' => $user->following()->get()->map($person)->values(),
@@ -56,6 +58,20 @@ class SettingsController extends Controller
         return response()->json($data, 200, [
             'Content-Disposition' => 'attachment; filename="hoot-'.$user->username.'-'.now()->format('Y-m-d').'.json"',
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    /** What to leave out of Discover: keys of hoot.hideable, none ticked means nothing. */
+    public function updateHidden(Request $request): RedirectResponse
+    {
+        $input = $request->validate([
+            'hidden' => ['array'],
+            'hidden.*' => [Rule::in(array_keys(config('hoot.hideable')))],
+        ]);
+
+        $hidden = array_values(array_intersect(array_keys(config('hoot.hideable')), $input['hidden'] ?? []));
+        $request->user()->forceFill(['discover_hidden' => $hidden ?: null])->save();
+
+        return back()->with('status', $hidden ? 'Discover now hides '.Hidden::describe($hidden).'.' : 'Discover shows everything again.');
     }
 
     /** The extras, off unless you set them: for now, your own search link next to episodes that are out. */

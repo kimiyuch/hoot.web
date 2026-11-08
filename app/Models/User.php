@@ -39,6 +39,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'is_private' => 'boolean',
             'shares_activity' => 'boolean',
             'suspended_at' => 'datetime',
+            'discover_hidden' => 'array',
         ];
     }
 

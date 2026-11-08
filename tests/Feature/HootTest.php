@@ -13,7 +13,9 @@ use App\Services\Premieres;
 use App\Services\StreamingServices;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Sleep;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -277,6 +279,8 @@ class HootTest extends TestCase
 
         Http::fake([
             'api.tvmaze.com/updates/shows*' => Http::response([82 => now()->subDays(2)->getTimestamp(), 90 => now()->subHours(2)->getTimestamp()]),
+            // The cast: a person playing two parts is named once, and only the first three.
+            'api.tvmaze.com/shows/301/cast' => Http::response(array_map(fn ($name) => ['person' => ['name' => $name]], ['Ann Lead', 'Bo Second', 'Ann Lead', 'Cy Third', 'Di Fourth'])),
             'api.tvmaze.com/shows/90*' => Http::response(['id' => 90, 'name' => 'Changed', '_embedded' => ['episodes' => [$this->episode(5, 1, 1, '2026-11-08T20:00:00+00:00')]]]),
             'api.tvmaze.com/schedule/web*' => Http::response([
                 $this->episode(20, 1, 1, '2026-10-30T12:00:00+00:00') + ['_embedded' => ['show' => ['id' => 400, 'name' => 'Nocturne', 'weight' => 100, 'webChannel' => ['name' => 'Apple TV']]]],
@@ -303,8 +307,10 @@ class HootTest extends TestCase
 
         // Most popular first.
         $this->get('/discover')->assertOk()
-            ->assertSeeInOrder(['Big Return', 'Season 3', 'Mon 9 Nov', 'Netflix', 'Brand New', 'New show', 'Sun 8 Nov', 'BBC One'])
+            ->assertSeeInOrder(['Big Return', 'Season 3', 'Mon 9 Nov', 'Netflix', 'With', 'Ann Lead, Bo Second, Cy Third', 'Brand New', 'New show', 'Sun 8 Nov', 'BBC One'])
+            ->assertDontSee('Di Fourth')
             ->assertDontSee('Nocturne');
+        $this->assertSame(['Ann Lead', 'Bo Second', 'Cy Third'], Cache::get('cast:tvmaze:301'));
 
         // Recently premiered: most popular first.
         $this->get('/discover?when=new')->assertOk()
@@ -324,6 +330,90 @@ class HootTest extends TestCase
 
         Http::assertSent(fn ($request) => str_contains($request->url(), 'schedule/web?date=2026-10-06'));
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'date=2026-10-05'));
+    }
+
+    public function test_movie_premieres_bring_their_cast_from_the_same_request(): void
+    {
+        config(['hoot.tmdb_token' => 'abc123']);
+        Http::fake([
+            'api.themoviedb.org/3/discover/movie*' => Http::response(['total_pages' => 1, 'results' => [
+                ['id' => 7, 'title' => 'Owl Light', 'release_date' => '2026-11-20'],
+            ]]),
+            'api.themoviedb.org/3/movie/7*' => Http::response([
+                'release_dates' => ['results' => [['iso_3166_1' => 'US', 'release_dates' => [['type' => 3, 'release_date' => '2026-11-20T00:00:00.000Z']]]]],
+                'credits' => ['cast' => [['name' => 'Wren Moss', 'order' => 0], ['name' => 'Pip Hart', 'order' => 1]]],
+            ]),
+        ]);
+
+        $this->assertSame(['Wren Moss', 'Pip Hart'], app(Premieres::class)->movies()[0]['cast']);
+        Http::assertSent(fn ($request) => str_contains(urldecode($request->url()), 'append_to_response=release_dates,watch/providers,credits'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/credits'));
+    }
+
+    public function test_hidden_kinds_are_saved_in_settings(): void
+    {
+        $this->put('/settings/hidden', ['hidden' => ['korean', 'nope']])->assertSessionHasErrors('hidden.1');
+
+        $this->put('/settings/hidden', ['hidden' => ['indian', 'anime', 'korean']])
+            ->assertSessionHas('status', 'Discover now hides anime, Korean and Indian titles.');
+        $this->assertSame(['anime', 'korean', 'indian'], $this->user->fresh()->discover_hidden);
+        $this->get('/settings')->assertOk()->assertSee('Hide from Discover');
+
+        $this->put('/settings/hidden', [])->assertSessionHas('status', 'Discover shows everything again.');
+        $this->assertNull($this->user->fresh()->discover_hidden);
+    }
+
+    public function test_discover_leaves_out_hidden_premieres(): void
+    {
+        $show = fn (int $id, string $name, array $extra) => $extra + ['tvmaze_id' => $id, 'name' => $name, 'year' => '2026', 'channel' => null, 'status' => null,
+            'image_url' => null, 'url' => null, 'rating' => null, 'genres' => [], 'language' => 'English', 'overview' => null,
+            'season' => 1, 'airs_at' => '2026-11-10T20:00:00+00:00', 'weight' => 100 - $id, 'country' => 'US', 'service' => null];
+        Storage::disk('local')->put('premieres.json', json_encode(['shows' => [
+            $show(1, 'Plain Drama', []),
+            $show(2, 'Seoul Nights', ['language' => 'Korean', 'country' => null]),
+            $show(3, 'Mumbai Calling', ['language' => 'English', 'country' => 'IN']),
+            $show(4, 'Spirit Blade', ['language' => 'Japanese', 'country' => 'JP', 'genres' => ['Anime', 'Action']]),
+            $show(5, 'Tokyo Kitchen', ['language' => 'Japanese', 'country' => 'JP', 'genres' => ['Food']]),
+        ], 'movies' => [], 'refreshed_at' => now()->toIso8601String()]));
+
+        $this->get('/discover')->assertOk()->assertSee(['Seoul Nights', 'Mumbai Calling', 'Spirit Blade'])->assertDontSee('Hiding');
+
+        $this->user->forceFill(['discover_hidden' => ['anime', 'korean', 'indian']])->save();
+
+        $this->get('/discover')->assertOk()
+            ->assertSee('Hiding anime, Korean and Indian titles.')
+            ->assertSee(['Plain Drama', 'Tokyo Kitchen'])
+            ->assertDontSee('Seoul Nights')->assertDontSee('Mumbai Calling')->assertDontSee('Spirit Blade');
+    }
+
+    public function test_any_time_leaves_out_hidden_titles_and_still_fills_pages_of_twenty(): void
+    {
+        config(['hoot.tmdb_token' => 'abc123']);
+        $this->user->forceFill(['discover_hidden' => ['anime', 'korean']])->save();
+        // 40 shows by popularity over two TMDB pages: every third one Korean, show 7 Japanese animation. 26 are left.
+        $shows = array_map(fn ($i) => ['id' => $i, 'name' => sprintf('Show-%02d', $i), 'first_air_date' => '2026-03-01', 'popularity' => 100 - $i,
+            'original_language' => $i % 3 === 0 ? 'ko' : ($i === 7 ? 'ja' : 'en'), 'genre_ids' => $i === 7 ? [16] : [18], 'origin_country' => []], range(1, 40));
+        Http::fake([
+            'api.themoviedb.org/3/watch/providers/*' => Http::response(['results' => []]),
+            'api.themoviedb.org/3/discover/tv*page=1*' => Http::response(['total_pages' => 2, 'total_results' => 40, 'results' => array_slice($shows, 0, 20)]),
+            'api.themoviedb.org/3/discover/tv*page=2*' => Http::response(['total_pages' => 2, 'total_results' => 40, 'results' => array_slice($shows, 20)]),
+            'api.themoviedb.org/3/tv/*' => Http::response(['cast' => []]),
+        ]);
+
+        // Page 1 is the first 20 that are left (1, 2, 4, 5, 8 … 29, 31), taking from TMDB's second page.
+        $first = $this->get('/discover?when=any&type=tv')->assertOk()
+            ->assertSee('Hiding anime and Korean titles.')
+            ->assertSeeInOrder(['Show-01', 'Show-02', 'Show-04', 'Show-29', 'Show-31', 'Page 1', 'Next'])
+            ->assertDontSee('Page 1 of');
+        foreach (['Show-03', 'Show-07', 'Show-30', 'Show-32'] as $title) {
+            $first->assertDontSee($title);
+        }
+
+        $this->get('/discover?when=any&type=tv&page=2')->assertOk()
+            ->assertSeeInOrder(['Show-32', 'Show-34', 'Show-40', 'Page 2'])
+            ->assertDontSee('Show-31')->assertDontSee('Show-39')->assertDontSee('Next');
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'without_keywords=210024'));
     }
 
     public function test_pages_render_without_anything_followed(): void
@@ -372,18 +462,21 @@ class HootTest extends TestCase
             'api.themoviedb.org/3/discover/movie*watch_region=CH&page=1*' => Http::response(['total_pages' => 2, 'total_results' => 25, 'results' => array_slice($swiss, 0, 20)]),
             'api.themoviedb.org/3/discover/movie*watch_region=CH&page=2*' => Http::response(['total_pages' => 2, 'total_results' => 25, 'results' => array_slice($swiss, 20)]),
             'api.themoviedb.org/3/discover/movie*watch_region=US*' => Http::response(['total_pages' => 1, 'total_results' => 11, 'results' => $american]),
+            // The cast, in billing order ("order"), not the order TMDB lists it in.
+            'api.themoviedb.org/3/movie/1/credits*' => Http::response(['cast' => [['name' => 'Second Billed', 'order' => 1], ['name' => 'Top Billed', 'order' => 0]]]),
+            'api.themoviedb.org/3/movie/*/credits*' => Http::response(['cast' => []]),
         ]);
 
         // 35 different films: page 1 is popularity 100 to 81, both countries interleaved, film 1 once.
         $first = $this->get('/discover?when=any&type=movie&service=netflix&region=all');
         $first->assertOk()
-            ->assertSeeInOrder(['in any region', 'Film-001', 'Film-101', 'Film-002', 'Film-102', 'Film-010', 'Film-110', 'Page 1 of 2'])
+            ->assertSeeInOrder(['in any region', 'Film-001', 'Top Billed, Second Billed', 'Film-101', 'Film-002', 'Film-102', 'Film-010', 'Film-110', 'Page 1', 'Next'])
             ->assertDontSee('Film-011');
         $this->assertSame(1, substr_count($first->getContent(), 'Film-001</'));
 
         $this->get('/discover?when=any&type=movie&service=netflix&region=all&page=2')->assertOk()
-            ->assertSeeInOrder(['Film-011', 'Film-012', 'Film-025', 'Page 2 of 2'])
-            ->assertDontSee('Film-110');
+            ->assertSeeInOrder(['Film-011', 'Film-012', 'Film-025', 'Page 2'])
+            ->assertDontSee('Film-110')->assertDontSee('Next');
     }
 
     public function test_a_show_from_browse_is_followed_through_tvmaze(): void

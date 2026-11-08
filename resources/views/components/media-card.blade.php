@@ -1,8 +1,9 @@
 {{--
     A panel with the poster (and the rating under it) on the left and the details on the right.
     Slots: "meta" (a line under the title), the default slot (extra lines), "action" (follow button).
+    $cast: the first few actors' names, shown as "With …" under the meta line.
 --}}
-@props(['title', 'href' => null, 'image' => null, 'overview' => null, 'rating' => null])
+@props(['title', 'href' => null, 'image' => null, 'overview' => null, 'rating' => null, 'cast' => []])
 
 <li class="group relative flex gap-5 rounded-xl bg-night-900/80 p-3 inset-ring inset-ring-white/5 transition-colors hover:bg-night-800/80 sm:gap-6">
     {{-- The poster, with the rating from TVmaze or TMDB under it. --}}
@@ -18,6 +19,9 @@
         @isset($meta)
             <div class="mt-1 text-base/6 text-white/50 sm:text-sm/6">{{ $meta }}</div>
         @endisset
+        @if ($cast)
+            <p class="mt-1 line-clamp-1 text-base/6 text-white/50 sm:text-sm/6"><span class="text-white/35">With</span> {{ implode(', ', $cast) }}</p>
+        @endif
         @if ($overview)
             <p class="mt-3 line-clamp-3 text-base/6 text-pretty text-white/60 sm:text-sm/6">{{ $overview }}</p>
         @endif

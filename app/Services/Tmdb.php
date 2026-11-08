@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -44,7 +47,58 @@ class Tmdb
      */
     public function movie(int $id): array
     {
-        return $this->http()->get("/movie/{$id}", ['append_to_response' => 'release_dates,watch/providers'])->throw()->json();
+        return $this->http()->get("/movie/{$id}", ['append_to_response' => 'release_dates,watch/providers,credits'])->throw()->json();
+    }
+
+    /**
+     * The first actors of several movies or shows, asked for in parallel and cached for a week per title.
+     * A title that can't be loaded is left out (and asked again next time).
+     *
+     * @param  'movie'|'tv'  $type
+     * @param  list<int>  $ids
+     * @return array<int, list<string>>
+     */
+    public function casts(string $type, array $ids): array
+    {
+        $casts = [];
+        $missing = [];
+        foreach (array_unique($ids) as $id) {
+            $cached = Cache::get("cast:tmdb:{$type}:{$id}");
+            $cached === null ? $missing[] = $id : $casts[$id] = $cached;
+        }
+
+        if ($missing === []) {
+            return $casts;
+        }
+
+        // Shows: aggregate_credits has the cast over all seasons, credits only the latest season's.
+        $path = $type === 'tv' ? 'aggregate_credits' : 'credits';
+        $responses = Http::pool(fn (Pool $pool) => array_map(
+            fn (int $id) => $this->configure($pool->as((string) $id))->get("/{$type}/{$id}/{$path}"),
+            $missing,
+        ));
+
+        foreach ($missing as $id) {
+            $response = $responses[(string) $id] ?? null;
+            if ($response instanceof Response && $response->successful()) {
+                $casts[$id] = self::cast($response->json() ?? []);
+                Cache::put("cast:tmdb:{$type}:{$id}", $casts[$id], now()->addWeek());
+            }
+        }
+
+        return $casts;
+    }
+
+    /**
+     * The first actors from TMDB credits (a movie's credits, or a show's aggregate_credits), in billing order.
+     *
+     * @return list<string>
+     */
+    public static function cast(array $credits, int $limit = 3): array
+    {
+        $cast = collect($credits['cast'] ?? [])->sortBy('order')->pluck('name')->all();
+
+        return TvMaze::names($cast, $limit);
     }
 
     /**
@@ -99,6 +153,10 @@ class Tmdb
             'popularity' => (float) ($item['popularity'] ?? 0),
             'rating' => self::rating($item),
             'overview' => filled($item['overview'] ?? null) ? $item['overview'] : null,
+            // For Hidden: what a title is, in TMDB's own terms (origin_country only comes with shows).
+            'original_language' => $item['original_language'] ?? null,
+            'genre_ids' => $item['genre_ids'] ?? [],
+            'origin_country' => $item['origin_country'] ?? [],
         ];
     }
 
@@ -140,14 +198,20 @@ class Tmdb
 
     private function http(): PendingRequest
     {
+        return $this->configure(Http::baseUrl(self::URL))
+            ->retry(3, 2000, fn ($exception) => $exception->response?->status() === 429, throw: false);
+    }
+
+    /** The base URL, timeout and key, for a plain request or one in a pool. */
+    private function configure(PendingRequest $http): PendingRequest
+    {
         $token = config('hoot.tmdb_token');
 
         if (blank($token)) {
             throw new RuntimeException('There is no TMDB key. Add TMDB_TOKEN to .env.');
         }
 
-        $http = Http::baseUrl(self::URL)->acceptJson()->timeout(15)
-            ->retry(3, 2000, fn ($exception) => $exception->response?->status() === 429, throw: false);
+        $http = $http->baseUrl(self::URL)->acceptJson()->timeout(15);
 
         // The short "API Key" goes in the query string; the long "API Read Access Token" is a bearer token.
         return strlen($token) > 40

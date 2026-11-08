@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Sleep;
 use Throwable;
@@ -83,8 +84,36 @@ class Premieres
             // The most popular of what's coming up, and of what started recently, $limit each.
             ->groupBy(fn (array $show) => $show['airs_at'] > now()->utc()->toIso8601String() ? 'upcoming' : 'recent')
             ->flatMap(fn ($group) => $group->take($limit))
+            ->map(fn (array $show) => $show + ['cast' => $this->showCast($show['tvmaze_id'])])
             ->values()
             ->all();
+    }
+
+    /**
+     * A show's first actors from TVmaze, cached for a week, so a refresh only asks for the new premieres.
+     * Nothing (and not cached) if TVmaze can't be reached.
+     *
+     * @return list<string>
+     */
+    private function showCast(int $id): array
+    {
+        $key = "cast:tvmaze:{$id}";
+        if (($cached = Cache::get($key)) !== null) {
+            return $cached;
+        }
+
+        try {
+            $cast = $this->tvmaze->cast($id);
+            Cache::put($key, $cast, now()->addWeek());
+        } catch (Throwable $exception) {
+            report($exception);
+            $cast = [];
+        }
+
+        // Stay well under TVmaze's 20 calls per 10 seconds.
+        Sleep::for(600)->milliseconds();
+
+        return $cast;
     }
 
     /**
@@ -138,6 +167,7 @@ class Premieres
                 'cinema_date' => $releases['cinema']['date'] ?? null,
                 'digital_date' => $releases['digital']['date'] ?? null,
                 'services' => StreamingServices::fromWatchProviders($details['watch/providers'] ?? []),
+                'cast' => Tmdb::cast($details['credits'] ?? []),
             ];
         })
             // Out everywhere for more than a month? Then it isn't new any more.

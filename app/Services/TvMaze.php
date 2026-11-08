@@ -34,6 +34,24 @@ class TvMaze
     }
 
     /**
+     * The first $limit actors of a show, in TVmaze's order (main cast first), each name once.
+     *
+     * @return list<string>
+     */
+    public function cast(int $id, int $limit = 3): array
+    {
+        $cast = $this->http()->get("/shows/{$id}/cast")->throw()->json() ?? [];
+
+        return self::names(array_map(fn (array $credit) => $credit['person']['name'] ?? null, $cast), $limit);
+    }
+
+    /** @return list<string> */
+    public static function names(array $names, int $limit = 3): array
+    {
+        return array_slice(array_values(array_unique(array_filter($names))), 0, $limit);
+    }
+
+    /**
      * The shows that changed in the last week: TVmaze id => unix time of the change.
      *
      * @return array<int, int>
@@ -105,6 +123,7 @@ class TvMaze
             'official_url' => str_starts_with($show['officialSite'] ?? '', 'http') ? $show['officialSite'] : null,
             'rating' => $show['rating']['average'] ?? null,
             'genres' => $show['genres'] ?? [],
+            'language' => $show['language'] ?? null,
             // TVmaze's summary is HTML.
             'overview' => filled($show['summary'] ?? null) ? trim(html_entity_decode(strip_tags($show['summary']))) : null,
         ];
