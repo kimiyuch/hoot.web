@@ -203,6 +203,7 @@
                     <a href="{{ route('login') }}" class="hover:text-white">Log in</a>
                     <a href="{{ route('register') }}" class="hover:text-white">Sign up</a>
                     <a href="{{ route('privacy') }}" class="hover:text-white">Privacy and rules</a>
+                    <a href="{{ route('imprint') }}" class="hover:text-white">Imprint</a>
                     <a href="{{ config('hoot.repository_url') }}" class="hover:text-white">GitHub</a>
                 </nav>
             </div>

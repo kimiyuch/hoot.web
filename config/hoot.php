@@ -6,11 +6,21 @@ return [
         'admin', 'administrator', 'hoot', 'kimiyu', 'support', 'help', 'about', 'team', 'staff', 'moderator', 'mod', 'root', 'system',
         'settings', 'discover', 'search', 'login', 'logout', 'register', 'signup', 'for_you', 'foryou', 'calendar', 'profile',
         'people', 'shows', 'movies', 'favourites', 'favorites', 'following', 'followers', 'premieres', 'browse', 'api', 'www', 'mail',
-        'privacy', 'terms', 'null', 'undefined', 'anonymous', 'me', 'you',
+        'privacy', 'terms', 'imprint', 'impressum', 'legal', 'null', 'undefined', 'anonymous', 'me', 'you',
     ],
 
     // GitHub repository of this site.
     'repository_url' => 'https://github.com/kimiyuch/hoot.web',
+
+    // Who runs Hoot: named on the privacy page and in the imprint.
+    'operator' => [
+        'brand' => 'kimiyu.ch',
+        'name' => 'Marcel Stadelmann',
+        'street' => 'Letzigraben 149',
+        'postcode' => '8047',
+        'town' => 'Zürich',
+        'country' => 'Switzerland',
+    ],
 
     // Where "Report" on a profile and the privacy page's contact go.
     'report_email' => env('HOOT_REPORT_EMAIL', env('MAIL_FROM_ADDRESS')),

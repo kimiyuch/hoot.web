@@ -12,6 +12,7 @@ Route::get('/', [HootController::class, 'welcome'])->name('home');
 
 // What's stored, who sees what, and the few rules. Public, so it can be read before signing up.
 Route::view('/privacy', 'privacy')->name('privacy');
+Route::view('/imprint', 'imprint')->name('imprint');
 
 // The source of the link preview image (scripts/og-image.sh renders it to public/images/og.png). Local only.
 if (app()->isLocal()) {

@@ -122,6 +122,7 @@ class PrivateAccountsTest extends TestCase
     public function test_the_privacy_page_the_export_and_report(): void
     {
         $this->get('/privacy')->assertOk()->assertSee('Privacy and rules')->assertSee('Who sees what');
+        $this->get('/imprint')->assertOk()->assertSee('Letzigraben 149')->assertSee(route('privacy'));
 
         [$me, $pip] = [$this->person('me'), $this->person('pip')];
         app(Network::class)->follow($me, $pip);
