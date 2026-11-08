@@ -22,7 +22,7 @@
         ])->join(' · ').' followed';
     @endphp
 
-    <div class="mx-auto max-w-6xl">
+    <div>
         <header class="flex flex-col gap-6 sm:flex-row sm:items-center">
             <x-avatar :user="$user" size="xl" />
             <div class="min-w-0 flex-1">
@@ -78,67 +78,78 @@
         @elseif (! $visible)
             <x-empty-state class="mt-16">{{ $user->name }}’s profile is private. Ask to follow them, and once they accept you see their favourites and what they watch and follow.</x-empty-state>
         @else
-            {{-- Favourites: the first four big, the rest smaller. --}}
-            @foreach ($favourites as $heading => $tiles)
-                @continue($tiles->isEmpty() && ! $own)
-                <section class="mt-16" aria-label="{{ $heading }}">
-                    <h2 class="font-display text-xl font-semibold tracking-tight">{{ $heading }}</h2>
-                    @if ($tiles->isEmpty())
-                        <x-empty-state class="mt-4">None yet. Tap the heart on a {{ str_contains($heading, 'shows') ? 'show' : 'movie' }} in Discover or Search to put it here.</x-empty-state>
-                    @else
-                        <ol role="list" class="mt-6 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 sm:gap-x-6">
-                            @foreach ($tiles->take(4) as $tile)
-                                <x-poster-tile big :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
-                            @endforeach
-                        </ol>
-                        @if ($tiles->count() > 4)
-                            <ol role="list" start="5" class="mt-8 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-6">
-                                @foreach ($tiles->skip(4) as $tile)
-                                    <x-poster-tile :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
+            {{-- Like For you: favourites and where they are on the left, what they did lately and what they follow in a sidebar. --}}
+            <div class="mt-16 grid grid-cols-1 gap-x-16 gap-y-16 lg:grid-cols-[minmax(0,48rem)_minmax(20rem,28rem)] lg:justify-between">
+                <div class="min-w-0">
+                    @if ($favourites['Favourite shows']->isEmpty() && $favourites['Favourite movies']->isEmpty() && ! $own
+                        && $watchingTiles->isEmpty() && $watchedTiles->isEmpty() && $plannedTiles->isEmpty())
+                        <x-empty-state>{{ $user->name }} hasn’t picked favourites or marked anything as watching or watched yet.</x-empty-state>
+                    @endif
+                {{-- Favourites: the first four big, the rest smaller. --}}
+                @foreach ($favourites as $heading => $tiles)
+                    @continue($tiles->isEmpty() && ! $own)
+                    <section class="mt-16 first:mt-0" aria-label="{{ $heading }}">
+                        <h2 class="font-display text-xl font-semibold tracking-tight">{{ $heading }}</h2>
+                        @if ($tiles->isEmpty())
+                            <x-empty-state class="mt-4">None yet. Tap the heart on a {{ str_contains($heading, 'shows') ? 'show' : 'movie' }} in Discover or Search to put it here.</x-empty-state>
+                        @else
+                            <ol role="list" class="mt-6 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 sm:gap-x-6">
+                                @foreach ($tiles->take(4) as $tile)
+                                    <x-poster-tile big :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
                                 @endforeach
                             </ol>
+                            @if ($tiles->count() > 4)
+                                <ol role="list" start="5" class="mt-8 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-6">
+                                    @foreach ($tiles->skip(4) as $tile)
+                                        <x-poster-tile :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
+                                    @endforeach
+                                </ol>
+                            @endif
                         @endif
-                    @endif
-                </section>
-            @endforeach
-
-            {{-- Where they are: watching now, and what they finished lately. --}}
-            @foreach (['Watching now' => $watchingTiles, 'Watched lately' => $watchedTiles, 'Want to watch' => $plannedTiles] as $heading => $tiles)
-                @continue($tiles->isEmpty())
-                <section class="mt-16" aria-label="{{ $heading }}">
-                    <h2 class="font-display text-xl font-semibold tracking-tight">{{ $heading }}</h2>
-                    <ul role="list" class="mt-6 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-5 lg:grid-cols-8">
-                        @foreach ($tiles as $tile)
-                            <x-poster-tile :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
-                        @endforeach
-                    </ul>
-                </section>
-            @endforeach
-
-            {{-- What they did lately: the thread, just theirs. --}}
-            @if ($hasActivity)
-                <section class="mt-16 max-w-2xl" aria-labelledby="lately">
-                    <h2 id="lately" class="font-display text-xl font-semibold tracking-tight">Lately</h2>
-                    <livewire:thread :user-id="$user->id" />
-                </section>
-            @endif
-
-            {{-- What they follow. --}}
-            <section class="mt-16 border-t border-white/5 pt-12" aria-labelledby="following">
-                <h2 id="following" class="font-display text-xl font-semibold tracking-tight">Following</h2>
-                @if ($shows->isEmpty() && $movies->isEmpty())
-                    <x-empty-state class="mt-4">{{ $own ? 'You don’t follow anything yet.' : $user->name.' doesn’t follow anything yet.' }}</x-empty-state>
-                @endif
-                @foreach ($following as $heading => $tiles)
-                    @continue($tiles->isEmpty())
-                    <h3 class="mt-8 text-sm/6 font-medium text-white/60">{{ $heading }} <span class="text-white/35 tabular-nums">{{ $tiles->count() }}</span></h3>
-                    <ul role="list" class="mt-4 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-5 lg:grid-cols-8">
-                        @foreach ($tiles as $tile)
-                            <x-poster-tile :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
-                        @endforeach
-                    </ul>
+                    </section>
                 @endforeach
-            </section>
+
+                {{-- Where they are: watching now, and what they finished lately. --}}
+                @foreach (['Watching now' => $watchingTiles, 'Watched lately' => $watchedTiles, 'Want to watch' => $plannedTiles] as $heading => $tiles)
+                    @continue($tiles->isEmpty())
+                    <section class="mt-16 first:mt-0" aria-label="{{ $heading }}">
+                        <h2 class="font-display text-xl font-semibold tracking-tight">{{ $heading }}</h2>
+                        <ul role="list" class="mt-6 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-6">
+                            @foreach ($tiles as $tile)
+                                <x-poster-tile :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
+                            @endforeach
+                        </ul>
+                    </section>
+                @endforeach
+                </div>
+
+                <aside class="flex flex-col gap-12">
+                {{-- What they did lately: the thread, just theirs. --}}
+                @if ($hasActivity)
+                    <section aria-labelledby="lately" class="border-t border-white/5 pt-8 first:border-t-0 first:pt-0">
+                        <h2 id="lately" class="font-display text-lg font-semibold tracking-tight">Lately</h2>
+                        <livewire:thread :user-id="$user->id" />
+                    </section>
+                @endif
+
+                {{-- What they follow. --}}
+                <section aria-labelledby="following" class="border-t border-white/5 pt-8 first:border-t-0 first:pt-0">
+                    <h2 id="following" class="font-display text-lg font-semibold tracking-tight">Following</h2>
+                    @if ($shows->isEmpty() && $movies->isEmpty())
+                        <x-empty-state class="mt-4">{{ $own ? 'You don’t follow anything yet.' : $user->name.' doesn’t follow anything yet.' }}</x-empty-state>
+                    @endif
+                    @foreach ($following as $heading => $tiles)
+                        @continue($tiles->isEmpty())
+                        <h3 class="mt-4 text-sm/6 font-medium text-white/60">{{ $heading }} <span class="text-white/35 tabular-nums">{{ $tiles->count() }}</span></h3>
+                        <ul role="list" class="mt-3 grid grid-cols-4 gap-x-3 gap-y-5">
+                            @foreach ($tiles as $tile)
+                                <x-poster-tile :title="$tile['title']" :image="$tile['image']" :href="$tile['href']" :meta="$tile['meta']" />
+                            @endforeach
+                        </ul>
+                    @endforeach
+                </section>
+                </aside>
+            </div>
         @endif
     </div>
 </x-layouts.app>
