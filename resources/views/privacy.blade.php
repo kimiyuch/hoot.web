@@ -18,7 +18,9 @@
         <li><strong class="font-medium text-white">Your account:</strong> name, username, email address, your password (only as a hash, never readable), bio, whether your profile is public or private, whether you share your activity, and whose invite link you signed up through, if any.</li>
         <li><strong class="font-medium text-white">Your library:</strong> the shows and movies you follow or made favourites, your watch status (with when you started and finished) and your ratings.</li>
         <li><strong class="font-medium text-white">People:</strong> who you follow, who follows you, follow requests, and who you blocked.</li>
-        <li><strong class="font-medium text-white">Your activity:</strong> short entries like “followed Severance” or “finished The Bear”, shown to your followers while you share your activity.</li>
+        <li><strong class="font-medium text-white">Your activity:</strong> short entries like “followed Severance” or “finished The Bear”, shown on your profile and to your followers while you share your activity.</li>
+        <li><strong class="font-medium text-white">Notifications:</strong> who followed you, asked to, or accepted your request, and whether you’ve seen it. Taken back when the follow or request is.</li>
+        <li><strong class="font-medium text-white">Weekly mail:</strong> whether you want it (off unless you switch it on). It goes to your email address and holds what comes out for what you follow and who followed you.</li>
         <li><strong class="font-medium text-white">Your calendar link:</strong> a secret address for your calendar feed. Anyone with it can see what you follow, so you can make a new one in Settings.</li>
         <li><strong class="font-medium text-white">Cookies:</strong> a session cookie to keep you logged in (and a longer one if you tick “Keep me logged in”), one against forged forms, and one with your browser’s timezone so times are right. No others.</li>
     </ul>
@@ -47,7 +49,7 @@
                 </tr>
                 <tr>
                     <td class="{{ $td }} font-medium text-white">Your activity</td>
-                    <td class="{{ $td }}">Your followers, while you share it</td>
+                    <td class="{{ $td }}">Everyone on Hoot (under “Lately” on your profile, and in your followers’ For you), while you share it</td>
                     <td class="{{ $td }}">Followers you accepted, while you share it</td>
                 </tr>
                 <tr>

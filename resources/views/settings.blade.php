@@ -27,7 +27,7 @@
                     <input type="checkbox" name="shares_activity" value="1" @checked(old('shares_activity', $user->shares_activity)) class="mt-1 size-4 shrink-0 accent-midnight-400">
                     <span>
                         <span class="block text-base/6 font-medium sm:text-sm/6">Share my activity</span>
-                        <span class="block text-sm/5 text-pretty text-white/50">What you follow, start, finish, rate and favourite shows up for your followers under “From people you follow”. Turned off, nothing new is shared and what was shared is hidden.</span>
+                        <span class="block text-sm/5 text-pretty text-white/50">What you follow, start, finish, rate and favourite shows up under “Lately” on your profile and for your followers under “From people you follow”. Turned off, nothing new is shared and what was shared is hidden.</span>
                     </span>
                 </label>
                 <x-button class="self-start">Save</x-button>
