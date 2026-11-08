@@ -55,8 +55,8 @@ Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.w
 
 ## Next
 
-1. **After the first deploy**: try it live (sign up with a real address, the confirmation and reset mails, following, the calendar feed). The SMTP login was tested, but no mail has been sent yet. The test user (`test@possum.local`) was deleted on the live site on 2026-11-08 (it had 4 shows, all followed by others too; a copy of the database from just before is `database/database.sqlite.bak-2026-11-08` on the server). Open points:
-   - Check the mails in Gmail and Outlook (only checked in Chrome via MailHog).
+1. **Live site**: tried live by the user on 2026-11-08 (sign-up with a real address, the confirmation and reset mails incl. Gmail/Outlook, following, the calendar feed): all fine. Leftovers:
+   - `database/database.sqlite.bak-2026-11-08` on the server, a copy from just before the test user (`test@possum.local`) was deleted; remove it once nobody needs it.
    - `/privacy` is a draft from the code, not lawyer-checked, but names the operator now and links to the imprint. Bios stay visible on private profiles (intended for now; the page says so).
 2. **Discover follow-ups** (ideas from 2026-11-08, nothing asked for yet): the hidden kinds could also apply to Search or the ⌘K lightbox (left out on purpose so far: an explicit search finds everything); the cast could show in For you's Following or on Search cards; the cast line is one line and usually shows two names in full at desktop width.
 3. **Hoot as a network**: the plan is in [`docs/SOCIAL.md`](docs/SOCIAL.md); steps 0–5 are built (favourites, profiles, following people with blocking and Discover → People, watch status with ratings, the thread with Follow buttons, private accounts with requests, sharing, suspension, privacy page, export). **Next: step 6**, "people you follow watch this" on cards and in search. Then step 7 (in-app notifications: new followers, requests, accepted requests; maybe a weekly digest). Smaller: someone's recent activity on their profile (the `Activities` service would need a per-user query), an invite link (`/@pip` → sign up and follow in one go).
