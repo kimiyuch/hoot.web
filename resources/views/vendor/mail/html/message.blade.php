@@ -21,7 +21,7 @@
 {{-- Footer --}}
 <x-slot:footer>
 <x-mail::footer>
-Possum, made with ❤️ by [kimiyu.ch](https://kimiyu.ch)
+{{ config('app.name') }}, made with ❤️ by [kimiyu.ch](https://kimiyu.ch)
 </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>
