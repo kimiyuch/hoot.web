@@ -15,14 +15,27 @@ class Thread extends Component
 {
     public const PAGE = 8;
 
+    /** On a profile, a shorter list: five at a time. */
+    public const PROFILE_PAGE = 5;
+
     public int $limit = self::PAGE;
 
     /** Set on a profile: only this person's entries. */
     public ?int $userId = null;
 
+    public function mount(): void
+    {
+        $this->limit = $this->page();
+    }
+
     public function loadMore(): void
     {
-        $this->limit += self::PAGE;
+        $this->limit += $this->page();
+    }
+
+    private function page(): int
+    {
+        return $this->userId ? self::PROFILE_PAGE : self::PAGE;
     }
 
     public function render(Activities $activities): View

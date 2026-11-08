@@ -184,6 +184,16 @@ class ThreadTest extends TestCase
         $this->actingAs($me)->get('/@me')->assertOk()->assertDontSee('Lately');
 
         Livewire::actingAs($me)->test(Thread::class, ['userId' => $secret->id])->assertDontSee('Andor');
+
+        // Five at a time on a profile.
+        $pip->update(['shares_activity' => true]);
+        foreach (range(10, 16) as $id) {
+            $this->travel(1)->hours();
+            $library->setStatus($pip->fresh(), $this->show($id, "Show {$id}"), 'watching');
+        }
+        Livewire::actingAs($me)->test(Thread::class, ['userId' => $pip->id])
+            ->assertSee('Show 16')->assertSee('Show 12')->assertDontSee('Show 11')->assertSee('Load more')
+            ->call('loadMore')->assertSee('Show 11')->assertSee('Show 10');
     }
 
     public function test_entries_outlive_the_catalog_and_load_more(): void
