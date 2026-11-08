@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\Activities;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -11,7 +12,7 @@ use Illuminate\View\View;
  */
 class ProfileController extends Controller
 {
-    public function show(Request $request, User $user): View
+    public function show(Request $request, User $user, Activities $activities): View
     {
         $viewer = $request->user();
         $this->hideFromBlocked($viewer, $user);
@@ -39,6 +40,8 @@ class ProfileController extends Controller
             'planned' => $visible ? $user->libraryShows()->wherePivot('status', 'plan')->get()
                 ->concat($user->libraryMovies()->wherePivot('status', 'plan')->get())
                 ->sortByDesc(fn ($item) => $item->pivot->created_at)->values() : collect(),
+            // "Lately": shown only when there's something (the list itself is the Thread component).
+            'hasActivity' => $visible && $activities->of($user, $viewer, 1)['entries']->isNotEmpty(),
             'shows' => $visible ? $user->shows()->orderBy('name')->get() : collect(),
             'movies' => $visible ? $user->movies()->orderBy('title')->get() : collect(),
         ]);

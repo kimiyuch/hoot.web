@@ -162,6 +162,30 @@ class ThreadTest extends TestCase
         $this->assertTrue($activities->thread($me)['entries']->isEmpty());
     }
 
+    public function test_a_profile_shows_what_that_person_did_lately(): void
+    {
+        [$me, $pip, $secret] = [$this->person('me'), $this->person('pip'), $this->person('secret', ['is_private' => true])];
+        $library = app(Library::class);
+        $activities = app(Activities::class);
+
+        $library->setStatus($pip, $this->show(1, 'Severance'), 'watching');
+        $library->setStatus($secret, $this->show(2, 'Andor'), 'watching');
+
+        // Public: anyone sees it, without following.
+        $this->actingAs($me)->get('/@pip')->assertOk()->assertSee('Lately')->assertSeeInOrder(['Pip', 'started watching', 'Severance']);
+        // Private and not followed: nothing, not even the heading.
+        $this->assertTrue($activities->of($secret, $me)['entries']->isEmpty());
+        $this->get('/@secret')->assertDontSee('Lately');
+        // Not sharing: gone, on your own profile too.
+        $pip->update(['shares_activity' => false]);
+        $this->get('/@pip')->assertDontSee('Lately');
+        $this->actingAs($pip)->get('/@pip')->assertDontSee('Lately');
+        // Nothing done yet: no section.
+        $this->actingAs($me)->get('/@me')->assertOk()->assertDontSee('Lately');
+
+        Livewire::actingAs($me)->test(Thread::class, ['userId' => $secret->id])->assertDontSee('Andor');
+    }
+
     public function test_entries_outlive_the_catalog_and_load_more(): void
     {
         [$me, $pip] = [$this->person('me'), $this->person('pip')];

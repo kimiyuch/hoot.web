@@ -115,6 +115,14 @@
                 </section>
             @endforeach
 
+            {{-- What they did lately: the thread, just theirs. --}}
+            @if ($hasActivity)
+                <section class="mt-16 max-w-2xl" aria-labelledby="lately">
+                    <h2 id="lately" class="font-display text-xl font-semibold tracking-tight">Lately</h2>
+                    <livewire:thread :user-id="$user->id" />
+                </section>
+            @endif
+
             {{-- What they follow. --}}
             <section class="mt-16 border-t border-white/5 pt-12" aria-labelledby="following">
                 <h2 id="following" class="font-display text-xl font-semibold tracking-tight">Following</h2>

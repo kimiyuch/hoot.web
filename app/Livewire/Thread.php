@@ -2,19 +2,23 @@
 
 namespace App\Livewire;
 
+use App\Models\User;
 use App\Services\Activities;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
 /**
  * For you's "From people you follow": the newest entries of the thread, and more with every "Load more".
- * Each show or movie in it can be followed from there.
+ * Each show or movie in it can be followed from there. With a userId, it's that person's "Lately" on their profile.
  */
 class Thread extends Component
 {
     public const PAGE = 8;
 
     public int $limit = self::PAGE;
+
+    /** Set on a profile: only this person's entries. */
+    public ?int $userId = null;
 
     public function loadMore(): void
     {
@@ -26,7 +30,10 @@ class Thread extends Component
         $user = auth()->user();
 
         return view('livewire.thread', [
-            ...$activities->thread($user, $this->limit),
+            ...($this->userId
+                ? $activities->of(User::findOrFail($this->userId), $user, $this->limit)
+                : $activities->thread($user, $this->limit)),
+            'profile' => $this->userId !== null,
             // What you follow already, so the Follow buttons start in the right state.
             'followed' => [
                 'show' => $user->shows()->pluck('tvmaze_id')->flip(),

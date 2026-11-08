@@ -31,7 +31,9 @@
 
 <div>
     @if ($entries->isEmpty())
-        <p class="mt-2 text-base/7 text-pretty text-white/50 sm:text-sm/6">Nothing yet. When people you follow follow, start, finish or rate something, it shows up here.</p>
+        @unless ($profile)
+            <p class="mt-2 text-base/7 text-pretty text-white/50 sm:text-sm/6">Nothing yet. When people you follow follow, start, finish or rate something, it shows up here.</p>
+        @endunless
     @else
         <ul role="list" class="mt-2 divide-y divide-white/5">
             @foreach ($entries as $entry)
@@ -52,7 +54,9 @@
                 @endphp
                 @continue($what === null)
                 <li wire:key="activity-{{ $entry->id }}" class="relative flex items-start gap-3 py-3">
-                    <a href="{{ $entry->user->profileUrl() }}" class="shrink-0" aria-hidden="true" tabindex="-1"><x-avatar :user="$entry->user" size="sm" /></a>
+                    @unless ($profile)
+                        <a href="{{ $entry->user->profileUrl() }}" class="shrink-0" aria-hidden="true" tabindex="-1"><x-avatar :user="$entry->user" size="sm" /></a>
+                    @endunless
                     <div class="min-w-0 flex-1">
                         <p class="text-base/6 text-pretty text-white/60 sm:text-sm/5">
                             <a href="{{ $entry->user->profileUrl() }}" class="font-semibold text-white hover:text-midnight-200">{{ $entry->user->name }}</a>

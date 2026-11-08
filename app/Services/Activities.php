@@ -97,9 +97,36 @@ class Activities
      */
     public function thread(User $viewer, int $limit = 10): array
     {
-        $rows = Activity::query()
+        return $this->page(Activity::query()
             ->whereIn('user_id', DB::table('follows')->select('followed_id')->where('follower_id', $viewer->id)->whereNotNull('accepted_at'))
-            ->whereHas('user', fn (Builder $users) => $users->visibleTo($viewer)->where('shares_activity', true))
+            ->whereHas('user', fn (Builder $users) => $users->visibleTo($viewer)->where('shares_activity', true)), $viewer, $limit);
+    }
+
+    /**
+     * What one person did, for "Lately" on their profile: only where $viewer may see the profile, and only while
+     * they share their activity (your own too, so the profile shows what others see). Same rules as the thread
+     * for "followed someone".
+     *
+     * @return array{entries: Collection<int, Activity>, more: bool}
+     */
+    public function of(User $owner, User $viewer, int $limit = 10): array
+    {
+        if (! $owner->shares_activity || ! $owner->profileVisibleTo($viewer)) {
+            return ['entries' => collect(), 'more' => false];
+        }
+
+        return $this->page(Activity::where('user_id', $owner->id), $viewer, $limit);
+    }
+
+    /**
+     * The newest $limit entries of $query, with "followed someone" cut down to people $viewer may see.
+     *
+     * @param  Builder<Activity>  $query
+     * @return array{entries: Collection<int, Activity>, more: bool}
+     */
+    private function page(Builder $query, User $viewer, int $limit): array
+    {
+        $rows = $query
             ->with('user')
             ->latest('updated_at')->latest('id')
             ->limit($limit + 1)
