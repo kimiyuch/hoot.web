@@ -44,8 +44,8 @@ class Invites
     {
         $inviter = $user->invitedBy;
 
-        if ($inviter && $this->network->follow($user, $inviter) && $inviter->is_private) {
-            $this->network->accept($inviter, $user);
+        if ($inviter) {
+            $this->network->follow($user, $inviter, invited: true);
         }
     }
 }

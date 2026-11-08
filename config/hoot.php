@@ -6,7 +6,7 @@ return [
         'admin', 'administrator', 'hoot', 'kimiyu', 'support', 'help', 'about', 'team', 'staff', 'moderator', 'mod', 'root', 'system',
         'settings', 'discover', 'search', 'login', 'logout', 'register', 'signup', 'for_you', 'foryou', 'calendar', 'profile',
         'people', 'shows', 'movies', 'favourites', 'favorites', 'following', 'followers', 'premieres', 'browse', 'api', 'www', 'mail',
-        'privacy', 'terms', 'imprint', 'impressum', 'legal', 'null', 'undefined', 'anonymous', 'me', 'you',
+        'privacy', 'terms', 'notifications', 'invite', 'imprint', 'impressum', 'legal', 'null', 'undefined', 'anonymous', 'me', 'you',
     ],
 
     // GitHub repository of this site.

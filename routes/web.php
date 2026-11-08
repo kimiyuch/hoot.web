@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HootController;
 use App\Http\Controllers\InviteController;
+use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
@@ -50,9 +51,12 @@ Route::middleware(['auth', 'verified', 'username'])->group(function () {
         Route::delete('/movies/{movie}', 'unfollowMovie')->name('movies.unfollow');
     });
 
+    Route::get('/notifications', [NotificationsController::class, 'index'])->name('notifications');
+
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');
     Route::put('/settings/hidden', [SettingsController::class, 'updateHidden'])->name('settings.hidden');
     Route::put('/settings/extras', [SettingsController::class, 'updateExtras'])->name('settings.extras');
+    Route::put('/settings/mail', [SettingsController::class, 'updateMail'])->name('settings.mail');
     Route::post('/settings/calendar', [SettingsController::class, 'resetCalendar'])->name('settings.calendar');
     Route::get('/settings/export', [SettingsController::class, 'export'])->name('settings.export');
     Route::delete('/settings', [SettingsController::class, 'destroy'])->name('settings.destroy');

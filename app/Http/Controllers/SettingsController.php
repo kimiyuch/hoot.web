@@ -11,6 +11,7 @@ use App\Services\Hidden;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -44,7 +45,7 @@ class SettingsController extends Controller
 
         $data = [
             'exported_at' => now()->toIso8601String(),
-            'account' => $user->only(['name', 'username', 'email', 'bio', 'is_private', 'shares_activity', 'episode_search_url', 'discover_hidden', 'created_at', 'email_verified_at']),
+            'account' => $user->only(['name', 'username', 'email', 'bio', 'is_private', 'shares_activity', 'weekly_digest', 'episode_search_url', 'discover_hidden', 'created_at', 'email_verified_at']),
             'invited_by' => $user->invitedBy ? $person($user->invitedBy) : null,
             'library' => $user->libraryShows()->get()->map(fn ($show) => $entry($show, 'show'))
                 ->concat($user->libraryMovies()->get()->map(fn ($movie) => $entry($movie, 'movie')))->values(),
@@ -95,6 +96,14 @@ class SettingsController extends Controller
         return back()->with('status', filled($input['episode_search_url'] ?? null) ? 'Search link saved.' : 'Search link removed.');
     }
 
+    public function updateMail(Request $request): RedirectResponse
+    {
+        $on = $request->boolean('weekly_digest');
+        $request->user()->forceFill(['weekly_digest' => $on])->save();
+
+        return back()->with('status', $on ? 'You’ll get the weekly mail on Monday mornings.' : 'No more weekly mail.');
+    }
+
     public function resetCalendar(Request $request): RedirectResponse
     {
         $request->user()->resetCalendarToken();
@@ -111,6 +120,9 @@ class SettingsController extends Controller
         $movies = $user->libraryMovies()->pluck('movies.id');
 
         Auth::logout();
+        // Notifications: theirs, and what others were told about them.
+        $user->notifications()->delete();
+        DatabaseNotification::where('type', 'people')->where('data->user_id', $user->id)->delete();
         $user->delete();
 
         // What only this user had in their library leaves the catalog with them.

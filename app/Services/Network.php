@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Notifications\PeopleNews;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Following people, and blocking them. Everything that changes the follows and blocks tables goes
- * through here, so the rules live in one place.
+ * through here, so the rules live in one place. It also sends the in-app notifications about it
+ * (PeopleNews) and takes them back when a follow or request is undone, so they never outlive what they say.
  */
 class Network
 {
@@ -27,9 +29,10 @@ class Network
 
     /**
      * Follows $user, or asks to if their account is private (the follow waits, with accepted_at null, until
-     * they accept). False if that isn't allowed; true if it worked or was already done.
+     * they accept). Through $user's own invite link it's accepted right away. False if that isn't allowed;
+     * true if it worked or was already done.
      */
-    public function follow(User $follower, User $user): bool
+    public function follow(User $follower, User $user, bool $invited = false): bool
     {
         if ($follower->isFollowing($user) || $follower->hasRequestedToFollow($user)) {
             return true;
@@ -39,7 +42,7 @@ class Network
             return false;
         }
 
-        $accepted = ! $user->is_private;
+        $accepted = ! $user->is_private || $invited;
 
         $added = DB::table('follows')->insertOrIgnore([
             'follower_id' => $follower->id,
@@ -51,6 +54,9 @@ class Network
 
         if ($added && $accepted) {
             $this->activities->record($follower, 'followed_user', $user);
+        }
+        if ($added) {
+            $user->notify(new PeopleNews($accepted ? 'followed' : 'requested', $follower, $invited));
         }
 
         return true;
@@ -64,6 +70,9 @@ class Network
 
         if ($accepted) {
             $this->activities->record($follower, 'followed_user', $user);
+            // The request is dealt with; the news is theirs now.
+            $this->unsay($user, $follower, ['requested']);
+            $follower->notify(new PeopleNews('accepted', $user));
         }
 
         return (bool) $accepted;
@@ -73,6 +82,7 @@ class Network
     public function decline(User $user, User $follower): void
     {
         DB::table('follows')->where('follower_id', $follower->id)->where('followed_id', $user->id)->whereNull('accepted_at')->delete();
+        $this->unsay($user, $follower, ['requested']);
     }
 
     /** Accepts every waiting request, for when an account goes public. */
@@ -87,6 +97,7 @@ class Network
     public function unfollow(User $follower, User $user): void
     {
         $this->forget($follower, $user);
+        $this->unsay($user, $follower, ['followed', 'requested']);
         $this->activities->retract($follower, ['followed_user'], $user);
     }
 
@@ -94,6 +105,7 @@ class Network
     public function removeFollower(User $user, User $follower): void
     {
         $this->forget($follower, $user);
+        $this->unsay($user, $follower, ['followed']);
         $this->activities->retract($follower, ['followed_user'], $user);
     }
 
@@ -115,6 +127,8 @@ class Network
             ]);
 
             $this->activities->forgetBetween($blocker, $user);
+            $this->unsay($blocker, $user, PeopleNews::KINDS);
+            $this->unsay($user, $blocker, PeopleNews::KINDS);
         });
     }
 
@@ -122,6 +136,13 @@ class Network
     public function unblock(User $blocker, User $user): void
     {
         DB::table('blocks')->where('blocker_id', $blocker->id)->where('blocked_id', $user->id)->delete();
+    }
+
+    /** Takes back what $to was told about $about, of these kinds. */
+    private function unsay(User $to, User $about, array $kinds): void
+    {
+        $to->notifications()->where('type', 'people')
+            ->where('data->user_id', $about->id)->whereIn('data->kind', $kinds)->delete();
     }
 
     private function forget(User $follower, User $user): void

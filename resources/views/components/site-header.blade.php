@@ -2,6 +2,7 @@
     $links = ['for-you' => 'For you', 'discover' => 'Discover'];
     $me = auth()->user();
     $requests = $me->followRequests()->whereNull('users.suspended_at')->count();
+    $unread = $me->unreadNotifications()->where('type', 'people')->count();
     $onOwnPages = request()->routeIs('settings') || request()->route('user')?->is($me);
     $kbd = 'rounded-full px-2 font-sans text-xs/5 font-normal text-white/45 inset-ring inset-ring-white/10';
 @endphp
@@ -26,10 +27,10 @@
                 <kbd data-shortcut class="{{ $kbd }} max-lg:hidden">⌘K</kbd>
             </a>
             <details data-menu class="group/menu relative">
-                <summary aria-label="Your account{{ $requests ? ', '.trans_choice(':count follow request|:count follow requests', $requests) : '' }}"
+                <summary aria-label="Your account{{ $unread ? ', '.trans_choice(':count new notification|:count new notifications', $unread) : '' }}{{ $requests ? ', '.trans_choice(':count follow request|:count follow requests', $requests) : '' }}"
                     @class(['relative flex list-none rounded-full transition [&::-webkit-details-marker]:hidden', 'ring-2 ring-white/60 ring-offset-2 ring-offset-night-950' => $onOwnPages, 'opacity-85 group-open/menu:opacity-100 hover:opacity-100' => ! $onOwnPages])>
                     <x-avatar :user="$me" />
-                    @if ($requests)
+                    @if ($requests || $unread)
                         <span class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-calendar-400 ring-2 ring-night-950" aria-hidden="true"></span>
                     @endif
                 </summary>
@@ -41,6 +42,12 @@
                     </div>
                     <div class="border-t border-white/8 pt-1">
                         <a href="{{ $me->profileUrl() }}" class="{{ $item }}">Your profile</a>
+                        <a href="{{ route('notifications') }}" class="{{ $item }}">
+                            Notifications
+                            @if ($unread)
+                                <span class="rounded-full bg-calendar-400/15 px-1.5 text-xs/5 font-medium text-calendar-400 tabular-nums">{{ $unread }}</span>
+                            @endif
+                        </a>
                         <a href="{{ route('settings') }}" class="{{ $item }}">Settings</a>
                         @if ($requests)
                             <a href="{{ route('settings') }}#requests" class="{{ $item }}">

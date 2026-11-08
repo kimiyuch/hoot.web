@@ -39,6 +39,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'is_private' => 'boolean',
             'shares_activity' => 'boolean',
+            'weekly_digest' => 'boolean',
             'suspended_at' => 'datetime',
             'discover_hidden' => 'array',
         ];

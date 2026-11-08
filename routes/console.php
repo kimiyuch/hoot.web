@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Services\Digest;
 use App\Services\Library;
 use App\Services\Premieres;
 use Illuminate\Support\Facades\Artisan;
@@ -22,6 +23,15 @@ Artisan::command('hoot:refresh {--all : Refresh every show, not just the ones TV
 
 // On Hostpoint, a cron job runs "php artisan schedule:run" every few minutes.
 Schedule::command('hoot:refresh')->everySixHours()->withoutOverlapping();
+
+Artisan::command('hoot:digest {username? : Only this account (for trying it), even with the mail switched off}', function (Digest $digest, ?string $username = null) {
+    $users = $username ? User::where('username', ltrim(strtolower($username), '@'))->get() : $digest->recipients()->get();
+    $sent = $users->filter(fn (User $user) => $digest->send($user))->count();
+    $this->info("Sent {$sent} of {$users->count()} weekly mails (the rest had nothing to tell).");
+})->purpose('Send the weekly mail: what comes out this week, and new followers');
+
+// Monday mornings, Zurich time.
+Schedule::command('hoot:digest')->weeklyOn(1, '7:00')->timezone(config('hoot.timezone'));
 
 Artisan::command('hoot:suspend {username : Without the @} {--lift : Lift the suspension}', function (string $username) {
     $user = User::where('username', ltrim(strtolower($username), '@'))->first();

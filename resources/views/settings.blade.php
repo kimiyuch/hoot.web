@@ -128,6 +128,26 @@
             </div>
         </section>
 
+        <section id="mail" aria-labelledby="mail-title" class="{{ $section }} scroll-mt-24">
+            <div>
+                <h2 id="mail-title" class="font-display text-lg font-semibold tracking-tight">Weekly mail</h2>
+                <p class="{{ $intro }}">Off unless you switch it on. No mail in a week with nothing to tell.</p>
+            </div>
+            <form method="post" action="{{ route('settings.mail') }}" class="flex flex-col gap-5">
+                @csrf
+                @method('put')
+                <label class="flex cursor-pointer gap-3">
+                    <input type="hidden" name="weekly_digest" value="0">
+                    <input type="checkbox" name="weekly_digest" value="1" @checked($user->weekly_digest) class="mt-1 size-4 shrink-0 accent-midnight-400">
+                    <span>
+                        <span class="block text-base/6 font-medium sm:text-sm/6">Send me the week ahead</span>
+                        <span class="block text-sm/5 text-pretty text-white/50">On Monday mornings: what comes out that week for what you follow, day by day, and who followed you. To {{ $user->email }}.</span>
+                    </span>
+                </label>
+                <x-button variant="secondary" class="self-start">Save</x-button>
+            </form>
+        </section>
+
         <section id="hidden" aria-labelledby="hidden-title" class="{{ $section }} scroll-mt-24">
             <div>
                 <h2 id="hidden-title" class="font-display text-lg font-semibold tracking-tight">Hide from Discover</h2>
