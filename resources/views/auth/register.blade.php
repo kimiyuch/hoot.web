@@ -1,4 +1,6 @@
-<x-layouts.auth title="Sign up" heading="Create your account" description="Free, and it takes a minute. Then follow a show or two.">
+@php($inviter = app(\App\Services\Invites::class)->inviter())
+<x-layouts.auth title="Sign up" :heading="$inviter ? 'Join '.$inviter->name.' on Hoot' : 'Create your account'"
+    :description="$inviter ? $inviter->name.' (@'.$inviter->username.') invited you. Once you’ve confirmed your email, you follow them.' : 'Free, and it takes a minute. Then follow a show or two.'">
     <form method="post" action="{{ route('register.store') }}" class="flex flex-col gap-5">
         @csrf
         <x-field name="name" label="Name" required autofocus autocomplete="name" />

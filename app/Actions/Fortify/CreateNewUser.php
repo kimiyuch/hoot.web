@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Services\Invites;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -37,12 +38,17 @@ class CreateNewUser implements CreatesNewUsers
             'visibility' => ['nullable', 'in:public,private'],
         ], $this->usernameMessages())->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
             'username' => $input['username'],
             'is_private' => ($input['visibility'] ?? 'public') === 'private',
         ]);
+
+        // Came through an invite link: noted now, followed once the email is confirmed.
+        app(Invites::class)->attach($user);
+
+        return $user;
     }
 }

@@ -34,6 +34,14 @@
             </form>
         </section>
 
+        <section id="invite" aria-labelledby="invite-title" class="{{ $section }} scroll-mt-24">
+            <div>
+                <h2 id="invite-title" class="font-display text-lg font-semibold tracking-tight">Invite friends</h2>
+                <p class="{{ $intro }}">Send this link to a friend. They sign up through it and follow you once they’ve confirmed their email@if ($user->is_private), no request needed@endif.</p>
+            </div>
+            <x-invite-link :user="$user" class="self-start" />
+        </section>
+
         <section id="favourites" aria-labelledby="favourites-title" class="{{ $section }} scroll-mt-24">
             <div>
                 <h2 id="favourites-title" class="font-display text-lg font-semibold tracking-tight">Favourites</h2>

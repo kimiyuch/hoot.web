@@ -45,6 +45,7 @@ class SettingsController extends Controller
         $data = [
             'exported_at' => now()->toIso8601String(),
             'account' => $user->only(['name', 'username', 'email', 'bio', 'is_private', 'shares_activity', 'episode_search_url', 'discover_hidden', 'created_at', 'email_verified_at']),
+            'invited_by' => $user->invitedBy ? $person($user->invitedBy) : null,
             'library' => $user->libraryShows()->get()->map(fn ($show) => $entry($show, 'show'))
                 ->concat($user->libraryMovies()->get()->map(fn ($movie) => $entry($movie, 'movie')))->values(),
             'following' => $user->following()->get()->map($person)->values(),

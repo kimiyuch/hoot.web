@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Services\Invites;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,6 +20,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureMails();
+
+        // Signed up through an invite link: follow the inviter once the email is confirmed.
+        Event::listen(Verified::class, fn (Verified $event) => app(Invites::class)->follow($event->user));
     }
 
     /**

@@ -15,7 +15,7 @@
 
     <h2 class="{{ $h2 }}">What Hoot stores</h2>
     <ul role="list" class="{{ $ul }}">
-        <li><strong class="font-medium text-white">Your account:</strong> name, username, email address, your password (only as a hash, never readable), bio, whether your profile is public or private, and whether you share your activity.</li>
+        <li><strong class="font-medium text-white">Your account:</strong> name, username, email address, your password (only as a hash, never readable), bio, whether your profile is public or private, whether you share your activity, and whose invite link you signed up through, if any.</li>
         <li><strong class="font-medium text-white">Your library:</strong> the shows and movies you follow or made favourites, your watch status (with when you started and finished) and your ratings.</li>
         <li><strong class="font-medium text-white">People:</strong> who you follow, who follows you, follow requests, and who you blocked.</li>
         <li><strong class="font-medium text-white">Your activity:</strong> short entries like “followed Severance” or “finished The Bear”, shown to your followers while you share your activity.</li>

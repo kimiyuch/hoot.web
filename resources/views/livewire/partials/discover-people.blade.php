@@ -37,7 +37,7 @@
                 </ul>
             @endif
         @elseif (empty($sections))
-            <x-empty-state class="mt-8">Nobody else is on Hoot yet. Invite someone: your profile is at {{ auth()->user()->profileUrl() }}.</x-empty-state>
+            <x-empty-state class="mt-8">Nobody else is on Hoot yet. Invite someone with the link below.</x-empty-state>
         @else
             @foreach ($sections as $section => $people)
                 <section wire:key="people-{{ $section }}" aria-labelledby="people-{{ $section }}" class="mt-12 first:mt-10">
@@ -54,6 +54,14 @@
                     </ul>
                 </section>
             @endforeach
+        @endif
+
+        @if ($results === null)
+            <section aria-labelledby="people-invite" class="mt-12 max-w-xl">
+                <h2 id="people-invite" class="font-display text-xl font-semibold tracking-tight">Invite a friend</h2>
+                <p class="mt-1 text-base/7 text-white/45 sm:text-sm/6">They sign up through your link and follow you straight away.</p>
+                <x-invite-link :user="auth()->user()" class="mt-4" />
+            </section>
         @endif
     </div>
 </div>
