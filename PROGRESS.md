@@ -55,7 +55,7 @@ Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.w
 ## Next
 
 1. **Landing page features**: the feature list doesn't mention the social side yet (profiles, following people, the thread); offered, not decided. The FAQ "Can other people see what I follow?" was corrected for public/private profiles.
-2. **After the first deploy**: try it live (sign up with a real address, the confirmation and reset mails, following, the calendar feed). The SMTP login was tested, but no mail has been sent yet. Delete the local test user (`test@possum.local`) on the live site. Open points:
+2. **After the first deploy**: try it live (sign up with a real address, the confirmation and reset mails, following, the calendar feed). The SMTP login was tested, but no mail has been sent yet. The test user (`test@possum.local`) was deleted on the live site on 2026-11-08 (it had 4 shows, all followed by others too; a copy of the database from just before is `database/database.sqlite.bak-2026-11-08` on the server). Open points:
    - Maybe widen `deploy.sh`'s rsync protect filter to `/database/database.sqlite*`, so a deploy can't delete SQLite's temporary journal file mid-write (not changed yet; the user hasn't decided).
    - Check the mails in Gmail and Outlook (only checked in Chrome via MailHog).
    - `/privacy` is a draft from the code, not lawyer-checked, and has no operator name or address (an imprint); the user decides what goes there. Bios stay visible on private profiles (intended for now; the page says so).
