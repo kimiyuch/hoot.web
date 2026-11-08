@@ -13,6 +13,10 @@
         ['icon' => 'sparkles', 'title' => 'What’s premiering', 'body' => 'Discover shows the new series and movies of the next and last few weeks, by service, so nothing slips past.'],
         ['icon' => 'squares-2x2', 'title' => 'A whole season at once', 'body' => 'When all episodes drop on the same day, that’s one line, not eight.'],
         ['icon' => 'star', 'title' => 'Ratings at a glance', 'body' => 'TVmaze ratings for shows and TMDB ratings for movies, right next to the dates.'],
+        ['icon' => 'eye', 'title' => 'Watching, watched, rated', 'body' => 'Mark a show as watching, paused or watched, and rate what you saw in half stars. Your library, your way.'],
+        ['icon' => 'user-circle', 'title' => 'A profile, if you like', 'body' => 'Show your favourites and what you’re watching now. Public, or private for the people you accept.'],
+        ['icon' => 'users', 'title' => 'Follow friends', 'body' => 'Follow people whose taste you trust, and find the ones who follow the same shows as you.'],
+        ['icon' => 'chat-bubble-left-right', 'title' => 'What they’re up to', 'body' => 'A quiet list of what the people you follow started, finished and rated, with a Follow button next to each show.'],
         ['icon' => 'moon', 'title' => 'Up at night', 'body' => 'Owls are out after dark, which is also when most episodes come out. This one never misses a night.'],
     ];
 
@@ -138,7 +142,7 @@
                         One list for everything you watch
                     </h2>
                     <p class="mt-6 max-w-[48ch] text-lg/8 text-pretty text-white/60">
-                        No feeds, no recommendations engine, no social anything. Just what comes out next, for what you follow.
+                        No ads, no algorithm, no endless feed. Just what comes out next for what you follow, and, if you like, what your friends are watching.
                     </p>
 
                     <dl class="mt-16 grid grid-cols-1 gap-x-12 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
