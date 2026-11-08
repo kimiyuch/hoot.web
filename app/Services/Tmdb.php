@@ -65,13 +65,13 @@ class Tmdb
 
     /**
      * @param  'movie'|'tv'  $type
-     * @return array{results: list<array>, total_pages: int}
+     * @return array{results: list<array>, total_pages: int, total_results: int}
      */
     public function discover(string $type, array $filters): array
     {
         $response = $this->http()->get("/discover/{$type}", $filters + ['include_adult' => 'false'])->throw();
 
-        return ['results' => $response->json('results') ?? [], 'total_pages' => (int) $response->json('total_pages', 1)];
+        return ['results' => $response->json('results') ?? [], 'total_pages' => (int) $response->json('total_pages', 1), 'total_results' => (int) $response->json('total_results', 0)];
     }
 
     /**

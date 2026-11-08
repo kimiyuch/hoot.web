@@ -33,7 +33,7 @@ class DiscoverPage extends Component
     #[Url(except: '')]
     public string $service = '';
 
-    /** '' is the configured country (hoot.region). */
+    /** '' is the configured country (hoot.region); 'all' is every country in hoot.regions. */
     #[Url(except: '')]
     public string $region = '';
 
@@ -216,7 +216,7 @@ class DiscoverPage extends Component
         $this->when = in_array($this->when, ['soon', 'new', 'any'], true) ? $this->when : 'soon';
         $this->type = in_array($this->type, ['tv', 'movie', 'people'], true) ? $this->type : 'tv';
         $this->service = array_key_exists($this->service, StreamingServices::all()) ? $this->service : '';
-        $this->region = array_key_exists($this->region, config('hoot.regions')) && $this->region !== config('hoot.region') ? $this->region : '';
+        $this->region = array_key_exists($this->region, Browse::regions()) && $this->region !== config('hoot.region') ? $this->region : '';
         $this->from = $this->from >= 1950 && $this->from <= now()->year && $this->from !== self::defaultFrom() ? $this->from : 0;
         $this->sort = array_key_exists($this->sort, Browse::SORTS) ? $this->sort : 'popular';
         $this->minRating = array_key_exists($this->minRating, Browse::MIN_RATINGS) ? $this->minRating : 0;

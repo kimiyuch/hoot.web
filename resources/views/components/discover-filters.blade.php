@@ -9,7 +9,7 @@
         'sort' => ['Sort by', \App\Services\Browse::SORTS, $filters['sort']],
         'from' => ['Released since', collect(range(now()->year, 1970))->mapWithKeys(fn ($y) => [$y => $y])->all(), $filters['from']],
         'min_rating' => ['Rating', \App\Services\Browse::MIN_RATINGS, $filters['min_rating']],
-        'region' => ['Streaming in', config('hoot.regions'), $filters['region']],
+        'region' => ['Streaming in', \App\Services\Browse::regions(), $filters['region']],
     ];
     $whens = [
         'soon' => 'Premiering soon',

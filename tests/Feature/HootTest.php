@@ -360,6 +360,32 @@ class HootTest extends TestCase
         $this->get('/discover?service=nope')->assertSessionHasErrors('service');
     }
 
+    public function test_browse_in_all_regions_merges_the_countries_into_pages_of_twenty(): void
+    {
+        config(['hoot.tmdb_token' => 'abc123', 'hoot.regions' => ['CH' => 'Switzerland', 'US' => 'United States']]);
+        $film = fn (int $id, int $popularity) => ['id' => $id, 'title' => sprintf('Film-%03d', $id), 'release_date' => '2026-03-01', 'popularity' => $popularity];
+        // Switzerland: 25 films over two pages, popularity 100, 98, … 52. The US: film 1 again, and ten of its own at 99, 97, … 81.
+        $swiss = array_map(fn ($i) => $film($i, 102 - 2 * $i), range(1, 25));
+        $american = [$film(1, 100), ...array_map(fn ($i) => $film(100 + $i, 101 - 2 * $i), range(1, 10))];
+        Http::fake([
+            'api.themoviedb.org/3/watch/providers/*' => Http::response(['results' => []]),
+            'api.themoviedb.org/3/discover/movie*watch_region=CH&page=1*' => Http::response(['total_pages' => 2, 'total_results' => 25, 'results' => array_slice($swiss, 0, 20)]),
+            'api.themoviedb.org/3/discover/movie*watch_region=CH&page=2*' => Http::response(['total_pages' => 2, 'total_results' => 25, 'results' => array_slice($swiss, 20)]),
+            'api.themoviedb.org/3/discover/movie*watch_region=US*' => Http::response(['total_pages' => 1, 'total_results' => 11, 'results' => $american]),
+        ]);
+
+        // 35 different films: page 1 is popularity 100 to 81, both countries interleaved, film 1 once.
+        $first = $this->get('/discover?when=any&type=movie&service=netflix&region=all');
+        $first->assertOk()
+            ->assertSeeInOrder(['in any region', 'Film-001', 'Film-101', 'Film-002', 'Film-102', 'Film-010', 'Film-110', 'Page 1 of 2'])
+            ->assertDontSee('Film-011');
+        $this->assertSame(1, substr_count($first->getContent(), 'Film-001</'));
+
+        $this->get('/discover?when=any&type=movie&service=netflix&region=all&page=2')->assertOk()
+            ->assertSeeInOrder(['Film-011', 'Film-012', 'Film-025', 'Page 2 of 2'])
+            ->assertDontSee('Film-110');
+    }
+
     public function test_a_show_from_browse_is_followed_through_tvmaze(): void
     {
         config(['hoot.tmdb_token' => 'abc123']);

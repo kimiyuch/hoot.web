@@ -11,7 +11,7 @@
             ? ['Shows that just premiered', 'New shows and new seasons from the last '.\App\Services\Premieres::DAYS_BACK.' days'.($serviceName ? ' on '.$serviceName : ', on every service').', most popular first.']
             : ['Movies just out', 'Popular movies released in cinemas or digitally in the last '.\App\Services\Premieres::DAYS_BACK.' days'.($serviceName ? ', on '.$serviceName : '').'.'],
         default => [$isTv ? 'All shows' : 'All movies',
-            \App\Services\Browse::SORTS[$filters['sort']].' since '.$filters['from'].($serviceName ? ' on '.$serviceName.' in '.config('hoot.regions')[$filters['region']] : ', on every service').'.'],
+            \App\Services\Browse::SORTS[$filters['sort']].' since '.$filters['from'].($serviceName ? ' on '.$serviceName.($filters['region'] === \App\Services\Browse::ALL_REGIONS ? ' in any region' : ' in '.config('hoot.regions')[$filters['region']]) : ', on every service').'.'],
     };
 
     $activeFilters = collect([

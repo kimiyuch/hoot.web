@@ -73,7 +73,7 @@ class HootController extends Controller
             'type' => [Rule::in(['movie', 'tv', 'people'])],
             'q' => ['nullable', 'string', 'max:100'],
             'service' => [Rule::in(array_keys(StreamingServices::all()))],
-            'region' => [Rule::in(array_keys(config('hoot.regions')))],
+            'region' => [Rule::in(array_keys(Browse::regions()))],
             'from' => ['integer', 'between:1950,'.now()->year],
             'sort' => [Rule::in(array_keys(Browse::SORTS))],
             'min_rating' => [Rule::in(array_keys(Browse::MIN_RATINGS))],
