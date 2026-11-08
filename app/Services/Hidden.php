@@ -5,10 +5,11 @@ namespace App\Services;
 use App\Models\User;
 
 /**
- * What someone hides from Discover (Settings → Hide from Discover): anime, or titles from a language or country.
+ * What someone hides from Discover and search (Settings → Hide from Discover and Search): anime, or titles from a
+ * language or country.
  * The choices are in hoot.hideable. Shows from TVmaze are matched by their language, channel country and
  * genres; TMDB titles by their original language, origin country (shows only, TMDB doesn't give one for movies
- * in lists) and genre ids. Search, For you and profiles still show everything.
+ * in lists) and genre ids. For you, profiles and the thread still show everything; search says how many it left out.
  */
 class Hidden
 {

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Browse;
 use App\Services\Calendar;
 use App\Services\Circle;
+use App\Services\Hidden;
 use App\Services\Library;
 use App\Services\People;
 use App\Services\Premieres;
@@ -15,6 +16,7 @@ use App\Services\Search;
 use App\Services\StreamingServices;
 use App\Services\Timeline;
 use App\Services\Tmdb;
+use App\Services\TvMaze;
 use App\Timezone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -84,21 +86,30 @@ class HootController extends Controller
         return view('discover');
     }
 
-    public function search(Request $request, Search $search, Tmdb $tmdb, Circle $circle): View
+    public function search(Request $request, Search $search, Tmdb $tmdb, TvMaze $tvmaze, Circle $circle): View
     {
         $query = trim((string) $request->query('q'));
         $onlyPeople = str_starts_with($query, '@');
-        $results = $search->run($onlyPeople ? '' : $query);
+        $hidden = $request->boolean('all') ? [] : Hidden::for($request->user());
+        $results = Search::hide($search->run($onlyPeople ? '' : $query), $hidden);
+        $shows = array_slice($results['shows'], 0, 10);
 
         return view('search', [
             'query' => $query,
             'onlyPeople' => $onlyPeople,
             'people' => $search->people($request->user(), $query, 24),
-            'shows' => $results['shows'],
+            'shows' => $shows,
             'movies' => $results['movies'],
+            'hiddenCount' => $results['hidden'],
+            'hidden' => $hidden,
+            // The first actors, asked for in parallel and cached a week; none if TVmaze or TMDB don't answer.
+            'casts' => [
+                'show' => $shows ? $tvmaze->casts(array_column($shows, 'tvmaze_id')) : [],
+                'movie' => $results['movies'] && $tmdb->configured() ? rescue(fn () => $tmdb->casts('movie', array_column($results['movies'], 'tmdb_id')), [], report: true) : [],
+            ],
             'searchErrors' => $results['errors'],
             'moviesEnabled' => $tmdb->configured(),
-            'circle' => $circle->among($request->user(), tvmazeIds: array_column($results['shows'], 'tvmaze_id'), movieIds: array_column($results['movies'], 'tmdb_id')),
+            'circle' => $circle->among($request->user(), tvmazeIds: array_column($shows, 'tvmaze_id'), movieIds: array_column($results['movies'], 'tmdb_id')),
             'followedShows' => $request->user()->shows()->pluck('tvmaze_id')->flip(),
             'followedMovies' => $request->user()->movies()->pluck('tmdb_id')->flip(),
             'favouriteShows' => $request->user()->favouriteShows()->pluck('shows.id', 'tvmaze_id'),

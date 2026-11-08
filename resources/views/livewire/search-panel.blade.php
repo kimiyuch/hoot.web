@@ -67,6 +67,9 @@
             <a href="{{ route('search', ['q' => $term]) }}" class="mt-1 flex items-center justify-center rounded-lg px-3 py-2 text-sm/6 font-medium text-white/55 hover:bg-white/5 hover:text-white">
                 Show all results <span aria-hidden="true" class="ml-1">→</span>
             </a>
+            @if ($hiddenCount)
+                <p class="pb-1 text-center text-xs/5 text-white/35">{{ trans_choice(':count result|:count results', $hiddenCount) }} hidden by your settings. <a href="{{ route('search', ['q' => $term, 'all' => 1]) }}" class="underline decoration-white/20 underline-offset-2 hover:text-white">Show them</a></p>
+            @endif
         @endif
     </div>
 </div>

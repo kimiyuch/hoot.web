@@ -164,6 +164,9 @@
                                             <div><livewire:library-actions :key="'following-show-'.$show->id" type="show" :tvmaze-id="$show->tvmaze_id" :label="$show->name" :with-follow="false" :compact="false" following :favourite="$show->pivot->favourite_position ? $show->id : null" /></div>
                                             <x-follow-button class="ml-auto" following :unfollow-action="route('shows.unfollow', $show)" :label="$show->name" />
                                         </div>
+                                        @if ($show->cast)
+                                            <p class="mt-1 text-sm/6 text-white/50"><span class="text-white/35">With</span> {{ implode(', ', $show->cast) }}</p>
+                                        @endif
                                         @if ($show->overview)
                                             <p class="mt-1 text-sm/6 text-pretty text-white/60">{{ $show->overview }}</p>
                                         @endif
@@ -249,6 +252,9 @@
                                             <div><livewire:library-actions :key="'following-movie-'.$movie->id" type="movie" :tmdb-id="$movie->tmdb_id" :label="$movie->title" :with-follow="false" :compact="false" following :favourite="$movie->pivot->favourite_position ? $movie->id : null" /></div>
                                             <x-follow-button class="ml-auto" following :unfollow-action="route('movies.unfollow', $movie)" :label="$movie->title" />
                                         </div>
+                                        @if ($movie->cast)
+                                            <p class="mt-1 text-sm/6 text-white/50"><span class="text-white/35">With</span> {{ implode(', ', $movie->cast) }}</p>
+                                        @endif
                                         @if ($movie->overview)
                                             <p class="mt-1 text-sm/6 text-pretty text-white/60">{{ $movie->overview }}</p>
                                         @endif

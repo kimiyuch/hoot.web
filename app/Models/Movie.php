@@ -31,6 +31,7 @@ class Movie extends Model
             'refreshed_at' => 'datetime',
             'rating' => 'float',
             'services' => 'array',
+            'cast' => 'array',
         ];
     }
 

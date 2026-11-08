@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Services\Circle;
+use App\Services\Hidden;
 use App\Services\Search;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -21,12 +22,13 @@ class SearchPanel extends Component
         $term = trim($this->query);
         $searching = mb_strlen($term) >= 2;
         // "@pip" only looks for people.
-        $results = $searching && ! str_starts_with($term, '@') ? $search->run($term) : null;
+        $results = $searching && ! str_starts_with($term, '@') ? Search::hide($search->run($term), Hidden::for(auth()->user())) : null;
         $people = $searching ? $search->people(auth()->user(), $term) : collect();
 
         return view('livewire.search-panel', [
             'term' => $term,
             'searchErrors' => $results['errors'] ?? [],
+            'hiddenCount' => $results['hidden'] ?? 0,
             'groups' => $searching ? ($results ? $this->groups($results) : []) : null,
             'people' => $people,
         ]);

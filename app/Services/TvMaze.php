@@ -3,7 +3,11 @@
 namespace App\Services;
 
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Throwable;
 
 /**
  * TVmaze: TV shows and their episodes, with the exact UTC time each episode first airs.
@@ -26,11 +30,67 @@ class TvMaze
     }
 
     /**
-     * A show with all of its episodes embedded.
+     * A show with all of its episodes and its cast embedded.
      */
     public function show(int $id): array
     {
-        return $this->http()->get("/shows/{$id}", ['embed' => 'episodes'])->throw()->json();
+        // TVmaze wants embed[]=…&embed[]=…, which an array in the query wouldn't give (it numbers the brackets).
+        return $this->http()->get("/shows/{$id}?embed[]=episodes&embed[]=cast")->throw()->json();
+    }
+
+    /**
+     * The first actors of several shows, asked for in parallel and cached for a week per show (the same cache as
+     * the premieres use). A show that can't be loaded is left out, and asked again next time.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, list<string>>
+     */
+    public function casts(array $ids): array
+    {
+        $casts = [];
+        $missing = [];
+        foreach (array_unique($ids) as $id) {
+            $cached = Cache::get("cast:tvmaze:{$id}");
+            $cached === null ? $missing[] = $id : $casts[$id] = $cached;
+        }
+
+        // TVmaze allows 20 calls in 10 seconds; a search page has at most 10 shows.
+        $missing = array_slice($missing, 0, 10);
+        if ($missing === []) {
+            return $casts;
+        }
+
+        try {
+            $responses = Http::pool(fn (Pool $pool) => array_map(
+                fn (int $id) => $pool->as((string) $id)->baseUrl(self::URL)->acceptJson()->timeout(10)
+                    ->withUserAgent('Hoot (https://hoot.kimiyu.ch)')->get("/shows/{$id}/cast"),
+                $missing,
+            ));
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return $casts;
+        }
+
+        foreach ($missing as $id) {
+            $response = $responses[(string) $id] ?? null;
+            if ($response instanceof Response && $response->successful()) {
+                $casts[$id] = self::castNames($response->json() ?? []);
+                Cache::put("cast:tvmaze:{$id}", $casts[$id], now()->addWeek());
+            }
+        }
+
+        return $casts;
+    }
+
+    /**
+     * The first $limit actors from TVmaze's cast list (main cast first), each name once.
+     *
+     * @return list<string>
+     */
+    public static function castNames(array $cast, int $limit = 3): array
+    {
+        return self::names(array_map(fn (array $credit) => $credit['person']['name'] ?? null, $cast), $limit);
     }
 
     /**
@@ -40,9 +100,7 @@ class TvMaze
      */
     public function cast(int $id, int $limit = 3): array
     {
-        $cast = $this->http()->get("/shows/{$id}/cast")->throw()->json() ?? [];
-
-        return self::names(array_map(fn (array $credit) => $credit['person']['name'] ?? null, $cast), $limit);
+        return self::castNames($this->http()->get("/shows/{$id}/cast")->throw()->json() ?? [], $limit);
     }
 
     /** @return list<string> */
@@ -124,6 +182,8 @@ class TvMaze
             'rating' => $show['rating']['average'] ?? null,
             'genres' => $show['genres'] ?? [],
             'language' => $show['language'] ?? null,
+            // The channel's country, for Hidden (premieres set the same).
+            'country' => $show['network']['country']['code'] ?? $show['webChannel']['country']['code'] ?? null,
             // TVmaze's summary is HTML.
             'overview' => filled($show['summary'] ?? null) ? trim(html_entity_decode(strip_tags($show['summary']))) : null,
         ];

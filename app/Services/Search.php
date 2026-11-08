@@ -25,7 +25,7 @@ class Search
         }
 
         try {
-            $result['shows'] = Cache::remember('search:tv:'.$key, now()->addDay(), fn () => $this->tvmaze->search($query));
+            $result['shows'] = Cache::remember('search:tv:v2:'.$key, now()->addDay(), fn () => $this->tvmaze->search($query));
         } catch (Throwable $exception) {
             report($exception);
             $result['errors'][] = 'TVmaze can’t be reached right now.';
@@ -42,6 +42,20 @@ class Search
         }
 
         return $result;
+    }
+
+    /**
+     * Leaves out what someone hides (Settings → Hide from Discover and Search), counting how many went.
+     *
+     * @return array{shows: array, movies: array, errors: list<string>, hidden: int}
+     */
+    public static function hide(array $results, array $hidden): array
+    {
+        $shows = array_values(array_filter($results['shows'], fn (array $show) => ! Hidden::show($show, $hidden)));
+        $movies = array_values(array_filter($results['movies'], fn (array $movie) => ! Hidden::tmdb($movie, $hidden)));
+
+        return ['shows' => $shows, 'movies' => $movies, 'errors' => $results['errors'],
+            'hidden' => count($results['shows']) - count($shows) + count($results['movies']) - count($movies)];
     }
 
     /**

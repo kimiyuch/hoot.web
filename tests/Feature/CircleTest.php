@@ -59,7 +59,7 @@ class CircleTest extends TestCase
         app(Network::class)->follow($me, $pip);
         app(Library::class)->setStatus($pip, Show::create(['tvmaze_id' => 1, 'name' => 'Severance']), 'watching');
 
-        Cache::put('search:tv:severance', [['tvmaze_id' => 1, 'name' => 'Severance', 'year' => '2022', 'channel' => 'Apple TV', 'status' => 'Running', 'image_url' => null, 'url' => null, 'rating' => 8.4]], 60);
+        Cache::put('search:tv:v2:severance', [['tvmaze_id' => 1, 'name' => 'Severance', 'year' => '2022', 'channel' => 'Apple TV', 'status' => 'Running', 'image_url' => null, 'url' => null, 'rating' => 8.4]], 60);
         Cache::put('search:movie:severance', [], 60);
         config(['hoot.tmdb_token' => 'test']);
 

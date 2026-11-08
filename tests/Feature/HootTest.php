@@ -125,6 +125,7 @@ class HootTest extends TestCase
                     ['type' => 4, 'release_date' => '2026-12-10T00:00:00.000Z'],
                 ]],
             ]],
+            'credits' => ['cast' => [['name' => 'Second Billed', 'order' => 1], ['name' => 'Top Billed', 'order' => 0]]],
         ])]);
 
         $this->post('/movies', ['tmdb_id' => 550])->assertSessionHas('status', 'Following Owl Light.');
@@ -133,6 +134,7 @@ class HootTest extends TestCase
 
         $movie = Movie::first();
         $this->assertSame('2026-11-10', $movie->cinema_date->toDateString());
+        $this->assertSame(['Top Billed', 'Second Billed'], $movie->cast, 'the cast, in billing order, for For you');
         $this->assertSame('AU', $movie->cinema_country);
         $this->assertSame('2026-12-10', $movie->digital_date->toDateString());
 
@@ -243,6 +245,44 @@ class HootTest extends TestCase
         Livewire::test(SearchPanel::class)
             ->set('query', 'n')->assertSee('Search shows on TVmaze')
             ->set('query', 'night')->assertSeeInOrder(['Shows', 'Night Shift', 'Night Court', 'Show all results']);
+    }
+
+    public function test_search_leaves_out_what_you_hide_says_so_and_shows_the_cast(): void
+    {
+        $this->user->forceFill(['discover_hidden' => ['korean']])->save();
+        Http::fake([
+            'api.tvmaze.com/search/shows*' => Http::response([
+                ['score' => 1, 'show' => ['id' => 82, 'name' => 'Night Shift', 'language' => 'English', 'network' => ['name' => 'HBO', 'country' => ['code' => 'US']]]],
+                ['score' => 1, 'show' => ['id' => 83, 'name' => 'Night Market', 'language' => 'Korean', 'network' => ['name' => 'tvN', 'country' => ['code' => 'KR']]]],
+            ]),
+            'api.tvmaze.com/shows/82/cast' => Http::response([['person' => ['name' => 'Ann Lead']], ['person' => ['name' => 'Bo Second']]]),
+            'api.tvmaze.com/shows/83/cast' => Http::response([['person' => ['name' => 'Kim Lead']]]),
+        ]);
+
+        $this->get('/search?q=night')->assertOk()
+            ->assertSee('Night Shift')->assertSee('Ann Lead, Bo Second')
+            ->assertDontSee('Night Market')
+            ->assertSee('1 result left out: you hide Korean titles.', false)
+            ->assertSee('Show them');
+        $this->get('/search?q=night&all=1')->assertOk()->assertSee('Night Market')->assertSee('Kim Lead')->assertDontSee('left out');
+
+        // The casts are cached: no second round of requests.
+        Http::assertSentCount(3);
+        $this->get('/search?q=night');
+        Http::assertSentCount(3);
+
+        Livewire::test(SearchPanel::class)->set('query', 'night')
+            ->assertSee('Night Shift')->assertDontSee('Night Market')->assertSee('1 result hidden by your settings');
+    }
+
+    public function test_following_a_show_keeps_its_cast_from_tvmaze_for_for_you(): void
+    {
+        Http::fake(['api.tvmaze.com/shows/82*' => Http::response(array_replace($this->tvmazeShow([]), ['_embedded' => ['episodes' => [], 'cast' => [['person' => ['name' => 'Ann Lead']], ['person' => ['name' => 'Bo Second']]]]]))]);
+        $this->post('/shows', ['tvmaze_id' => 82]);
+
+        Http::assertSent(fn ($request) => str_contains(urldecode($request->url()), 'embed[]=episodes&embed[]=cast'));
+        $this->assertSame(['Ann Lead', 'Bo Second'], Show::where('tvmaze_id', 82)->value('cast'));
+        $this->get('/for-you')->assertSee('Ann Lead, Bo Second');
     }
 
     public function test_search_says_so_when_tvmaze_is_down(): void

@@ -27,7 +27,7 @@ class Show extends Model
 
     protected function casts(): array
     {
-        return ['refreshed_at' => 'datetime', 'rating' => 'float', 'genres' => 'array'];
+        return ['refreshed_at' => 'datetime', 'rating' => 'float', 'genres' => 'array', 'cast' => 'array'];
     }
 
     /** The streaming service key (config/hoot.php) of the show's channel, if it's one of them. */

@@ -315,6 +315,8 @@ class Library
 
             $show = Show::updateOrCreate(['tvmaze_id' => $summary['tvmaze_id']], [
                 ...collect($summary)->only(['name', 'overview', 'channel', 'status', 'image_url', 'image_large_url', 'url', 'official_url', 'rating', 'genres'])->all(),
+                // Only when TVmaze sent the cast along, so an answer without it doesn't wipe it.
+                ...(isset($data['_embedded']['cast']) ? ['cast' => TvMaze::castNames($data['_embedded']['cast'])] : []),
                 'refreshed_at' => now(),
             ]);
 
@@ -355,6 +357,7 @@ class Library
             'poster_path' => $data['poster_path'] ?? null,
             'backdrop_path' => $data['backdrop_path'] ?? null,
             'services' => StreamingServices::fromWatchProviders($data['watch/providers'] ?? []),
+            ...(isset($data['credits']) ? ['cast' => Tmdb::cast($data['credits'])] : []),
             'cinema_date' => $releases['cinema']['date'] ?? null,
             'cinema_country' => $releases['cinema']['country'] ?? null,
             'digital_date' => $releases['digital']['date'] ?? null,

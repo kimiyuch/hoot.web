@@ -150,8 +150,8 @@
 
         <section id="hidden" aria-labelledby="hidden-title" class="{{ $section }} scroll-mt-24">
             <div>
-                <h2 id="hidden-title" class="font-display text-lg font-semibold tracking-tight">Hide from Discover</h2>
-                <p class="{{ $intro }}">Never see these in Discover’s premieres and catalog. Search, For you and profiles still show everything.</p>
+                <h2 id="hidden-title" class="font-display text-lg font-semibold tracking-tight">Hide from Discover and Search</h2>
+                <p class="{{ $intro }}">Never see these in Discover or in search results (a search tells you when it left something out, and can show it anyway). For you and profiles still show everything.</p>
             </div>
             <form method="post" action="{{ route('settings.hidden') }}" class="flex flex-col gap-5">
                 @csrf
