@@ -87,7 +87,7 @@ class InvitesTest extends TestCase
     {
         $pip = $this->person('pip');
 
-        $this->actingAs($pip)->get('/settings')->assertSee('Invite friends')->assertSee(url('/invite/pip'));
+        $this->actingAs($pip)->get('/settings')->assertSee('Invite friends')->assertDontSee('@if', false)->assertSee(url('/invite/pip'));
         $this->get('/discover?type=people')->assertSee('Invite a friend')->assertSee(url('/invite/pip'));
     }
 }
