@@ -10,7 +10,7 @@
                 : '<a href="'.e(route('profile', $item['username'])).'" class="relative font-medium text-white hover:text-midnight-200">'.e($item['title']).'</a>';
         }
 
-        return $item['url']
+        return ($item['url'] ?? null)
             ? '<a href="'.e($item['url']).'" target="_blank" rel="noopener" class="relative font-medium text-white hover:text-midnight-200">'.e($item['title']).'</a>'
             : '<span class="font-medium text-white">'.e($item['title']).'</span>';
     };
@@ -80,9 +80,9 @@
                                 <ul role="list" class="mt-1 divide-y divide-white/5">
                                     @foreach ($titles as $item)
                                         <li class="flex items-center gap-3 py-2">
-                                            <x-poster :src="$item['poster']" alt="" class="aspect-2/3 w-7 rounded" />
+                                            <x-poster :src="$item['poster'] ?? null" alt="" class="aspect-2/3 w-7 rounded" />
                                             <p class="min-w-0 flex-1 truncate text-sm/5 font-medium">
-                                                @if ($item['url'])
+                                                @if ($item['url'] ?? null)
                                                     <a href="{{ $item['url'] }}" target="_blank" rel="noopener" class="hover:text-midnight-200">{{ $item['title'] }}</a>
                                                 @else
                                                     {{ $item['title'] }}
@@ -98,7 +98,7 @@
                     @if ($posters->isNotEmpty())
                         <div class="flex shrink-0 -space-x-4">
                             @foreach ($posters as $item)
-                                <x-poster :src="$item['poster']" alt="" class="aspect-2/3 w-8 rounded ring-2 ring-night-950" />
+                                <x-poster :src="$item['poster'] ?? null" alt="" class="aspect-2/3 w-8 rounded ring-2 ring-night-950" />
                             @endforeach
                         </div>
                     @endif

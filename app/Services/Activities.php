@@ -173,7 +173,11 @@ class Activities
     private function setRating(Activity $activity, ?int $rating): void
     {
         $items = $activity->items();
-        $items[0] = array_filter(['rating' => $rating] + $items[0], fn ($value) => $value !== null);
+        // Only the rating goes when it's cleared; a missing poster or URL stays a null.
+        $items[0] = ['rating' => $rating] + $items[0];
+        if ($rating === null) {
+            unset($items[0]['rating']);
+        }
         $activity->forceFill(['data' => ['items' => $items], 'updated_at' => now()])->save();
     }
 
