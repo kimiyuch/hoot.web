@@ -6,9 +6,11 @@ Last updated: 2026-11-08.
 
 ## State
 
-Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.web`). 75 tests pass (`php artisan test`), Pint is clean. `public/build` is built.
+Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.web`). 80 tests pass (`php artisan test`), Pint is clean. `public/build` is built. The test account `test@possum.local` (username `tester`) hides anime, Korean and Indian on Discover locally.
 
 **Git:** in git since 2026-11-05 and pushed to https://github.com/kimiyuch/hoot.web (public, `main`). The tests run on GitHub Actions for every push (all green so far). `marceli-to` is a collaborator, so a plain `git push` works. **Live since 2026-11-06** at https://hoot.kimiyu.ch (Hostpoint, deployed with `./deploy.sh`, latest `6d34d1e`, 2026-11-08; the shortcut `bcpd` = build, commit, push, deploy; how-to in [`DEPLOY.md`](DEPLOY.md)). The local database was copied over (so kimi, marceli_to and the test user exist there too), mail goes out as `bot@kimiyu.ch` (stackr's SMTP login, copied server-side), reports go to `m@marceli.to`, and the cron line (`schedule:run` every minute with `/usr/local/php83/bin/php`) is in the shared crontab.
+
+**Last session (2026-11-08)**, all deployed and the server's premieres refreshed by hand right after: *Streaming in → All regions* on Discover's Any time, a cast line on every Discover card, and *Hide from Discover* in Settings (details under Built: Discover, and Hide from Discover). The live site's first refresh with casts took 3 min 20 s; scheduled ones are back to normal since casts are cached a week.
 
 `.env` has a working `TMDB_TOKEN` (the long "API Read Access Token"). It has to be added to the server's `.env` by hand when deploying.
 
@@ -57,7 +59,8 @@ Working locally at https://hoot.web.test (Herd, secured with `herd secure hoot.w
    - Maybe widen `deploy.sh`'s rsync protect filter to `/database/database.sqlite*`, so a deploy can't delete SQLite's temporary journal file mid-write (not changed yet; the user hasn't decided).
    - Check the mails in Gmail and Outlook (only checked in Chrome via MailHog).
    - `/privacy` is a draft from the code, not lawyer-checked, and has no operator name or address (an imprint); the user decides what goes there. Bios stay visible on private profiles (intended for now; the page says so).
-3. **Hoot as a network**: the plan is in [`docs/SOCIAL.md`](docs/SOCIAL.md); steps 0–5 are built (favourites, profiles, following people with blocking and Discover → People, watch status with ratings, the thread with Follow buttons, private accounts with requests, sharing, suspension, privacy page, export). **Next: step 6**, "people you follow watch this" on cards and in search. Then step 7 (in-app notifications: new followers, requests, accepted requests; maybe a weekly digest). Smaller: someone's recent activity on their profile (the `Activities` service would need a per-user query), an invite link (`/@pip` → sign up and follow in one go).
+3. **Discover follow-ups** (ideas from 2026-11-08, nothing asked for yet): the hidden kinds could also apply to Search or the ⌘K lightbox (left out on purpose so far: an explicit search finds everything); the cast could show in For you's Following or on Search cards; the cast line is one line and usually shows two names in full at desktop width.
+4. **Hoot as a network**: the plan is in [`docs/SOCIAL.md`](docs/SOCIAL.md); steps 0–5 are built (favourites, profiles, following people with blocking and Discover → People, watch status with ratings, the thread with Follow buttons, private accounts with requests, sharing, suspension, privacy page, export). **Next: step 6**, "people you follow watch this" on cards and in search. Then step 7 (in-app notifications: new followers, requests, accepted requests; maybe a weekly digest). Smaller: someone's recent activity on their profile (the `Activities` service would need a per-user query), an invite link (`/@pip` → sign up and follow in one go).
 
 ## On another machine
 
