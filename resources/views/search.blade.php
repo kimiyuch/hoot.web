@@ -36,7 +36,7 @@
             @else
                 <x-media-grid class="mt-6">
                     @foreach ($shows as $show)
-                        <x-media-card :title="$show['name']" :href="$show['url']" :image="$show['image_url']" :overview="$show['overview'] ?? null" :rating="$show['rating']">
+                        <x-media-card :title="$show['name']" :href="$show['url']" :image="$show['image_url']" :overview="$show['overview'] ?? null" :rating="$show['rating']" :friends="$circle['show'][$show['tvmaze_id']] ?? []">
                             <x-slot:meta>{{ collect([$show['year'], $show['channel'], $show['status'] === 'Ended' ? 'Ended' : null])->filter()->join(' · ') }}</x-slot:meta>
                             <x-slot:action>
                                 <livewire:library-actions :key="'show-tvmaze_id-'.$show['tvmaze_id']" type="show" :tvmaze-id="$show['tvmaze_id']" :label="$show['name']" :following="$followedShows->has($show['tvmaze_id'])" :favourite="$favouriteShows->get($show['tvmaze_id'])" />
@@ -58,7 +58,7 @@
                     @foreach ($movies as $movie)
                         <x-media-card :title="$movie['title']" :href="'https://www.themoviedb.org/movie/'.$movie['tmdb_id']"
                             :image="$movie['poster_path'] ? 'https://image.tmdb.org/t/p/w342'.$movie['poster_path'] : null"
-                            :overview="$movie['overview'] ?? null" :rating="$movie['rating']">
+                            :overview="$movie['overview'] ?? null" :rating="$movie['rating']" :friends="$circle['movie'][$movie['tmdb_id']] ?? []">
                             <x-slot:meta>{{ $movie['year'] }}</x-slot:meta>
                             <x-slot:action>
                                 <livewire:library-actions :key="'movie-tmdb_id-'.$movie['tmdb_id']" type="movie" :tmdb-id="$movie['tmdb_id']" :label="$movie['title']" :following="$followedMovies->has($movie['tmdb_id'])" :favourite="$favouriteMovies->get($movie['tmdb_id'])" />

@@ -7,6 +7,7 @@ use App\Models\Show;
 use App\Models\User;
 use App\Services\Browse;
 use App\Services\Calendar;
+use App\Services\Circle;
 use App\Services\Library;
 use App\Services\People;
 use App\Services\Premieres;
@@ -83,7 +84,7 @@ class HootController extends Controller
         return view('discover');
     }
 
-    public function search(Request $request, Search $search, Tmdb $tmdb): View
+    public function search(Request $request, Search $search, Tmdb $tmdb, Circle $circle): View
     {
         $query = trim((string) $request->query('q'));
         $onlyPeople = str_starts_with($query, '@');
@@ -97,6 +98,7 @@ class HootController extends Controller
             'movies' => $results['movies'],
             'searchErrors' => $results['errors'],
             'moviesEnabled' => $tmdb->configured(),
+            'circle' => $circle->among($request->user(), tvmazeIds: array_column($results['shows'], 'tvmaze_id'), movieIds: array_column($results['movies'], 'tmdb_id')),
             'followedShows' => $request->user()->shows()->pluck('tvmaze_id')->flip(),
             'followedMovies' => $request->user()->movies()->pluck('tmdb_id')->flip(),
             'favouriteShows' => $request->user()->favouriteShows()->pluck('shows.id', 'tvmaze_id'),

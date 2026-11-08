@@ -30,6 +30,7 @@
                                     @if ($item['meta'])
                                         <p class="truncate text-sm/5 text-white/45">{{ $item['meta'] }}</p>
                                     @endif
+                                    <x-friends :people="$item['friends']" class="mt-0.5" />
                                 </div>
                                 <div class="relative shrink-0">
                                     <livewire:library-actions :key="'search-'.$item['key']" :type="$item['type']" :tvmaze-id="$item['tvmaze_id']" :tmdb-id="$item['tmdb_id']"

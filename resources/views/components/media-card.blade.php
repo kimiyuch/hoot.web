@@ -2,8 +2,9 @@
     A panel with the poster (and the rating under it) on the left and the details on the right.
     Slots: "meta" (a line under the title), the default slot (extra lines), "action" (follow button).
     $cast: the first few actors' names, shown as "With …" under the meta line.
+    $friends: people you follow who have it in their library (App\Services\Circle), under the description.
 --}}
-@props(['title', 'href' => null, 'image' => null, 'overview' => null, 'rating' => null, 'cast' => []])
+@props(['title', 'href' => null, 'image' => null, 'overview' => null, 'rating' => null, 'cast' => [], 'friends' => []])
 
 <li class="group relative flex gap-5 rounded-xl bg-night-900/80 p-3 inset-ring inset-ring-white/5 transition-colors hover:bg-night-800/80 sm:gap-6">
     {{-- The poster, with the rating from TVmaze or TMDB under it. --}}
@@ -26,6 +27,7 @@
             <p class="mt-3 line-clamp-3 text-base/6 text-pretty text-white/60 sm:text-sm/6">{{ $overview }}</p>
         @endif
         {{ $slot }}
+        <x-friends :people="$friends" class="mt-3" />
         @isset($action)
             <div class="mt-auto flex justify-end pt-4">
                 <div class="relative z-10 min-w-0">{{ $action }}</div>

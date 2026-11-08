@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Services\Circle;
 use App\Services\Search;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -39,17 +40,21 @@ class SearchPanel extends Component
         $followedMovies = $user->movies()->pluck('tmdb_id')->flip();
         $favouriteShows = $user->favouriteShows()->pluck('shows.id', 'tvmaze_id');
         $favouriteMovies = $user->favouriteMovies()->pluck('movies.id', 'tmdb_id');
+        $shows = collect($results['shows'])->take(6);
+        $movies = collect($results['movies'])->take(6);
+        $circle = app(Circle::class)->among($user, tvmazeIds: $shows->pluck('tvmaze_id')->all(), movieIds: $movies->pluck('tmdb_id')->all());
 
         return array_filter([
-            'Shows' => collect($results['shows'])->take(6)->map(fn (array $show) => [
+            'Shows' => $shows->map(fn (array $show) => [
                 'key' => 'show-'.$show['tvmaze_id'],
                 'type' => 'show', 'tvmaze_id' => $show['tvmaze_id'], 'tmdb_id' => null,
                 'title' => $show['name'], 'href' => $show['url'], 'image' => $show['image_url'],
                 'meta' => collect([$show['year'], $show['channel'], $show['status'] === 'Ended' ? 'Ended' : null])->filter()->join(' · '),
                 'following' => $followedShows->has($show['tvmaze_id']),
                 'favourite' => $favouriteShows->get($show['tvmaze_id']),
+                'friends' => $circle['show'][$show['tvmaze_id']] ?? [],
             ]),
-            'Movies' => collect($results['movies'])->take(6)->map(fn (array $movie) => [
+            'Movies' => $movies->map(fn (array $movie) => [
                 'key' => 'movie-'.$movie['tmdb_id'],
                 'type' => 'movie', 'tvmaze_id' => null, 'tmdb_id' => $movie['tmdb_id'],
                 'title' => $movie['title'], 'href' => 'https://www.themoviedb.org/movie/'.$movie['tmdb_id'],
@@ -57,6 +62,7 @@ class SearchPanel extends Component
                 'meta' => $movie['year'],
                 'following' => $followedMovies->has($movie['tmdb_id']),
                 'favourite' => $favouriteMovies->get($movie['tmdb_id']),
+                'friends' => $circle['movie'][$movie['tmdb_id']] ?? [],
             ]),
         ], fn (Collection $items) => $items->isNotEmpty());
     }

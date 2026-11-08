@@ -70,7 +70,7 @@
                             {{-- The TMDB catalog --}}
                             <x-media-card :title="$item['title']" :href="'https://www.themoviedb.org/'.($isTv ? 'tv' : 'movie').'/'.$item['tmdb_id']"
                                 :image="$item['poster_path'] ? 'https://image.tmdb.org/t/p/w342'.$item['poster_path'] : null"
-                                :overview="$item['overview'] ?? null" :rating="$item['rating']" :cast="$item['cast'] ?? []">
+                                :overview="$item['overview'] ?? null" :rating="$item['rating']" :cast="$item['cast'] ?? []" :friends="$isTv ? ($circle['tv'][$item['tmdb_id']] ?? []) : ($circle['movie'][$item['tmdb_id']] ?? [])">
                                 <x-slot:meta>{{ $item['year'] }}</x-slot:meta>
                                 <x-slot:action>
                                     @if ($isTv)
@@ -83,7 +83,7 @@
                         @elseif ($isTv)
                             {{-- Show premieres --}}
                             @php $at = \Carbon\CarbonImmutable::parse($item['airs_at'])->setTimezone($timezone); @endphp
-                            <x-media-card :title="$item['name']" :href="$item['url']" :image="$item['image_url']" :overview="$item['overview'] ?? null" :rating="$item['rating'] ?? null" :cast="$item['cast'] ?? []">
+                            <x-media-card :title="$item['name']" :href="$item['url']" :image="$item['image_url']" :overview="$item['overview'] ?? null" :rating="$item['rating'] ?? null" :cast="$item['cast'] ?? []" :friends="$circle['show'][$item['tvmaze_id']] ?? []">
                                 <x-slot:meta>
                                     <span class="flex min-w-0 flex-wrap items-center gap-x-1.5">
                                         <span @class(['text-calendar-400' => $item['season'] === 1])>{{ $item['season'] === 1 ? 'New show' : 'Season '.$item['season'] }}</span>
@@ -107,7 +107,7 @@
                             @endphp
                             <x-media-card :title="$item['title']" :href="'https://www.themoviedb.org/movie/'.$item['tmdb_id']"
                                 :image="$item['poster_path'] ? 'https://image.tmdb.org/t/p/w342'.$item['poster_path'] : null"
-                                :overview="$item['overview'] ?? null" :rating="$item['rating'] ?? null" :cast="$item['cast'] ?? []">
+                                :overview="$item['overview'] ?? null" :rating="$item['rating'] ?? null" :cast="$item['cast'] ?? []" :friends="$circle['movie'][$item['tmdb_id']] ?? []">
                                 <x-slot:meta>
                                     {{ collect([$cinema ? 'Cinema '.$cinema->format('j M') : null, $digital ? 'Digital '.$digital->format('j M') : null])->filter()->join(' · ') ?: $item['year'] }}
                                 </x-slot:meta>

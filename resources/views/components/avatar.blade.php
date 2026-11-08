@@ -4,6 +4,7 @@
 @php
     $colours = ['bg-midnight-600', 'bg-calendar-700', 'bg-teal-700', 'bg-amber-700', 'bg-sky-700', 'bg-indigo-600', 'bg-rose-700', 'bg-emerald-700'];
     $sizes = [
+        'xs' => 'size-5 text-[0.625rem]',
         'sm' => 'size-8 text-sm',
         'md' => 'size-9 text-sm',
         'xl' => 'size-20 text-3xl sm:size-24 sm:text-4xl',

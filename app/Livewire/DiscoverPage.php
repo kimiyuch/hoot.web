@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Services\Browse;
+use App\Services\Circle;
 use App\Services\Hidden;
 use App\Services\People;
 use App\Services\Premieres;
@@ -91,7 +92,7 @@ class DiscoverPage extends Component
         $this->normalize();
     }
 
-    public function render(Premieres $premieres, Browse $browse, Tmdb $tmdb, StreamingServices $services): View
+    public function render(Premieres $premieres, Browse $browse, Tmdb $tmdb, StreamingServices $services, Circle $circle): View
     {
         $user = auth()->user();
         $filters = $this->filters();
@@ -132,9 +133,12 @@ class DiscoverPage extends Component
                 }
             }
 
+            $ids = array_column($results['results'], 'tmdb_id');
+
             return view('livewire.discover-page', $view + [
                 'filters' => $filters,
                 'items' => collect($results['results']),
+                'circle' => $filters['type'] === 'tv' ? $circle->among($user, tmdbShowIds: $ids) : $circle->among($user, movieIds: $ids),
                 // TMDB serves at most 500 pages.
                 'totalPages' => min($results['total_pages'], 500),
                 'pagesCounted' => $results['counted'] ?? true,
@@ -163,6 +167,9 @@ class DiscoverPage extends Component
         return view('livewire.discover-page', $view + [
             'filters' => $filters,
             'items' => $items->values(),
+            'circle' => $filters['type'] === 'tv'
+                ? $circle->among($user, tvmazeIds: $items->pluck('tvmaze_id')->all())
+                : $circle->among($user, movieIds: $items->pluck('tmdb_id')->all()),
             'totalPages' => 1,
             'error' => null,
             'serviceCounts' => $serviceCounts,
